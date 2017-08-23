@@ -1,0 +1,23 @@
+{
+    "policy_handler" : {
+        "system" : "policy_handler",
+        "thread_pool_size" : 4,
+        "scope_prefixes" : ["DCAE_alex.Config_"],
+        "policy_retry_count" : 5,
+        "policy_retry_sleep" : 5,
+        "policy_engine" : {
+            "url" : "https://peawiv9nspd01.pedc.sbc.com:8081",
+            "path_pdp" :"/pdp/",
+            "path_api" : "/pdp/api/",
+            "headers" : {
+                "Accept" : "application/json",
+                "Content-Type" : "application/json",
+                "ClientAuth" : "Basic bTAzOTQ5OnBvbGljeVIwY2sk",
+                "Authorization" : "Basic dGVzdHBkcDphbHBoYTEyMw==",
+                "Environment" : "TEST"
+            },
+            "target_entity" : "policy_engine"
+        },
+        "deploy_handler" : "policy_deploy_handler"
+    }
+}

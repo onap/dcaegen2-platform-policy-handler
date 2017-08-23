@@ -1,0 +1,8 @@
+--extra-index-url https://YOUR_NEXUS_PYPI_SERVER/repository/solutioning01-mte2-pypi/simple
+CherryPy>=10.2.2
+enum34>=1.1.6
+future>=0.16.0
+pycrypto>=2.6.1
+requests>=2.13.0
+six>=1.10.0
+websocket-client>=0.40.0

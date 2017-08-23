@@ -1,0 +1,38 @@
+{
+    "config_pwd" : "onap-secret@2017!",
+    "wservice_port" : 25577,
+    "policy_handler" : {
+        "system" : "policy_handler"
+    },
+    "logging" : {
+        "version": 1,
+        "disable_existing_loggers": false,
+        "formatters": {
+            "local": {
+                "format": "%(asctime)s.%(msecs)03d %(levelname)+8s %(threadName)s %(name)s.%(funcName)s: %(message)s",
+                "datefmt": "%Y%m%d_%H%M%S"
+            }
+        },
+        "handlers": {
+            "file": {
+                "class": "logging.handlers.TimedRotatingFileHandler",
+                "formatter": "local",
+                "filename" : "logs/policy_handler.log",
+                "level": "DEBUG",
+                "when": "midnight",
+                "interval": 1,
+                "backupCount": 10,
+                "delay": true
+            }
+        },
+        "loggers": {
+            "policy_handler" : {
+                "handlers": ["file"],
+                "propagate":false
+            }
+        },
+        "root": {
+            "handlers": ["file"]
+        }
+    }
+}
