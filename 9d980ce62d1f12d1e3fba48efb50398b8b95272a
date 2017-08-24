@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9a437d4f_1b099131",
+        "filename": "policyhandler/PolicyEngine.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2017-08-24T01:02:52Z",
+      "side": 1,
+      "message": "this is Python code but this naming violates PEP8. These are Java style variable names.. not a blocker here but should be cleaned later.",
+      "revId": "9d980ce62d1f12d1e3fba48efb50398b8b95272a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a437d4f_36134c5e",
+        "filename": "policyhandler/onap/CommonLogger.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2017-08-24T01:02:52Z",
+      "side": 1,
+      "message": "I\u0027m OK with this being here. Some of our platform went out without \"ECOMP style logging\" and some went with. Eventually we have to standardize",
+      "revId": "9d980ce62d1f12d1e3fba48efb50398b8b95272a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a437d4f_b6261cb9",
+        "filename": "requirements.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2017-08-24T01:02:52Z",
+      "side": 1,
+      "message": "you can take this out later because it looks like these are all public pypi packages. Also \"solutioning\"..",
+      "revId": "9d980ce62d1f12d1e3fba48efb50398b8b95272a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
