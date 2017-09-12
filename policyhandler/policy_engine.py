@@ -32,7 +32,7 @@ class PolicyNotificationHandler(NotificationHandler):
     _logger = logging.getLogger("policy_handler.policy_notification")
 
     def __init__(self, policy_updater):
-        scope_prefixes = [scope_prefix.replace(".", "[.]") \
+        scope_prefixes = [scope_prefix.replace(".", "[.]")
                           for scope_prefix in Config.config["scope_prefixes"]]
         self._policy_scopes = re.compile("(" + "|".join(scope_prefixes) + ")")
         PolicyNotificationHandler._logger.info("_policy_scopes %s", self._policy_scopes.pattern)
@@ -43,13 +43,13 @@ class PolicyNotificationHandler(NotificationHandler):
         if not notification or not notification._loadedPolicies:
             return
 
-        policy_names = [loaded._policyName \
-            for loaded in notification._loadedPolicies \
-            if self._policy_scopes.match(loaded._policyName)]
+        policy_names = [loaded._policyName
+                        for loaded in notification._loadedPolicies
+                        if self._policy_scopes.match(loaded._policyName)]
 
         if not policy_names:
-            PolicyNotificationHandler._logger.info("no policy updated for scopes %s", \
-                self._policy_scopes.pattern)
+            PolicyNotificationHandler._logger.info("no policy updated for scopes %s",
+                                                   self._policy_scopes.pattern)
             return
 
         audit = Audit(req_message="notificationReceived from PDP")
@@ -89,11 +89,13 @@ class PolicyEngineClient(object):
         sub_aud = Audit(aud_parent=audit)
         sub_aud.metrics_start("create client to PDP")
         PolicyEngineConfig.save_to_file()
-        PolicyEngineClient._policy_engine = PolicyEngine(PolicyEngineConfig.PATH_TO_PROPERTIES, \
-                                            scheme=NotificationScheme.AUTO_ALL_NOTIFICATIONS.name,\
-                                            handler=PolicyEngineClient._pdp_notification_handler)
+        PolicyEngineClient._policy_engine = PolicyEngine(
+            PolicyEngineConfig.PATH_TO_PROPERTIES,
+            scheme=NotificationScheme.AUTO_ALL_NOTIFICATIONS.name,
+            handler=PolicyEngineClient._pdp_notification_handler
+        )
         sub_aud.metrics("created client to PDP")
-        seed_scope = Config.config["scope_prefixes"][0] + ".*"
+        seed_scope = ".*"
         PolicyEngineClient._policy_engine.getConfig(policyName=seed_scope)
         sub_aud.metrics("seeded client by PDP.getConfig for policyName={0}".format(seed_scope))
 

@@ -24,7 +24,7 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="0.0.1",
+    version="1.0.0",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,
@@ -32,9 +32,14 @@ setup(
         "CherryPy>=10.2.2",
         "enum34>=1.1.6",
         "future>=0.16.0",
-        "pycrypto>=2.6.1",
         "requests>=2.13.0",
         "six>=1.10.0",
         "websocket-client>=0.40.0"
+    ],
+    keywords='policy dcae controller',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python :: 2.7'
     ]
 )

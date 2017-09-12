@@ -33,13 +33,13 @@ if [[ -n ${DOCKER_HOST} ]]; then
   # replace CONSUL_IP with docker-host-ip if consul-agent is local
   CONSUL_HOST=${HOSTNAME}
   CONSUL_IP=$(host ${CONSUL_HOST} | awk '/has address/ { print $4 ; exit }')
+  if [ "0${CONSUL_IP}" = "0" ]; then
+    CONSUL_IP=${CONSUL_HOST}
+  fi
 
   echo "starting ${APPNAME} on HOSTNAME=${HOSTNAME} CONSUL_HOST=${CONSUL_HOST} CONSUL_IP=${CONSUL_IP}"
 
   docker run --name ${APPNAME} -d -e HOSTNAME --add-host consul:${CONSUL_IP} -P ${APPNAME}
-
-  # cd logs
-  # docker cp ${APPNAME}:/opt/app/${APPNAME}/logs .
 else
   export HOSTNAME=$(hostname --fqdn)
 
@@ -62,3 +62,9 @@ else
     -p 25577:25577 \
     ${APPNAME}
 fi
+
+docker ps -a | grep ${APPNAME}
+echo "--- --- --- --- ---"
+docker exec ${APPNAME} sh -c "whoami;pwd;set;ls -la;ls -l logs"
+echo "copy logs: docker cp ${APPNAME}:/opt/app/${APPNAME}/logs logs/"
+echo "export logs: docker logs ${APPNAME} > logs/"'$(date +%Y_%m%d-%H%M%S)_'"${APPNAME}.log 2>&1"

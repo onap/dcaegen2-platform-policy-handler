@@ -1,5 +1,4 @@
 {
-    "config_pwd" : "onap-secret@2017!",
     "wservice_port" : 25577,
     "policy_handler" : {
         "system" : "policy_handler"

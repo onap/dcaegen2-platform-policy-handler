@@ -31,39 +31,11 @@ if [[ -n ${DOCKER_HOST} ]]; then
   DOCKER_HOSTNAME=${DOCKER_HOST//tcp:/}
   DOCKER_HOSTNAME=${DOCKER_HOSTNAME//:*[0-9]/}
   DOCKER_HOSTNAME=${DOCKER_HOSTNAME//\//}
-  echo "${APPNAME} on DOCKER_HOSTNAME=${DOCKER_HOSTNAME}"
-  export HOSTNAME=${DOCKER_HOSTNAME}
-
-  # replace CONSUL_IP with docker-host-ip if consul-agent is local
-  CONSUL_HOST=${HOSTNAME}
-  CONSUL_IP=$(host ${CONSUL_HOST} | awk '/has address/ { print $4 ; exit }')
-
-  echo "starting ${APPNAME} on HOSTNAME=${HOSTNAME} CONSUL_HOST=${CONSUL_HOST} CONSUL_IP=${CONSUL_IP}"
-
-  docker run --name ${APPNAME} -d \
-    -e HOSTNAME \
-    --add-host consul:${CONSUL_IP} \
-    ${APPNAME}
+  CONSUL_HOST=${DOCKER_HOSTNAME}
 else
-  export HOSTNAME=$(hostname --fqdn)
-
-  # replace CONSUL_IP with docker-host-ip if consul-agent is local
-  CONSUL_HOST=${HOSTNAME}
-  CONSUL_IP=$(host ${CONSUL_HOST} | awk '/has address/ { print $4 ; exit }')
-
-  echo "starting ${APPNAME} on HOSTNAME=${HOSTNAME} CONSUL_HOST=${CONSUL_HOST} CONSUL_IP=${CONSUL_IP}"
-
-  BASEDIR=$(pwd)
-  TARGETDIR=/opt/app/${APPNAME}
-
-  mkdir -p ${BASEDIR}/logs
-  mkdir -p ${BASEDIR}/etc_upload/logs
-
-  docker run --name ${APPNAME} -d \
-    -e HOSTNAME \
-    --add-host consul:${CONSUL_IP} \
-    -v ${BASEDIR}/etc:${TARGETDIR}/etc \
-    -v ${BASEDIR}/etc_upload:${TARGETDIR}/etc_upload \
-    -v ${BASEDIR}/etc_upload/logs:${TARGETDIR}/logs \
-    ${APPNAME}
+  CONSUL_HOST=devcnsl00.dcae.sic.research.att.com
 fi
+
+echo "uploading etc_upload/config.json for ${APPNAME} to CONSUL_HOST=${CONSUL_HOST}"
+
+curl -X PUT -H 'Content-Type: application/json' --data-binary "$(cat etc_upload/config.json)" http://${CONSUL_HOST}:8500/v1/kv/${APPNAME}

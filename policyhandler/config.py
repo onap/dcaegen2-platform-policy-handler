@@ -26,7 +26,6 @@ import base64
 import logging
 
 from .discovery import DiscoveryClient
-from .onap.crypto import Cipher
 
 logging.basicConfig(
     filename='logs/policy_handler.log', \
@@ -38,14 +37,10 @@ class Config(object):
     """main config of the application"""
     CONFIG_FILE_PATH = "etc/config.json"
     LOGGER_CONFIG_FILE_PATH = "etc/common_logger.config"
-    UPLOAD_CONFIG_FILE_PATH = "etc_upload/config.json"
     SERVICE_NAME_POLICY_HANDLER = "policy_handler"
     FIELD_SYSTEM = "system"
-    FIELD_CONFIG_PWD = "config_pwd"
     FIELD_WSERVICE_PORT = "wservice_port"
     FIELD_POLICY_ENGINE = "policy_engine"
-    CRYPTED_FIELDS = ["ClientAuth", "Authorization", "config_pwd"]
-    config_pwd = "donottell150&$"
     wservice_port = 25577
     _logger = logging.getLogger("policy_handler.config")
     config = None
@@ -62,32 +57,6 @@ class Config(object):
 
         new_config = copy.deepcopy(new_config)
         Config.config.update(new_config)
-
-    @staticmethod
-    def decrypt_secret_value(field_name, field_value):
-        """decrypt the value of the secret field"""
-        if field_name in Config.CRYPTED_FIELDS and isinstance(field_value, basestring):
-            return Cipher.decrypt(Config.config_pwd, field_value)
-        return field_value
-
-    @staticmethod
-    def encrypt_secret_value(field_name, field_value):
-        """encrypt the value of the secret field"""
-        if field_name in Config.CRYPTED_FIELDS and isinstance(field_value, basestring):
-            return Cipher.encrypt(Config.config_pwd, field_value)
-        return field_value
-
-    @staticmethod
-    def update_tree_leaves(tree_element, func_on_leaf):
-        """traverse through json tree and apply function func_on_leaf to each leaf"""
-        if not tree_element:
-            return
-
-        for field_name in tree_element:
-            field_value = func_on_leaf(field_name, tree_element[field_name])
-            tree_element[field_name] = field_value
-            if isinstance(field_value, dict):
-                Config.update_tree_leaves(field_value, func_on_leaf)
 
     @staticmethod
     def get_system_name():
@@ -112,9 +81,8 @@ class Config(object):
 
         Config._logger.debug("loaded config from discovery(%s): %s", \
             discovery_key, json.dumps(new_config))
-        Config.update_tree_leaves(new_config, Config.decrypt_secret_value)
         Config._logger.debug("config before merge from discovery: %s", json.dumps(Config.config))
-        Config.merge(new_config)
+        Config.merge(new_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
         Config._logger.debug("merged config from discovery: %s", json.dumps(Config.config))
 
     @staticmethod
@@ -124,11 +92,8 @@ class Config(object):
             Config._logger.error("unexpected config: %s", Config.config)
             return
 
-        latest_config = copy.deepcopy(Config.config)
-        Config.update_tree_leaves(latest_config, Config.encrypt_secret_value)
-
         discovery_key = Config.get_system_name()
-        latest_config = json.dumps(latest_config)
+        latest_config = json.dumps({Config.SERVICE_NAME_POLICY_HANDLER:Config.config})
         DiscoveryClient.put_kv(discovery_key, latest_config)
         Config._logger.debug("uploaded config to discovery(%s): %s", \
             discovery_key, latest_config)
@@ -153,7 +118,6 @@ class Config(object):
         if logging_config:
             logging.config.dictConfig(logging_config)
 
-        Config.config_pwd = loaded_config.get(Config.FIELD_CONFIG_PWD, Config.config_pwd)
         Config.wservice_port = loaded_config.get(Config.FIELD_WSERVICE_PORT, Config.wservice_port)
         Config.merge(loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
         return True

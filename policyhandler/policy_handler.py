@@ -60,28 +60,5 @@ def run_policy_handler():
     PolicyEngineClient.run()
     PolicyWeb.run()
 
-def upload_config_to_discovery():
-    """read the config from file and upload it to discovery"""
-    logger = logging.getLogger("policy_handler")
-    sys.stdout = LogWriter(logger.info)
-    sys.stderr = LogWriter(logger.error)
-
-    Config.load_from_file()
-
-    if not Config.load_from_file(Config.UPLOAD_CONFIG_FILE_PATH):
-        logger.info("not found config %s", Config.UPLOAD_CONFIG_FILE_PATH)
-        return
-
-    logger.info("========== upload_config_to_discovery ==========")
-    Config.upload_to_discovery()
-
-    logger.info("========== upload_config_to_discovery - get it back ==========")
-    Config.config = None
-    Config.load_from_file()
-    Config.discover()
-    logger.info("========== upload_config_to_discovery - done ==========")
-    return True
-
 if __name__ == "__main__":
-    if not upload_config_to_discovery():
-        run_policy_handler()
+    run_policy_handler()
