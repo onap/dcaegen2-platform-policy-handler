@@ -2,7 +2,8 @@
     "policy_handler" : {
         "system" : "policy_handler",
         "thread_pool_size" : 4,
-        "scope_prefixes" : ["DCAE_alex.Config_"],
+        "pool_connections" : 20,
+        "scope_prefixes" : ["DCAE_alex.Config_", "DCAE.Config_"],
         "policy_retry_count" : 5,
         "policy_retry_sleep" : 5,
         "policy_engine" : {
@@ -18,6 +19,7 @@
             },
             "target_entity" : "policy_engine"
         },
-        "deploy_handler" : "policy_deploy_handler"
+        "deploy_handler_" : "policy_deploy_handler",
+        "deploy_handler" : "alex_dh"
     }
 }

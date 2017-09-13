@@ -27,10 +27,14 @@ from .config import Config
 from .discovery import DiscoveryClient
 from .onap.audit import REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode
 
+POOL_SIZE = 1
+
 class DeployHandler(object):
     """ deploy-handler """
     _logger = logging.getLogger("policy_handler.deploy_handler")
     _lazy_inited = False
+
+    _requests_session = None
     _config = None
     _url = None
     _url_path = None
@@ -42,6 +46,17 @@ class DeployHandler(object):
         if DeployHandler._lazy_inited:
             return
         DeployHandler._lazy_inited = True
+
+        DeployHandler._requests_session = requests.Session()
+        DeployHandler._requests_session.mount(
+            'https://',
+            requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
+        )
+        DeployHandler._requests_session.mount(
+            'http://',
+            requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
+        )
+
         DeployHandler._target_entity = Config.config["deploy_handler"]
         DeployHandler._url = DiscoveryClient.get_service_url(DeployHandler._target_entity)
         DeployHandler._url_path = DeployHandler._url + '/policy'
@@ -66,7 +81,9 @@ class DeployHandler(object):
 
         res = None
         try:
-            res = requests.post(DeployHandler._url_path, json=msg, headers=headers)
+            res = DeployHandler._requests_session.post(
+                DeployHandler._url_path, json=msg, headers=headers
+            )
         except requests.exceptions.RequestException as ex:
             error_msg = "failed to post to deployment-handler {0} {1} msg={2} headers={3}" \
                 .format(DeployHandler._url_path, str(ex), msg_str, headers_str)

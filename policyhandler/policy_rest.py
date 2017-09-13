@@ -136,6 +136,8 @@ class PolicyRest(object):
     """ policy-engine """
     _logger = logging.getLogger("policy_handler.policy_rest")
     _lazy_inited = False
+
+    _requests_session = None
     _url = None
     _headers = None
     _target_entity = None
@@ -151,7 +153,20 @@ class PolicyRest(object):
         if PolicyRest._lazy_inited:
             return
         PolicyRest._lazy_inited = True
+
         config = Config.config[Config.FIELD_POLICY_ENGINE]
+
+        pool_size = config.get("pool_connections", 20)
+        PolicyRest._requests_session = requests.Session()
+        PolicyRest._requests_session.mount(
+            'https://',
+            requests.adapters.HTTPAdapter(pool_connections=pool_size, pool_maxsize=pool_size)
+        )
+        PolicyRest._requests_session.mount(
+            'http://',
+            requests.adapters.HTTPAdapter(pool_connections=pool_size, pool_maxsize=pool_size)
+        )
+
         PolicyRest._url = config["url"] + config["path_api"]
         PolicyRest._headers = config["headers"]
         PolicyRest._target_entity = config.get("target_entity", Config.FIELD_POLICY_ENGINE)
@@ -186,7 +201,7 @@ class PolicyRest(object):
         PolicyRest._logger.info(log_line)
         res = None
         try:
-            res = requests.post(full_path, json=json_body, headers=headers)
+            res = PolicyRest._requests_session.post(full_path, json=json_body, headers=headers)
         except requests.exceptions.RequestException as ex:
             error_code = AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
             error_msg = "failed to post to PDP {0} {1} msg={2} headers={3}" \
