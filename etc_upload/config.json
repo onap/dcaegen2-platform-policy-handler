@@ -19,7 +19,6 @@
             },
             "target_entity" : "policy_engine"
         },
-        "deploy_handler_" : "policy_deploy_handler",
-        "deploy_handler" : "alex_dh"
+        "deploy_handler" : "deployment_handler"
     }
 }
