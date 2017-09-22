@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9a437d4f_da3ca7ca",
+        "filename": "tests/test_policyhandler.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2017-09-22T22:22:40Z",
+      "side": 1,
+      "message": "nice",
+      "revId": "9144f04afe7c56e762b6e4d0c28fd5726a3746ba",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a437d4f_ba39e3d8",
+        "filename": "tox-local.ini",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2017-09-22T22:22:40Z",
+      "side": 1,
+      "message": "you should also consider py36. py27 is very old but we use it for cloudify because cloudify only supports that. But rest of our stuff; cbs, cli, etc, is python3",
+      "revId": "9144f04afe7c56e762b6e4d0c28fd5726a3746ba",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
