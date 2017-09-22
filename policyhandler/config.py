@@ -24,6 +24,7 @@ import json
 import copy
 import base64
 import logging
+import logging.config
 
 from .discovery import DiscoveryClient
 
