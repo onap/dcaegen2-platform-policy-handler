@@ -2,7 +2,11 @@
 [run]
 branch = True
 cover_pylib = False
-# include = */policyhandler/*.py
+include = */policyhandler/*.py
+omit =
+    # omit client libs
+    policyhandler/PolicyEngine.py
+    policyhandler/onap/CommonLogger.py
 
 [report]
 # Regexes for lines to exclude from consideration
