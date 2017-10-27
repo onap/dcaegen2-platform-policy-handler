@@ -29,10 +29,10 @@ setup(
     packages=['policyhandler'],
     zip_safe=False,
     install_requires=[
-        "CherryPy>=10.2.2",
+        "CherryPy>=10.2.2,<11.0",
         "enum34>=1.1.6",
         "future>=0.16.0",
-        "requests>=2.13.0",
+        "requests>=2.13.0,<3.0.0",
         "six>=1.10.0",
         "websocket-client>=0.40.0"
     ],

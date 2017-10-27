@@ -22,6 +22,7 @@
 import os
 import json
 import copy
+import re
 import base64
 import logging
 import logging.config
@@ -141,8 +142,9 @@ class PolicyEngineConfig(object):
         try:
             config = Config.config[Config.FIELD_POLICY_ENGINE]
             headers = config["headers"]
-            client_parts = base64.b64decode(headers["ClientAuth"].split()[1]).split(":")
-            auth_parts = base64.b64decode(headers["Authorization"].split()[1]).split(":")
+            remove_basic = re.compile(r"(^Basic )")
+            client_parts = base64.b64decode(remove_basic.sub("", headers["ClientAuth"])).split(":")
+            auth_parts = base64.b64decode(remove_basic.sub("", headers["Authorization"])).split(":")
 
             props = PolicyEngineConfig.PYPDP_URL.format(config["url"], config["path_pdp"],
                                                         auth_parts[0], auth_parts[1])
