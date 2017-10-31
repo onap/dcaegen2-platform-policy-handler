@@ -1,0 +1,8 @@
+Verified+1: ONAP Jobbuilder <onap-jobbuilder@jenkins.onap.org>
+Code-Review+1: Jack Lucas <jflucas@research.att.com>
+Code-Review+2: Tony Hansen <tony@att.com>
+Submitted-by: Tony Hansen <tony@att.com>
+Submitted-at: Tue, 31 Oct 2017 16:21:03 +0000
+Reviewed-on: http://gerrit.onap.org/r/21519
+Project: dcaegen2/platform/policy-handler
+Branch: refs/heads/master
