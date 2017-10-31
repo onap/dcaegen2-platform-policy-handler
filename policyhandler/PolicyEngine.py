@@ -1,15 +1,15 @@
 """
-PolicyEngine API for Python 
+PolicyEngine API for Python
 
 @author: Tarun, Mike
 @version: 0.9
-@change: 
+@change:
     added Enum 'Other' Type and supported it in PolicyConfig class - 1/13
-    supporting Remote URL capability to the PolicyEngine as the parameter - 1/13 
+    supporting Remote URL capability to the PolicyEngine as the parameter - 1/13
     Request format has been updated accordingly. No need to send the PDP URLs anymore - 1/26
     Feature where the PolicyEngine chooses available PyPDP among different URLs. 1/26
     Major feature addition required for Notifications 2/17 , Fixed Session issues. 2/25
-    Major change in API structure for combining results 3/4. 
+    Major change in API structure for combining results 3/4.
     Added Security support for Notifications and clearNotification Method 3/18
     newMethod for retrieving configuration using policyFileName 3/20
     logging 3/24
@@ -17,14 +17,14 @@ PolicyEngine API for Python
     basic Auth 7/22
     Notification Changes 9/3
     ECOMP Error codes included 10/1
-    -2016 
+    -2016
     Major Changes to the Policy Engine API 3/29
     DeletePolicy API and Changes to pushPolicy and getConfig 5/27
     ConfigRequestParmeters and Error code Change 7/11
-    New Environment Variable and Client Authorizations Change 7/21 
+    New Environment Variable and Client Authorizations Change 7/21
     Changes to the Policy Parameters 8/21
-    Allow Clients to use their own Password Protection. 
-    Dictionary Types and its Fixes. 
+    Allow Clients to use their own Password Protection.
+    Dictionary Types and its Fixes.
 """
 
 # org.onap.dcae
@@ -50,18 +50,18 @@ import json,sys, os, collections, websocket , logging, time, base64, uuid
 from websocket import create_connection
 from enum import Enum
 from xml.etree.ElementTree import XML
-try: 
-    # For Python 3.0 and Later 
+try:
+    # For Python 3.0 and Later
     from pip._vendor import requests
 except ImportError:
     # For backend Support to Python 2's urllib2
     import requests
-try: 
+try:
     # For Python 3.0 and Later
     from urllib.request import urlopen
 except ImportError:
-    # Fall back for Python 2.* 
-    from urllib2 import urlopen 
+    # Fall back for Python 2.*
+    from urllib2 import urlopen
 try:
     import thread
 except ImportError:
@@ -84,14 +84,14 @@ ImportType = Enum('ImportType', 'MICROSERVICE')
 
 class PolicyEngine:
     """
-    PolicyEngine is the Class which needs to be instantiated to call the PDP server. 
-    It needs the *.properties* file path as the parameter to the constructor. 
+    PolicyEngine is the Class which needs to be instantiated to call the PDP server.
+    It needs the *.properties* file path as the parameter to the constructor.
     """
-    def __init__(self, filename, scheme = None, handler = None, clientKey = None):
+    def __init__(self, filename, scheme=None, handler=None, clientKey=None, basic_client_auth=True):
         """
         @param filename: String format of the path location of .properties file Could also be A remote URL eg: http://localhost:8080/config.properties
-        @param scheme: NotificationScheme to select the scheme required for notification updates. 
-        @param handler: NotificationHandler object which will be called when an event is occurred. 
+        @param scheme: NotificationScheme to select the scheme required for notification updates.
+        @param handler: NotificationHandler object which will be called when an event is occurred.
         @param clientKey: Decoded Client Key to be used by PolicyEngine.
         @attention:The .properties file must contain the PYPDP_URL parameter in it. The parameter can have multiple URLs the PolicyEngine chooses the available PyPDP among them.
         """
@@ -135,7 +135,7 @@ class PolicyEngine:
                 self.logger.error("PE300 - Data Issue: File is not in properties format: %s", filename)
                 print("PE300 - Data Issue: Not a .properties file!")
                 sys.exit(0)
-            try : 
+            try :
                 with open(self.filename, 'r') as f:
                     for line in f:
                         line = line.rstrip() # removes trailing whitespace and '\n' chars
@@ -182,7 +182,12 @@ class PolicyEngine:
             if(self.environment is None):
                 self.logger.info("Missing Environment Variable setting to Default Value.")
                 self.environment = "DEVL"
-            self.policyheader = {"Content-type" : "application/json", "Accept" : "application/json", "ClientAuth" : "Basic "+self.clientInfo, "Environment" : self.environment}
+            self.policyheader = {
+                "Content-type" : "application/json",
+                "Accept" : "application/json",
+                "ClientAuth" : ("Basic " if basic_client_auth else "") + self.clientInfo,
+                "Environment" : self.environment
+            }
             for key in self.urldict.keys():
                 if(key.startswith("PYPDP_URL")):
                     pypdpVal = self.urldict.get(key)
@@ -218,10 +223,10 @@ class PolicyEngine:
             self.handler = handler
             #else:
             #    print("handler should be a object of NotificationHandler class")
-            #    sys.exit(0) 
+            #    sys.exit(0)
         if scheme is not None:
             if ((scheme == NotificationScheme.AUTO_ALL_NOTIFICATIONS.name)or(scheme == NotificationScheme.AUTO_NOTIFICATIONS.name)):
-                # setup the Auto settings. 
+                # setup the Auto settings.
                 self.scheme = scheme
             elif ((scheme == NotificationScheme.MANUAL_ALL_NOTIFICATIONS.name)or(scheme == NotificationScheme.MANUAL_NOTIFICATIONS.name)):
                 # setup the Manual Settings
@@ -230,7 +235,7 @@ class PolicyEngine:
                 self.logger.error("PE300 - Data Issue: Scheme not a type of NotificationScheme: %s", scheme.name)
                 print("PE300 - Data Issue: scheme must be a Type of NotificationScheme Enumeration ")
                 sys.exit(0)
-    
+
     def __pdpParam(self,pdpValue):
         """
         Internal Usage for reading PyPDP Parameters
@@ -242,9 +247,9 @@ class PolicyEngine:
         elif "," in pdpValue:
             pdpValues = pdpValue.split(",")
             if (len(pdpValues)==3):
-                # 0 is pypdp URL 
+                # 0 is pypdp URL
                 self.resturl.append(pdpValues[0])
-                # 1 and 2 are user name password 
+                # 1 and 2 are user name password
                 if pdpValues[1] and pdpValues[2]:
                     uid = pdpValues[1].encode('ascii')
                     password = pdpValues[2].encode('ascii')
@@ -253,21 +258,21 @@ class PolicyEngine:
                 else:
                     self.logger.error("PE100 - Permissions Error: No Enough Credentials to send Request")
                     print("PE100 - Permissions Error: No Enough Credentials to send Request")
-                    sys.exit(0) 
+                    sys.exit(0)
             else:
                 self.logger.error("PE100 - Permissions Error: No Enough Credentials to send Request")
                 print("PE100 - Permissions Error: No Enough Credentials to send Request")
-                sys.exit(0) 
+                sys.exit(0)
         else:
             self.logger.error("PE100 - Permissions Error: No Enough Credentials to send Request")
             print("PE100 - Permissions Error: No Enough Credentials to send Request")
-            sys.exit(0)            
-    
+            sys.exit(0)
+
     def getConfigByPolicyName(self, policyName, requestID=None):
         """
         @param policyName: String format of the PolicyFile Name whose configuration is required.
-        @return: Returns a List of PolicyConfig Object(s). 
-        @deprecated: use getConfig instead.  
+        @return: Returns a List of PolicyConfig Object(s).
+        @deprecated: use getConfig instead.
         """
         __policyNameURL = "/getConfigByPolicyName"
         __headers = self.policyheader
@@ -281,15 +286,15 @@ class PolicyEngine:
         self.__cpnJSON = self.__cpnResponse.json()
         policyConfigs= self.__configResponse(self.__cpnJSON)
         return policyConfigs
-        
+
     def listConfig(self, eCOMPComponentName=None, configName=None, configAttributes=None, policyName=None, unique= False, requestID=None):
         """
         listConfig function calls the PDP for the configuration required using the parameters and returns the PDP response.
-        @param eCOMPComponentName: String of the eCOMPComponentName whose configuration is required. 
+        @param eCOMPComponentName: String of the eCOMPComponentName whose configuration is required.
         @param configName: String of the configName whose configuration is required. Not Mandatory field.
-        @param configAttributes: Dictionary of the config attributes in Key and Value String format. Not mandatory field. 
-        @param policyName: String of the policyName whose configuration is required.  
-        @param unique: Boolean value which can be set to True if Unique results are required.  
+        @param configAttributes: Dictionary of the config attributes in Key and Value String format. Not mandatory field.
+        @param policyName: String of the policyName whose configuration is required.
+        @param unique: Boolean value which can be set to True if Unique results are required.
         @param requestID: unique UUID for the request. Not mandatory field. If not provided, a value will be automatically generated.
         @return: Returns a List of PolicyNames.
         """
@@ -303,16 +308,16 @@ class PolicyEngine:
         #self.__configjson['pdp_URL'] = self.pdp_url
         __cResponse = self.__callPDP(__configURL, json.dumps(__configjson), __headers, "POST")
         return __cResponse.json()
-        
-    
+
+
     def getConfig(self, eCOMPComponentName=None, configName=None, configAttributes=None, policyName=None, unique= False, requestID=None):
         """
         getConfig function calls the PDP for the configuration required using the parameters and returns the PDP response.
-        @param eCOMPComponentName: String of the eCOMPComponentName whose configuration is required. 
+        @param eCOMPComponentName: String of the eCOMPComponentName whose configuration is required.
         @param configName: String of the configName whose configuration is required. Not Mandatory field.
-        @param configAttributes: Dictionary of the config attributes in Key and Value String format. Not mandatory field. 
-        @param policyName: String of the policyName whose configuration is required.  
-        @param unique: Boolean value which can be set to True if Unique results are required.  
+        @param configAttributes: Dictionary of the config attributes in Key and Value String format. Not mandatory field.
+        @param policyName: String of the policyName whose configuration is required.
+        @param unique: Boolean value which can be set to True if Unique results are required.
         @param requestID: unique UUID for the request. Not mandatory field. If not provided, a value will be automatically generated.
         @return: Returns a List of PolicyConfig Object(s).
         """
@@ -353,7 +358,7 @@ class PolicyEngine:
                 if __booMatch==False:
                     self.matchStore.append(__match)
         return policyConfigs
-    
+
     def __configRequestParametersJSON(self, eCOMPComponentName=None, configName=None, configAttributes=None, policyName=None, unique= False):
         """ Internal Function to set JSON from configRequestParameters
         """
@@ -368,7 +373,7 @@ class PolicyEngine:
             json['policyName'] = policyName
         json['unique'] = unique
         return json
-    
+
     def __configResponse(self, cJSON):
         """
         Internal function to take the convert JSON to Response Object.
@@ -393,14 +398,14 @@ class PolicyEngine:
                 policyConfig._other = configJSON['config']
             policyConfigs.append(policyConfig)
         return policyConfigs
-        
+
     def getDecision(self, decisionAttributes, ecompcomponentName, requestID = None):
         """
-        getDecision function sends the Decision Attributes to the PDP server and gets the response to the client from PDP. 
-        @param decisionAttributes: Dictionary of Decision Attributes in Key and Value String formats. 
-        @param ecompcomponentName:   
+        getDecision function sends the Decision Attributes to the PDP server and gets the response to the client from PDP.
+        @param decisionAttributes: Dictionary of Decision Attributes in Key and Value String formats.
+        @param ecompcomponentName:
         @param requestID: unique UUID for the request. Not mandatory field. If not provided, a value will be automatically generated.
-        @return: Returns a DecisionResponse Object.  
+        @return: Returns a DecisionResponse Object.
         """
         __decisionurl = "/getDecision"
         __headers = self.policyheader
@@ -414,16 +419,16 @@ class PolicyEngine:
         self.__dResponse = self.__callPDP(__decisionurl, json.dumps(self.__decisionjson), __headers, "POST")
         self.__dJSON = self.__dResponse.json()
         decisionResponse = DecisionResponse()
-        decisionResponse._decision = self.__dJSON['decision'] 
+        decisionResponse._decision = self.__dJSON['decision']
         decisionResponse._details = self.__dJSON['details']
         return decisionResponse
-    
+
     def sendEvent(self, eventAttributes, requestID=None):
         """
-        sendEvent function sends the Event to the PDP server and gets the response to the client from the PDP. 
-        @param eventAttributes:Dictonary of the EventAttributes in Key and Value String formats. 
+        sendEvent function sends the Event to the PDP server and gets the response to the client from the PDP.
+        @param eventAttributes:Dictonary of the EventAttributes in Key and Value String formats.
         @param requestID: unique UUID for the request. Not mandatory field. If not provided, a value will be automatically generated.
-        @return: Returns a List of PolicyResponse Object(s).  
+        @return: Returns a List of PolicyResponse Object(s).
         """
         __eventurl = "/sendEvent"
         __headers = self.policyheader
@@ -448,12 +453,12 @@ class PolicyEngine:
             policyResponse._requestAttributes = eventJSON['requestAttributes']
             policyResponses.append(policyResponse)
         return policyResponses
-    
+
     def createPolicy(self, policyParameters):
         """
         'createPolicy creates Policy using the policyParameters sent'
         @param policyParameters: This is an object of PolicyParameters which is required as a parameter to this method.
-        @return: Returns a PolicyChangeResponse Object  
+        @return: Returns a PolicyChangeResponse Object
         """
         __createurl = "/createPolicy"
         __headers = self.policyheader
@@ -467,10 +472,10 @@ class PolicyEngine:
             policyChangeResponse._responseCode = self.__createResponse.status_code
             policyChangeResponse._responseMessage = self.__createResponse.text
             return policyChangeResponse
-        except: 
+        except:
             self.logger.error("PE300 - Data Issue: Error with the policyParameters Object. It needs to be object of PolicyParameters ")
             print("PE300 - Data Issue: policyParamters object Error")
-            
+
     def updatePolicy(self, policyParameters):
         """
         'updatePolicy updates Policy using the policyParameters sent.'
@@ -489,10 +494,10 @@ class PolicyEngine:
             policyChangeResponse._responseCode = self.__updateResponse.status_code
             policyChangeResponse._responseMessage = self.__updateResponse.text
             return policyChangeResponse
-        except: 
+        except:
             self.logger.error("PE300 - Data Issue: Error with the policyParameters Object. It needs to be object of PolicyParameters ")
             print("PE300 - Data Issue: policyParamters object Error")
-        
+
     def __policyParametersJSON(self, policyParameters):
         """ Internal Function to set JSON from policyParameters Object
         """
@@ -536,7 +541,7 @@ class PolicyEngine:
         if policyParameters._policyDescription is not None:
             json['policyDescription'] = policyParameters._policyDescription
         if policyParameters._priority is not None:
-            json['priority'] = policyParameters._priority 
+            json['priority'] = policyParameters._priority
         if policyParameters._requestID is not None:
             json['requestID'] = policyParameters._requestID
         if policyParameters._riskLevel is not None:
@@ -548,11 +553,11 @@ class PolicyEngine:
         if policyParameters._ttlDate is not None:
             json['ttlDate'] = policyParameters._ttlDate
         return json
-    
+
     def pushPolicy(self, pushPolicyParameters, requestID = None):
         """
         'pushPolicy pushes a policy based on the given Push Policy Parameters. '
-        @param pushPolicyParameters: This is an object of PushPolicyParameters which is required as a parameter to this method. 
+        @param pushPolicyParameters: This is an object of PushPolicyParameters which is required as a parameter to this method.
         @param requestID: unique UUID for the request. Not mandatory field. If not provided, a value will be automatically generated.
         @return: Returns a PolicyChangeResponse Object
         """
@@ -575,12 +580,12 @@ class PolicyEngine:
         except:
             self.logger.error("PE300 - Data Issue: Error with the pushPolicyParameters Object. It needs to be object of PushPolicyParameters ")
             print("PE300 - Data Issue: pushPolicyParamters object Error")
-    
+
     def deletePolicy(self, deletePolicyParameters):
         """
         'deletePolicy Deletes a policy or all its version according to the given deletePolicyParameters'
         @param deletePolicyParameters: This is an Object of DeletePolicyParameters which is required as a parameter to this method.
-        @return: Returns a PolicyChangeResponse Object         
+        @return: Returns a PolicyChangeResponse Object
         """
         __deleteurl = "/deletePolicy"
         __createdictionaryurl = "/createDictionaryItem"
@@ -600,15 +605,15 @@ class PolicyEngine:
             policyChangeResponse._responseCode = self.__deleteResponse.status_code
             policyChangeResponse._responseMessage = self.__deleteResponse.text
             return policyChangeResponse
-        except: 
+        except:
             self.logger.error("PE300 - Data Issue: Error with the deletePolicyParameters Object. It needs to be object of DeletePolicyParameters ")
             print("PE300 - Data Issue: deletePolicyParameters object Error")
-    
+
     def createDictionaryItems(self, dictionaryParameters):
         """
         'createDictionaryItems adds dictionary items to the database for a specific dictionary'
         @param dictionaryParameters: This is an Object of DictionaryParameters which is required as a parameter to this method
-        @return: Returns a DictionaryResponse object 
+        @return: Returns a DictionaryResponse object
         """
         __createdictionaryurl = '/createDictionaryItem'
         __headers = self.policyheader
@@ -618,7 +623,7 @@ class PolicyEngine:
             self.__json={}
             self.__json['dictionaryType'] = dictionaryParameters._dictionaryType
             self.__json['dictionary'] = dictionaryParameters._dictionary
-            self.__json['dictionaryJson'] = dictionaryParameters._dictionaryJson 
+            self.__json['dictionaryJson'] = dictionaryParameters._dictionaryJson
             self.__json['requestID'] = dictionaryParameters._requestID
             self.__createResponse = self.__callPDP(__createdictionaryurl, json.dumps(self.__json), __headers, "PUT")
             dictionaryResponse = DictionaryResponse()
@@ -628,13 +633,13 @@ class PolicyEngine:
         except:
             self.logger.error("PE300 - Data Issue:  Error with the dictionaryParameters object.  It needs to be object of DictionaryParameters ")
             print("PE300 - Data Issue:  dictionaryParameters object Error")
-            
-       
+
+
     def updateDictionaryItems(self, dictionaryParameters):
         """
         'updateDictionaryItems edits dictionary items in the database for a specific dictionary'
         @param dictionaryParameters: This is an Object of DictionaryParameters which is required as a parameter to this method
-        @return: Returns a DictionaryResponse object 
+        @return: Returns a DictionaryResponse object
         """
         __updatedictionaryurl = '/updateDictionaryItem'
         __headers = self.policyheader
@@ -644,7 +649,7 @@ class PolicyEngine:
             self.__json={}
             self.__json['dictionaryType'] = dictionaryParameters._dictionaryType
             self.__json['dictionary'] = dictionaryParameters._dictionary
-            self.__json['dictionaryJson'] = dictionaryParameters._dictionaryJson 
+            self.__json['dictionaryJson'] = dictionaryParameters._dictionaryJson
             self.__json['requestID'] = dictionaryParameters._requestID
             self.__updateResponse = self.__callPDP(__updatedictionaryurl, json.dumps(self.__json), __headers, "PUT")
             dictionaryResponse = DictionaryResponse()
@@ -654,7 +659,7 @@ class PolicyEngine:
         except:
             self.logger.error("PE300 - Data Issue:  Error with the dictionaryParameters object.  It needs to be object of DictionaryParameters ")
             print("PE300 - Data Issue:  dictionaryParameters object Error")
-                         
+
     def getDictionaryItems(self, dictionaryParameters):
         """
         'getDictionaryItems gets all the dictionary items stored in the database for a specified dictionary'
@@ -678,7 +683,7 @@ class PolicyEngine:
         except:
             self.logger.error("PE300 - Data Issue:  Error with the dictionaryParameters object.  It needs to be object of DictionaryParameters ")
             print("PE300 - Data Issue:  dictionaryParameters object Error")
-            
+
     def getNotification(self):
         """
         gets the PDPNotification if the appropriate NotificationScheme is selected.
@@ -687,7 +692,7 @@ class PolicyEngine:
         if ((self.scheme == NotificationScheme.MANUAL_ALL_NOTIFICATIONS.name)or(self.scheme == NotificationScheme.MANUAL_NOTIFICATIONS.name)):
             # Manual Client for websocket Code in here.
             if(self.resturl[0].startswith("https")):
-                __man_url = self.resturl[0].replace("https","wss")+"notifications"           
+                __man_url = self.resturl[0].replace("https","wss")+"notifications"
             else:
                 __man_url = self.resturl[0].replace("http","ws")+"notifications"
             __result = self.__manualRequest(__man_url)
@@ -699,7 +704,7 @@ class PolicyEngine:
                 boo_Remove = False
                 boo_Update = False
                 if __result is None:
-                    return None 
+                    return None
                 if __result['removedPolicies']:
                     removedPolicies = []
                     for removed in __result['removedPolicies']:
@@ -731,12 +736,12 @@ class PolicyEngine:
                 return self.__checkNotification(__result)
         else:
             return None
-        
+
     def setNotification(self, scheme, handler = None):
         """
         setNotification allows changes to the NotificationScheme and the NotificationHandler.
         @param scheme: NotificationScheme to select the scheme required for notification updates.
-        @param handler: NotificationHandler object which will be called when an event is occurred. 
+        @param handler: NotificationHandler object which will be called when an event is occurred.
         """
         if handler is not None:
             #if type(handler) is NotificationHandler:
@@ -745,7 +750,7 @@ class PolicyEngine:
             #    print("Error: handler should be a object of NotificationHandler class")
         if scheme is not None:
             if ((scheme == NotificationScheme.AUTO_ALL_NOTIFICATIONS.name)or(scheme == NotificationScheme.AUTO_NOTIFICATIONS.name)):
-                # setup the Auto settings. 
+                # setup the Auto settings.
                 self.scheme = scheme
                 self.__startAuto()
             elif ((scheme == NotificationScheme.MANUAL_ALL_NOTIFICATIONS.name)or(scheme == NotificationScheme.MANUAL_NOTIFICATIONS.name)):
@@ -753,10 +758,10 @@ class PolicyEngine:
                 self.scheme = scheme
             else:
                 print("PE300 - Data Issue: scheme must be a Type of NotificationScheme Enumeration ")
-        
+
     def clearNotification(self):
         """
-        clearNotification ShutsDown the AutoNotification service if running.    
+        clearNotification ShutsDown the AutoNotification service if running.
         """
         if self.scheme is not None:
             if((self.scheme == NotificationScheme.AUTO_ALL_NOTIFICATIONS.name)or(self.scheme == NotificationScheme.AUTO_NOTIFICATIONS.name)):
@@ -766,13 +771,13 @@ class PolicyEngine:
                         self.autows.close()
                         self.logger.info("Notification Service Stopped.")
                         print("Notification Service is Stopped!!")
-    
+
     def __callPDP(self,urlFunction, jsonData, headerData,method, files= None, params = None):
         """
         This function call is for internal usage purpose only.
-        Calls the available PyPDP  
+        Calls the available PyPDP
         """
-        connected = False 
+        connected = False
         response = None
         errormessage = ''
         for count in range(0, len(self.resturl)):
@@ -834,24 +839,24 @@ class PolicyEngine:
         if(connected):
             if(self.autoURL==None):
                 self.__startAuto()
-            elif(self.autoURL!= self.resturl[0]): 
+            elif(self.autoURL!= self.resturl[0]):
                 self.__startAuto()
             return response
-        else: 
+        else:
             self.logger.error("PE200 - System Error: cannot connect to given PYPDPServer(s) %s", self.resturl)
             print(errormessage)
             sys.exit(0)
-    
+
     def __rotatePDP(self):
         self.resturl = collections.deque(self.resturl)
         self.resturl.rotate(-1)
         self.encoded = collections.deque(self.encoded)
         self.encoded.rotate(-1)
-        
+
     def __checkNotification(self, resultJson):
         """
-        This function call is for Internal usage purpose only. 
-        Checks the Notification JSON compares it with the MatchStore and returns the PDPNotification object. 
+        This function call is for Internal usage purpose only.
+        Checks the Notification JSON compares it with the MatchStore and returns the PDPNotification object.
         """
         if not resultJson:
             return None
@@ -873,7 +878,7 @@ class PolicyEngine:
             updatedPolicies = []
             for updated in resultJson['updatedPolicies']:
                 updatedPolicy = LoadedPolicy()
-                # check if it has matches then it is a Config Policy and compare it with Match Store. 
+                # check if it has matches then it is a Config Policy and compare it with Match Store.
                 if updated['matches']:
                     # compare the matches with our Stored Matches
                     for eachDict in self.matchStore:
@@ -897,10 +902,10 @@ class PolicyEngine:
         elif boo_Remove:
             pDPNotification._notificationType = NotificationType.REMOVE.name
         return pDPNotification
-    
+
     def __startAuto(self):
         """
-        Starts the Auto Notification Feature.. 
+        Starts the Auto Notification Feature..
         """
         if self.scheme is not None:
             if ((self.scheme == NotificationScheme.AUTO_ALL_NOTIFICATIONS.name)or(self.scheme == NotificationScheme.AUTO_NOTIFICATIONS.name)):
@@ -918,11 +923,11 @@ class PolicyEngine:
                             if(self.autows.sock.connected):
                                 self.mclose= True
                                 self.autows.close()
-                        else: 
+                        else:
                             self.autows = None
                     if self.autows is None:
                         if(self.autoURL.startswith("https")):
-                            __auto_url = self.autoURL.replace("https","wss")+"notifications"           
+                            __auto_url = self.autoURL.replace("https","wss")+"notifications"
                         else:
                             __auto_url = self.autoURL.replace("http","ws")+"notifications"
                         def run(*args):
@@ -936,27 +941,27 @@ class PolicyEngine:
                             self.restart = True
                             self.__rotatePDP()
                             if(self.autoURL.startswith("https")):
-                                __auto_url = self.autoURL.replace("https","wss")+"notifications"           
-                            else: 
+                                __auto_url = self.autoURL.replace("https","wss")+"notifications"
+                            else:
                                 __auto_url = self.autoURL.replace("http","ws")+"notifications"
                             def run(*args):
                                 self.__autoRequest(__auto_url)
                             self.logger.info("Starting AutoNotification Service with : %s" , __auto_url)
                             self.thread.start_new_thread(run , ())
-                        
+
             else:
-                #stop the Auto Notification Service if it is running. 
+                #stop the Auto Notification Service if it is running.
                 if self.autows.sock is not None:
                     if(self.autows.sock.connected):
                         self.mclose= True
                         self.autows.close()
-    
+
     def __onEvent(self, message):
         """
-        Handles the event Notification received. 
+        Handles the event Notification received.
         """
         message = json.loads(message)
-        if self.handler is not None:            
+        if self.handler is not None:
             if (self.scheme == NotificationScheme.AUTO_ALL_NOTIFICATIONS.name):
                 pDPNotification = PDPNotification()
                 boo_Remove = False
@@ -990,12 +995,12 @@ class PolicyEngine:
                 # call the Handler.
                 self.handler.notificationReceived(pDPNotification)
             elif (self.scheme == NotificationScheme.AUTO_NOTIFICATIONS.name):
-                # call the handler 
+                # call the handler
                 self.handler(self.__checkNotification(message))
-   
+
     def __manualRequest(self,request_url):
         """
-        Takes the request_URL given and returns the JSON response back to the Caller. 
+        Takes the request_URL given and returns the JSON response back to the Caller.
         """
         ws = create_connection(request_url)
         # when using self-signed server certificate, comment previous line and uncomment following:
@@ -1007,26 +1012,26 @@ class PolicyEngine:
             return None
         ws.close()
         ws.shutdown()
-   
+
     def __onMessage(self, ws,message):
-        """Occurs on Event 
-        """ 
+        """Occurs on Event
+        """
         self.logger.info("Received AutoNotification message: %s" , message)
         self.__onEvent(message)
-    
+
     def __onError(self, ws, error):
         """Self Restart the Notification Service on Error
         """
         self.logger.error("PE500 - Process Flow Issue: Auto Notification service Error!! : %s" , error)
-    
+
     def __onclose(self, ws):
-        """Occurs on Close ? Try to start again in case User didn't do it. 
+        """Occurs on Close ? Try to start again in case User didn't do it.
         """
         self.logger.debug("Connection has been Closed. ")
         if not self.mclose:
             self.__startAuto()
         self.mclose = False
-        
+
     def __autoRequest(self, request_url):
         """
         Takes the request_URL and invokes the PolicyEngine method on any receiving a Message
@@ -1035,9 +1040,9 @@ class PolicyEngine:
         self.autows = websocket.WebSocketApp(request_url, on_message= self.__onMessage, on_close= self.__onclose, on_error= self.__onError)
         # wait for to 5 seconds to restart
         if self.restart:
-            time.sleep(5)  
-        self.autows.run_forever()  
-    
+            time.sleep(5)
+        self.autows.run_forever()
+
 class NotificationHandler:
     """
     'Defines the methods which need to run when an Event or a Notification is received.'
@@ -1046,12 +1051,12 @@ class NotificationHandler:
         """
         Will be triggered automatically whenever a Notification is received by the PEP
         @param notification: PDPNotification object which has the information of the Policies.
-        @attention: This method must be implemented by the user for AUTO type NotificationScheme  
+        @attention: This method must be implemented by the user for AUTO type NotificationScheme
         """
         raise Exception("Unimplemented abstract method: %s" % __functionId(self, 1))
 
 def __functionId(obj, nFramesUp):
-    """ Internal Usage only.. 
+    """ Internal Usage only..
     Create a string naming the function n frames up on the stack. """
     fr = sys._getframe(nFramesUp+1)
     co = fr.f_code
@@ -1060,7 +1065,7 @@ def __functionId(obj, nFramesUp):
 class PolicyConfig:
     """
     'PolicyConfig is the return object resulted by getConfig Call.'
-    """ 
+    """
     def __init__(self):
         self._policyConfigMessage = None
         self._policyConfigStatus = None
@@ -1084,7 +1089,7 @@ class PolicyResponse:
         self._requestAttributes = None
         self._actionTaken = None
         self._actionAdvised= None
-        
+
 class PDPNotification:
     """
     'Defines the Notification Event sent from the PDP to PEP Client.'
@@ -1093,7 +1098,7 @@ class PDPNotification:
         self._removedPolicies = None
         self._loadedPolicies = None
         self._notificationType = None
-    
+
 class RemovedPolicy:
     """
     'Defines the structure of the Removed Policy'
@@ -1101,14 +1106,14 @@ class RemovedPolicy:
     def __init__(self):
         self._policyName = None
         self._policyVersion = None
-    
+
 class LoadedPolicy:
     """
     'Defines the Structure of the Loaded Policy'
     """
     def __init__(self):
-        self._policyName = None 
-        self._policyVersion = None 
+        self._policyName = None
+        self._policyVersion = None
         self._matchingConditions = None
         self._updateType = None
 
@@ -1140,9 +1145,9 @@ class PolicyParameters:
         self._requestID = None
         self._riskLevel = None
         self._riskType = None
-        self._ruleProvider = None 
-        self._ttlDate = None 
-        
+        self._ruleProvider = None
+        self._ttlDate = None
+
 class PushPolicyParameters:
     """
     'Defines the Structure of the Push Policy Parameters'
@@ -1159,7 +1164,7 @@ class PolicyChangeResponse:
     def __init__(self):
         self._responseMessage = None
         self._responseCode = None
-        
+
 class DeletePolicyParameters:
     """
     'Defines the Structure of the Delete Policy Parameters'
@@ -1171,7 +1176,7 @@ class DeletePolicyParameters:
         self._policyName = None
         self._policyType = None
         self._requestID = None
-        
+
 class DictionaryParameters:
     """
     'Defines the Structure of the Dictionary Parameters'
@@ -1181,7 +1186,7 @@ class DictionaryParameters:
         self._dictionary = None
         self._dictionaryJson = None
         self._requestID = None
-        
+
 class DictionaryResponse:
     """
     'Defines the Structure of the dictionary response'
@@ -1199,7 +1204,7 @@ class DecisionResponse:
     def __init__(self):
         self._decision = None
         self._details = None
-        
+
 class ImportParameters:
     """
     'Defines the Structure of Policy Model Import'

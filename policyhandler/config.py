@@ -143,7 +143,9 @@ class PolicyEngineConfig(object):
             config = Config.config[Config.FIELD_POLICY_ENGINE]
             headers = config["headers"]
             remove_basic = re.compile(r"(^Basic )")
-            client_parts = base64.b64decode(remove_basic.sub("", headers["ClientAuth"])).split(":")
+            client_auth = headers["ClientAuth"]
+            basic_client_auth = bool(remove_basic.match(client_auth))
+            client_parts = base64.b64decode(remove_basic.sub("", client_auth)).split(":")
             auth_parts = base64.b64decode(remove_basic.sub("", headers["Authorization"])).split(":")
 
             props = PolicyEngineConfig.PYPDP_URL.format(config["url"], config["path_pdp"],
@@ -154,7 +156,9 @@ class PolicyEngineConfig(object):
 
             with open(file_path, 'w') as prp_file:
                 prp_file.write(props)
-            PolicyEngineConfig._logger.info("created %s", file_path)
+            PolicyEngineConfig._logger.info("created %s basic_client_auth %s",
+                file_path, basic_client_auth)
+            return basic_client_auth
         except IOError:
             PolicyEngineConfig._logger.error("failed to save to %s", file_path)
         except KeyError:

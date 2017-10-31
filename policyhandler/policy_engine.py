@@ -88,11 +88,12 @@ class PolicyEngineClient(object):
 
         sub_aud = Audit(aud_parent=audit)
         sub_aud.metrics_start("create client to PDP")
-        PolicyEngineConfig.save_to_file()
+        basic_client_auth = PolicyEngineConfig.save_to_file()
         PolicyEngineClient._policy_engine = PolicyEngine(
             PolicyEngineConfig.PATH_TO_PROPERTIES,
             scheme=NotificationScheme.AUTO_ALL_NOTIFICATIONS.name,
-            handler=PolicyEngineClient._pdp_notification_handler
+            handler=PolicyEngineClient._pdp_notification_handler,
+            basic_client_auth=basic_client_auth
         )
         sub_aud.metrics("created client to PDP")
         seed_scope = ".*"
