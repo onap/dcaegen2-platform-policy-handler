@@ -27,78 +27,187 @@ import cherrypy
 from .config import Config
 from .onap.audit import Audit
 from .policy_rest import PolicyRest
-from .policy_engine import PolicyEngineClient
+from .policy_receiver import PolicyReceiver
 
 class PolicyWeb(object):
-    """Main static class for REST API of policy-handler"""
-    logger = logging.getLogger("policy_handler.web_cherrypy")
+    """run REST API of policy-handler"""
+    logger = logging.getLogger("policy_handler.policy_web")
 
     @staticmethod
-    def run():
-        """run forever the web-server of the policy-handler"""
-        PolicyWeb.logger.info("policy_handler web-service at port(%d)...", \
-            Config.wservice_port)
-        cherrypy.config.update({"server.socket_host": "0.0.0.0", \
-            'server.socket_port': Config.wservice_port})
-        cherrypy.tree.mount(PolicyLatest(), '/policy_latest')
-        cherrypy.tree.mount(PoliciesLatest(), '/policies_latest')
-        cherrypy.tree.mount(PoliciesCatchUp(), '/catch_up')
-        cherrypy.quickstart(Shutdown(), '/shutdown')
+    def run_forever(audit):
+        """run the web-server of the policy-handler forever"""
+        PolicyWeb.logger.info("policy_handler web-service at port(%d)...", Config.wservice_port)
+        cherrypy.config.update({"server.socket_host": "0.0.0.0",
+                                'server.socket_port': Config.wservice_port})
+        cherrypy.tree.mount(_PolicyWeb(), '/')
+        audit.info("running policy_handler web-service at port({0})".format(Config.wservice_port))
+        cherrypy.engine.start()
 
-class Shutdown(object):
-    """Shutdown the policy-handler"""
+class _PolicyWeb(object):
+    """REST API of policy-handler"""
+
+    @staticmethod
+    def _get_request_info(request):
+        """returns info about the http request"""
+        return "{0} {1}{2}".format(request.method, request.script_name, request.path_info)
+
     @cherrypy.expose
-    def index(self):
-        """shutdown event"""
-        audit = Audit(req_message="get /shutdown", headers=cherrypy.request.headers)
-        PolicyWeb.logger.info("--------- stopping REST API of policy-handler -----------")
+    @cherrypy.popargs('policy_id')
+    @cherrypy.tools.json_out()
+    def policy_latest(self, policy_id):
+        """retireves the latest policy identified by policy_id"""
+        req_info = _PolicyWeb._get_request_info(cherrypy.request)
+        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+        PolicyWeb.logger.info("%s policy_id=%s headers=%s", \
+            req_info, policy_id, json.dumps(cherrypy.request.headers))
+
+        res = PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
+
+        PolicyWeb.logger.info("res %s policy_id=%s res=%s", req_info, policy_id, json.dumps(res))
+
+        success, http_status_code, response_description = audit.audit_done(result=json.dumps(res))
+        if not success:
+            raise cherrypy.HTTPError(http_status_code, response_description)
+        return res
+
+    def _get_all_policies_latest(self):
+        """retireves all the latest policies on GET /policies_latest"""
+        req_info = _PolicyWeb._get_request_info(cherrypy.request)
+        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+
+        PolicyWeb.logger.info("%s", req_info)
+
+        valid_policies, errored_policies = PolicyRest.get_latest_policies(audit)
+
+        res = {"valid_policies": valid_policies, "errored_policies": errored_policies}
+        PolicyWeb.logger.info("result %s: %s", req_info, json.dumps(res))
+
+        success, http_status_code, response_description = audit.audit_done(result=json.dumps(res))
+        if not success:
+            raise cherrypy.HTTPError(http_status_code, response_description)
+        return res
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def policies_latest(self):
+        """
+        on :GET: retrieves all the latest policies from policy-engine that are
+        in the scope of the policy-handler.
+
+        on :POST: expects to receive the params that mimic the /getConfig of policy-engine
+        and retrieves the matching policies from policy-engine and picks the latest on each policy.
+
+        sample request - policies filter
+
+        {
+            "configAttributes": { "key1":"value1" },
+            "configName": "alex_config_name",
+            "ecompName": "DCAE",
+            "policyName": "DCAE_alex.Config_alex_.*",
+            "unique": false
+        }
+
+        sample response
+
+        {
+            "DCAE_alex.Config_alex_priority": {
+                "policy_body": {
+                    "policyName": "DCAE_alex.Config_alex_priority.3.xml",
+                    "policyConfigMessage": "Config Retrieved! ",
+                    "responseAttributes": {},
+                    "policyConfigStatus": "CONFIG_RETRIEVED",
+                    "type": "JSON",
+                    "matchingConditions": {
+                        "priority": "10",
+                        "key1": "value1",
+                        "ECOMPName": "DCAE",
+                        "ConfigName": "alex_config_name"
+                    },
+                    "property": null,
+                    "config": {
+                        "foo": "bar",
+                        "foo_updated": "2017-10-06T16:54:31.696Z"
+                    },
+                    "policyVersion": "3"
+                },
+                "policy_id": "DCAE_alex.Config_alex_priority"
+            }
+        }
+        """
+        if cherrypy.request.method == "GET":
+            return self._get_all_policies_latest()
+
+        if cherrypy.request.method != "POST":
+            raise cherrypy.HTTPError(404, "unexpected method {0}".format(cherrypy.request.method))
+
+        policy_filter = cherrypy.request.json or {}
+        str_policy_filter = json.dumps(policy_filter)
+
+        req_info = _PolicyWeb._get_request_info(cherrypy.request)
+        audit = Audit(req_message="{0}: {1}".format(req_info, str_policy_filter), \
+            headers=cherrypy.request.headers)
+        PolicyWeb.logger.info("%s: policy_filter=%s headers=%s", \
+            req_info, str_policy_filter, json.dumps(cherrypy.request.headers))
+
+        res, _ = PolicyRest.get_latest_policies(audit, policy_filter=policy_filter) or {}
+
+        PolicyWeb.logger.info("result %s: policy_filter=%s res=%s", \
+            req_info, str_policy_filter, json.dumps(res))
+
+        success, http_status_code, response_description = audit.audit_done(result=json.dumps(res))
+        if not success:
+            raise cherrypy.HTTPError(http_status_code, response_description)
+        return res
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def catch_up(self):
+        """catch up with all DCAE policies"""
+        started = str(datetime.now())
+        req_info = _PolicyWeb._get_request_info(cherrypy.request)
+        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+
+        PolicyWeb.logger.info("%s", req_info)
+        PolicyReceiver.catch_up(audit)
+
+        res = {"catch-up requested": started}
+        PolicyWeb.logger.info("requested %s: %s", req_info, json.dumps(res))
+        audit.info_requested(started)
+        return res
+
+    @cherrypy.expose
+    def shutdown(self):
+        """Shutdown the policy-handler"""
+        req_info = _PolicyWeb._get_request_info(cherrypy.request)
+        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+
+        PolicyWeb.logger.info("%s: --- stopping REST API of policy-handler ---", req_info)
+
         cherrypy.engine.exit()
-        PolicyEngineClient.shutdown(audit)
-        PolicyWeb.logger.info("--------- the end -----------")
+
+        PolicyReceiver.shutdown(audit)
+
+        health = json.dumps(Audit.health())
+        audit.info("policy_handler health: {0}".format(health))
+        PolicyWeb.logger.info("policy_handler health: %s", health)
+        PolicyWeb.logger.info("%s: --------- the end -----------", req_info)
         res = str(datetime.now())
         audit.info_requested(res)
         return "goodbye! shutdown requested {0}".format(res)
 
-class PoliciesLatest(object):
-    """REST API of the policy-hanlder"""
-
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def index(self):
-        """find the latest policy by policy_id or all latest policies"""
-        audit = Audit(req_message="get /policies_latest", headers=cherrypy.request.headers)
-        res = PolicyRest.get_latest_policies(audit) or {}
-        PolicyWeb.logger.info("PoliciesLatest: %s", json.dumps(res))
+    def healthcheck(self):
+        """returns the healthcheck results"""
+        req_info = _PolicyWeb._get_request_info(cherrypy.request)
+        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+
+        PolicyWeb.logger.info("%s", req_info)
+
+        res = Audit.health()
+
+        PolicyWeb.logger.info("healthcheck %s: res=%s", req_info, json.dumps(res))
+
         audit.audit_done(result=json.dumps(res))
-        return res
-
-@cherrypy.popargs('policy_id')
-class PolicyLatest(object):
-    """REST API of the policy-hanlder"""
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def index(self, policy_id):
-        """find the latest policy by policy_id or all latest policies"""
-        audit = Audit(req_message="get /policy_latest/{0}".format(policy_id or ""), \
-            headers=cherrypy.request.headers)
-        PolicyWeb.logger.info("PolicyLatest policy_id=%s headers=%s", \
-            policy_id, json.dumps(cherrypy.request.headers))
-        res = PolicyRest.get_latest_policy((audit, policy_id)) or {}
-        PolicyWeb.logger.info("PolicyLatest policy_id=%s res=%s", policy_id, json.dumps(res))
-        audit.audit_done(result=json.dumps(res))
-        return res
-
-class PoliciesCatchUp(object):
-    """catch up with all DCAE policies"""
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def index(self):
-        """catch up with all policies"""
-        started = str(datetime.now())
-        audit = Audit(req_message="get /catch_up", headers=cherrypy.request.headers)
-        PolicyEngineClient.catch_up(audit)
-        res = {"catch-up requested": started}
-        PolicyWeb.logger.info("PoliciesCatchUp: %s", json.dumps(res))
-        audit.info_requested(started)
         return res

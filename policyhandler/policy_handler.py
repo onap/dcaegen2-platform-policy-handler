@@ -18,14 +18,14 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
-
+import os
 import sys
 import logging
 
 from policyhandler.config import Config
 from policyhandler.onap.audit import Audit
 from policyhandler.web_server import PolicyWeb
-from policyhandler.policy_engine import PolicyEngineClient
+from policyhandler.policy_receiver import PolicyReceiver
 
 class LogWriter(object):
     """redirect the standard out + err to the logger"""
@@ -52,13 +52,16 @@ def run_policy_handler():
     sys.stderr = LogWriter(logger.error)
 
     logger.info("========== run_policy_handler ==========")
-    Audit.init(Config.get_system_name(), Config.LOGGER_CONFIG_FILE_PATH)
+    policy_handler_version = os.getenv("APP_VER")
+    logger.info("policy_handler_version %s", policy_handler_version)
+    Audit.init(Config.get_system_name(), policy_handler_version, Config.LOGGER_CONFIG_FILE_PATH)
 
     logger.info("starting policy_handler with config:")
     logger.info(Audit.log_json_dumps(Config.config))
 
-    PolicyEngineClient.run()
-    PolicyWeb.run()
+    audit = Audit(req_message="start policy handler")
+    PolicyReceiver.run(audit)
+    PolicyWeb.run_forever(audit)
 
 if __name__ == "__main__":
     run_policy_handler()

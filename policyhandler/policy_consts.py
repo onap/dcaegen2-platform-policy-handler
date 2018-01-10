@@ -24,5 +24,3 @@ POLICY_VERSION = "policyVersion"
 POLICY_NAME = "policyName"
 POLICY_BODY = 'policy_body'
 POLICY_CONFIG = 'config'
-
-POLICY_GET_CONFIG = 'getConfig'

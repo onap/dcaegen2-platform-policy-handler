@@ -27,14 +27,18 @@
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 import os
+import sys
 import json
 import uuid
 import time
 import copy
+from datetime import datetime
 from threading import Lock
 from enum import Enum
+from pip import utils as pip_utils
 
 from .CommonLogger import CommonLogger
+from .health import Health
 
 REQUEST_X_ECOMP_REQUESTID = "X-ECOMP-RequestID"
 REQUEST_REMOTE_ADDR = "Remote-Addr"
@@ -44,6 +48,7 @@ HOSTNAME = "HOSTNAME"
 AUDIT_REQUESTID = 'requestID'
 AUDIT_IPADDRESS = 'IPAddress'
 AUDIT_SERVER = 'server'
+AUDIT_TARGET_ENTITY = 'targetEntity'
 
 HEADER_CLIENTAUTH = "clientauth"
 HEADER_AUTHORIZATION = "authorization"
@@ -51,9 +56,10 @@ HEADER_AUTHORIZATION = "authorization"
 class AuditHttpCode(Enum):
     """audit http codes"""
     HTTP_OK = 200
-    DATA_NOT_FOUND_ERROR = 400
     PERMISSION_UNAUTHORIZED_ERROR = 401
     PERMISSION_FORBIDDEN_ERROR = 403
+    RESPONSE_ERROR = 400
+    DATA_NOT_FOUND_ERROR = 404
     SERVER_INTERNAL_ERROR = 500
     SERVICE_UNAVAILABLE_ERROR = 503
     DATA_ERROR = 1030
@@ -72,23 +78,25 @@ class AuditResponseCode(Enum):
     @staticmethod
     def get_response_code(http_status_code):
         """calculates the response_code from max_http_status_code"""
+        response_code = AuditResponseCode.UNKNOWN_ERROR
         if http_status_code <= AuditHttpCode.HTTP_OK.value:
-            return AuditResponseCode.SUCCESS
+            response_code = AuditResponseCode.SUCCESS
 
-        if http_status_code in [AuditHttpCode.PERMISSION_UNAUTHORIZED_ERROR.value, \
-                AuditHttpCode.PERMISSION_FORBIDDEN_ERROR.value]:
-            return AuditResponseCode.PERMISSION_ERROR
-        if http_status_code == AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value:
-            return AuditResponseCode.AVAILABILITY_ERROR
-        if http_status_code == AuditHttpCode.SERVER_INTERNAL_ERROR.value:
-            return AuditResponseCode.BUSINESS_PROCESS_ERROR
-        if http_status_code in [AuditHttpCode.DATA_ERROR.value, \
-                AuditHttpCode.DATA_NOT_FOUND_ERROR.value]:
-            return AuditResponseCode.DATA_ERROR
-        if http_status_code == AuditHttpCode.SCHEMA_ERROR.value:
-            return AuditResponseCode.SCHEMA_ERROR
+        elif http_status_code in [AuditHttpCode.PERMISSION_UNAUTHORIZED_ERROR.value,
+                                  AuditHttpCode.PERMISSION_FORBIDDEN_ERROR.value]:
+            response_code = AuditResponseCode.PERMISSION_ERROR
+        elif http_status_code == AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value:
+            response_code = AuditResponseCode.AVAILABILITY_ERROR
+        elif http_status_code == AuditHttpCode.SERVER_INTERNAL_ERROR.value:
+            response_code = AuditResponseCode.BUSINESS_PROCESS_ERROR
+        elif http_status_code in [AuditHttpCode.DATA_ERROR.value,
+                                  AuditHttpCode.RESPONSE_ERROR.value,
+                                  AuditHttpCode.DATA_NOT_FOUND_ERROR.value]:
+            response_code = AuditResponseCode.DATA_ERROR
+        elif http_status_code == AuditHttpCode.SCHEMA_ERROR.value:
+            response_code = AuditResponseCode.SCHEMA_ERROR
 
-        return AuditResponseCode.UNKNOWN_ERROR
+        return response_code
 
     @staticmethod
     def get_human_text(response_code):
@@ -109,16 +117,23 @@ class Audit(object):
     :kwargs: - put any request related params into kwargs
     """
     _service_name = ""
+    _service_version = ""
     _service_instance_UUID = str(uuid.uuid4())
+    _started = datetime.now()
     _logger_debug = None
     _logger_error = None
     _logger_metrics = None
     _logger_audit = None
+    _health = Health()
+    _py_ver = sys.version.replace("\n", "")
+    _packages = sorted([pckg.project_name + "==" + pckg.version
+                        for pckg in pip_utils.get_installed_distributions()])
 
     @staticmethod
-    def init(service_name, config_file_path):
+    def init(service_name, service_version, config_file_path):
         """init static invariants and loggers"""
         Audit._service_name = service_name
+        Audit._service_version = service_version
         Audit._logger_debug = CommonLogger(config_file_path, "debug", \
             instanceUUID=Audit._service_instance_UUID, serviceName=Audit._service_name)
         Audit._logger_error = CommonLogger(config_file_path, "error", \
@@ -127,6 +142,22 @@ class Audit(object):
             instanceUUID=Audit._service_instance_UUID, serviceName=Audit._service_name)
         Audit._logger_audit = CommonLogger(config_file_path, "audit", \
             instanceUUID=Audit._service_instance_UUID, serviceName=Audit._service_name)
+
+    @staticmethod
+    def health():
+        """returns json for health check"""
+        now = datetime.now()
+        return {
+            "service_name" : Audit._service_name,
+            "service_version" : Audit._service_version,
+            "service_instance_UUID" : Audit._service_instance_UUID,
+            "python" : Audit._py_ver,
+            "started" : str(Audit._started),
+            "now" : str(now),
+            "uptime" : str(now - Audit._started),
+            "stats" : Audit._health.dump(),
+            "packages" : Audit._packages
+        }
 
     def __init__(self, request_id=None, req_message=None, aud_parent=None, **kwargs):
         """create audit object per each request in the system
@@ -193,6 +224,13 @@ class Audit(object):
             self.max_http_status_code = max(http_status_code, self.max_http_status_code)
         self._lock.release()
 
+    def get_max_http_status_code(self):
+        """returns the highest(worst) http status code"""
+        self._lock.acquire()
+        max_http_status_code = self.max_http_status_code
+        self._lock.release()
+        return max_http_status_code
+
     @staticmethod
     def get_status_code(success):
         """COMPLETE versus ERROR"""
@@ -222,12 +260,24 @@ class Audit(object):
 
         return json.dumps(Audit.hide_secrets(copy.deepcopy(obj)), **kwargs)
 
-    def get_response_code(self):
-        """calculates the response_code from max_http_status_code"""
-        self._lock.acquire()
-        max_http_status_code = self.max_http_status_code
-        self._lock.release()
-        return AuditResponseCode.get_response_code(max_http_status_code)
+    def is_serious_error(self, status_code):
+        """returns whether the response_code is success and a human text for response code"""
+        return AuditResponseCode.PERMISSION_ERROR.value \
+            == AuditResponseCode.get_response_code(status_code).value \
+            or self.get_max_http_status_code() >= AuditHttpCode.SERVER_INTERNAL_ERROR.value
+
+    def _get_response_status(self):
+        """calculates the response status fields from max_http_status_code"""
+        max_http_status_code = self.get_max_http_status_code()
+        response_code = AuditResponseCode.get_response_code(max_http_status_code)
+        success = (response_code.value == AuditResponseCode.SUCCESS.value)
+        response_description = AuditResponseCode.get_human_text(response_code)
+        return success, max_http_status_code, response_code, response_description
+
+    def is_success(self):
+        """returns whether the response_code is success and a human text for response code"""
+        success, _, _, _ = self._get_response_status()
+        return success
 
     def debug(self, log_line, **kwargs):
         """debug - the debug=lowest level of logging"""
@@ -275,46 +325,56 @@ class Audit(object):
     def metrics(self, log_line, **kwargs):
         """debug+metrics - the metrics=sub-audit level of logging"""
         all_kwargs = self.merge_all_kwargs(**kwargs)
-        response_code = self.get_response_code()
-        success = (response_code.value == AuditResponseCode.SUCCESS.value)
+        success, max_http_status_code, response_code, response_description = \
+            self._get_response_status()
         metrics_func = None
+        timer = Audit.get_elapsed_time(self._metrics_started)
         if success:
             log_line = "done: {0}".format(log_line)
             self.info(log_line, **all_kwargs)
             metrics_func = Audit._logger_metrics.info
+            Audit._health.success(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
         else:
             log_line = "failed: {0}".format(log_line)
             self.error(log_line, errorCode=response_code.value, \
-                errorDescription=AuditResponseCode.get_human_text(response_code), **all_kwargs)
+                errorDescription=response_description, **all_kwargs)
             metrics_func = Audit._logger_metrics.error
+            Audit._health.error(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
 
-        metrics_func(log_line, begTime=self._metrics_start_event, \
-            timer=Audit.get_elapsed_time(self._metrics_started), \
-            statusCode=Audit.get_status_code(success), responseCode=response_code.value, \
-            responseDescription=AuditResponseCode.get_human_text(response_code), \
-            **all_kwargs)
+        metrics_func(log_line, begTime=self._metrics_start_event, timer=timer,
+                     statusCode=Audit.get_status_code(success), responseCode=response_code.value,
+                     responseDescription=response_description,
+                     **all_kwargs
+                    )
 
         self.metrics_start()
+        return (success, max_http_status_code, response_description)
 
     def audit_done(self, result=None, **kwargs):
         """debug+audit - the audit=top level of logging"""
         all_kwargs = self.merge_all_kwargs(**kwargs)
-        response_code = self.get_response_code()
-        success = (response_code.value == AuditResponseCode.SUCCESS.value)
+        success, max_http_status_code, response_code, response_description = \
+            self._get_response_status()
         log_line = "{0} {1}".format(self.req_message, result or "").strip()
         audit_func = None
+        timer = Audit.get_elapsed_time(self._started)
         if success:
             log_line = "done: {0}".format(log_line)
             self.info(log_line, **all_kwargs)
             audit_func = Audit._logger_audit.info
+            Audit._health.success(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
         else:
             log_line = "failed: {0}".format(log_line)
-            self.error(log_line, errorCode=response_code.value, \
-                errorDescription=AuditResponseCode.get_human_text(response_code), **all_kwargs)
+            self.error(log_line, errorCode=response_code.value,
+                       errorDescription=response_description, **all_kwargs)
             audit_func = Audit._logger_audit.error
+            Audit._health.error(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
 
-        audit_func(log_line, begTime=self._start_event, \
-            timer=Audit.get_elapsed_time(self._started), \
-            statusCode=Audit.get_status_code(success), responseCode=response_code.value, \
-            responseDescription=AuditResponseCode.get_human_text(response_code), \
-            **all_kwargs)
+        audit_func(log_line, begTime=self._start_event, timer=timer,
+                   statusCode=Audit.get_status_code(success),
+                   responseCode=response_code.value,
+                   responseDescription=response_description,
+                   **all_kwargs
+                  )
+
+        return (success, max_http_status_code, response_description)

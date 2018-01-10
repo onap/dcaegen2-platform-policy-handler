@@ -23,6 +23,9 @@
 mkdir -p logs
 LOG_FILE=logs/policy_handler.log
 echo "---------------------------------------------" >> ${LOG_FILE} 2>&1
+export APP_VER=$(python setup.py --version)
+echo "APP_VER=${APP_VER}" | tee -a ${LOG_FILE}
+
 echo "/etc/hosts" | tee -a ${LOG_FILE}
 cat /etc/hosts | tee -a ${LOG_FILE}
 python -m policyhandler/policy_handler >> ${LOG_FILE} 2>&1 &

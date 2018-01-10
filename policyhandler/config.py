@@ -22,8 +22,6 @@
 import os
 import json
 import copy
-import re
-import base64
 import logging
 import logging.config
 
@@ -65,11 +63,7 @@ class Config(object):
         """find the name of the policy-handler system
         to be used as the key in consul-kv for config of policy-handler
         """
-        system_name = None
-        if Config.config:
-            system_name = Config.config.get(Config.FIELD_SYSTEM)
-
-        return system_name or Config.SERVICE_NAME_POLICY_HANDLER
+        return (Config.config or {}).get(Config.FIELD_SYSTEM, Config.SERVICE_NAME_POLICY_HANDLER)
 
     @staticmethod
     def discover():
@@ -86,19 +80,6 @@ class Config(object):
         Config._logger.debug("config before merge from discovery: %s", json.dumps(Config.config))
         Config.merge(new_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
         Config._logger.debug("merged config from discovery: %s", json.dumps(Config.config))
-
-    @staticmethod
-    def upload_to_discovery():
-        """upload the current config settings to the discovery service"""
-        if not Config.config or not isinstance(Config.config, dict):
-            Config._logger.error("unexpected config: %s", Config.config)
-            return
-
-        discovery_key = Config.get_system_name()
-        latest_config = json.dumps({Config.SERVICE_NAME_POLICY_HANDLER:Config.config})
-        DiscoveryClient.put_kv(discovery_key, latest_config)
-        Config._logger.debug("uploaded config to discovery(%s): %s", \
-            discovery_key, latest_config)
 
     @staticmethod
     def load_from_file(file_path=None):
@@ -123,43 +104,3 @@ class Config(object):
         Config.wservice_port = loaded_config.get(Config.FIELD_WSERVICE_PORT, Config.wservice_port)
         Config.merge(loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
         return True
-
-class PolicyEngineConfig(object):
-    """main config of the application"""
-    # PATH_TO_PROPERTIES = r'logs/policy_engine.properties'
-    PATH_TO_PROPERTIES = r'tmp/policy_engine.properties'
-    PYPDP_URL = "PYPDP_URL = {0}{1}, {2}, {3}\n"
-    CLIENT_ID = "CLIENT_ID = {0}\n"
-    CLIENT_KEY = "CLIENT_KEY = {0}\n"
-    ENVIRONMENT = "ENVIRONMENT = {0}\n"
-    _logger = logging.getLogger("policy_handler.pe_config")
-
-    @staticmethod
-    def save_to_file():
-        """create the policy_engine.properties for policy-engine client"""
-        file_path = PolicyEngineConfig.PATH_TO_PROPERTIES
-
-        try:
-            config = Config.config[Config.FIELD_POLICY_ENGINE]
-            headers = config["headers"]
-            remove_basic = re.compile(r"(^Basic )")
-            client_auth = headers["ClientAuth"]
-            basic_client_auth = bool(remove_basic.match(client_auth))
-            client_parts = base64.b64decode(remove_basic.sub("", client_auth)).split(":")
-            auth_parts = base64.b64decode(remove_basic.sub("", headers["Authorization"])).split(":")
-
-            props = PolicyEngineConfig.PYPDP_URL.format(config["url"], config["path_pdp"],
-                                                        auth_parts[0], auth_parts[1])
-            props += PolicyEngineConfig.CLIENT_ID.format(client_parts[0])
-            props += PolicyEngineConfig.CLIENT_KEY.format(base64.b64encode(client_parts[1]))
-            props += PolicyEngineConfig.ENVIRONMENT.format(headers["Environment"])
-
-            with open(file_path, 'w') as prp_file:
-                prp_file.write(props)
-            PolicyEngineConfig._logger.info("created %s basic_client_auth %s",
-                file_path, basic_client_auth)
-            return basic_client_auth
-        except IOError:
-            PolicyEngineConfig._logger.error("failed to save to %s", file_path)
-        except KeyError:
-            PolicyEngineConfig._logger.error("unexpected config for %s", Config.FIELD_POLICY_ENGINE)

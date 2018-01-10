@@ -59,14 +59,27 @@ class DeployHandler(object):
 
         DeployHandler._target_entity = Config.config["deploy_handler"]
         DeployHandler._url = DiscoveryClient.get_service_url(DeployHandler._target_entity)
-        DeployHandler._url_path = DeployHandler._url + '/policy'
+        DeployHandler._url_path = (DeployHandler._url or "") + '/policy'
         DeployHandler._logger.info("DeployHandler url(%s)", DeployHandler._url)
 
     @staticmethod
-    def policy_update(audit, latest_policies):
-        """ post policy_updated message to deploy-handler """
+    def policy_update(audit, latest_policies, removed_policies=None,
+                      errored_policies=None, catch_up=False):
+        """post policy_updated message to deploy-handler"""
+        if not latest_policies and not removed_policies and not catch_up:
+            return
+
+        latest_policies = latest_policies or {}
+        removed_policies = removed_policies or {}
+        errored_policies = errored_policies or {}
+
         DeployHandler._lazy_init()
-        msg = {"latest_policies":latest_policies}
+        msg = {
+            "catch_up" : catch_up,
+            "latest_policies" : latest_policies,
+            "removed_policies" : removed_policies,
+            "errored_policies" : errored_policies
+        }
         sub_aud = Audit(aud_parent=audit, targetEntity=DeployHandler._target_entity,
                         targetServiceName=DeployHandler._url_path)
         headers = {REQUEST_X_ECOMP_REQUESTID : sub_aud.request_id}
@@ -74,10 +87,22 @@ class DeployHandler(object):
         msg_str = json.dumps(msg)
         headers_str = json.dumps(headers)
 
+        DeployHandler._logger.info(
+            "catch_up(%s) latest_policies[%s], removed_policies[%s], errored_policies[%s]",
+            catch_up, len(latest_policies), len(removed_policies), len(errored_policies))
         log_line = "post to deployment-handler {0} msg={1} headers={2}".format(
             DeployHandler._url_path, msg_str, headers_str)
-        sub_aud.metrics_start(log_line)
+
         DeployHandler._logger.info(log_line)
+        sub_aud.metrics_start(log_line)
+
+        if not DeployHandler._url:
+            error_msg = "no url found to {0}".format(log_line)
+            DeployHandler._logger.error(error_msg)
+            sub_aud.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
+            audit.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
+            sub_aud.metrics(error_msg)
+            return
 
         res = None
         try:

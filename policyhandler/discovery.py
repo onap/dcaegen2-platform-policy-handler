@@ -41,6 +41,8 @@ class DiscoveryClient(object):
     CONSUL_SERVICE_MASK = "http://consul:8500/v1/catalog/service/{0}"
     CONSUL_KV_MASK = "http://consul:8500/v1/kv/{0}"
     SERVICE_MASK = "http://{0}:{1}"
+    SERVICE_ADDRESS = "ServiceAddress"
+    SERVICE_PORT = "ServicePort"
     _logger = logging.getLogger("policy_handler.discovery")
 
 
@@ -51,23 +53,25 @@ class DiscoveryClient(object):
         DiscoveryClient._logger.info("discover %s", service_path)
         response = requests.get(service_path)
         response.raise_for_status()
-        service = response.json()[0]
-        return DiscoveryClient.SERVICE_MASK.format( \
-                service["ServiceAddress"], service["ServicePort"])
+        service = response.json()
+        if not service:
+            DiscoveryClient._logger.error("failed discover %s", service_path)
+            return
+        service = service[0]
+        return DiscoveryClient.SERVICE_MASK.format(
+            service[DiscoveryClient.SERVICE_ADDRESS], service[DiscoveryClient.SERVICE_PORT]
+        )
 
     @staticmethod
     def get_value(key):
         """get the value for the key from consul-kv"""
         response = requests.get(DiscoveryClient.CONSUL_KV_MASK.format(key))
         response.raise_for_status()
-        data = response.json()[0]
-        value = base64.b64decode(data["Value"]).decode("utf-8")
-        DiscoveryClient._logger.info("consul-kv key=%s data=%s value(%s)", \
-            key, json.dumps(data), value)
+        data = response.json()
+        if not data:
+            DiscoveryClient._logger.error("failed get_value %s", key)
+            return
+        value = base64.b64decode(data[0]["Value"]).decode("utf-8")
+        DiscoveryClient._logger.info("consul-kv key=%s value(%s) data=%s",
+                                     key, value, json.dumps(data))
         return json.loads(value)
-
-    @staticmethod
-    def put_kv(key, value):
-        """put the value under the key in consul-kv"""
-        response = requests.put(DiscoveryClient.CONSUL_KV_MASK.format(key), data=value)
-        response.raise_for_status()

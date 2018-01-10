@@ -24,16 +24,14 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="1.0.0",
+    version="2.0.0",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,
     install_requires=[
         "CherryPy>=10.2.2,<11.0",
         "enum34>=1.1.6",
-        "future>=0.16.0",
         "requests>=2.13.0,<3.0.0",
-        "six>=1.10.0",
         "websocket-client>=0.40.0"
     ],
     keywords='policy dcae controller',

@@ -21,11 +21,8 @@ COPY ./policyhandler/ ./policyhandler/
 COPY ./etc/ ./etc/
 
 RUN mkdir -p ${APPDIR}/logs \
- && mkdir -p ${APPDIR}/tmp \
- && mkdir -p ${APPDIR}/etc \
  && chown -R ${APPUSER}:${APPUSER} ${APPDIR} \
  && chmod a+w ${APPDIR}/logs \
- && chmod 700 ${APPDIR}/tmp \
  && chmod 500 ${APPDIR}/etc \
  && chmod 500 ${APPDIR}/run_policy.sh \
  && ls -la && ls -la ./policyhandler
