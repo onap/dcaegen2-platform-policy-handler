@@ -1,12 +1,3 @@
-"""generic class to keep track of request handling
- from receiving it through reponse and log all the activities
-
- call Audit.init("component-name", "path/to/config_file") to init the loggers before any requests
-
- start each outside request with creation of the Audit object
- audit = Audit(request_id=None, headers=None, msg=None)
-"""
-
 # org.onap.dcae
 # ================================================================================
 # Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
@@ -25,6 +16,15 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""generic class to keep track of request handling
+ from receiving it through reponse and log all the activities
+
+ call Audit.init("component-name", "path/to/config_file") to init the loggers before any requests
+
+ start each outside request with creation of the Audit object
+ audit = Audit(request_id=None, headers=None, msg=None)
+"""
 
 import os
 import sys

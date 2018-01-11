@@ -1,5 +1,3 @@
-"""policy-updater thread"""
-
 # org.onap.dcae
 # ================================================================================
 # Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
@@ -18,6 +16,8 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""policy-updater thread"""
 
 import logging
 import json

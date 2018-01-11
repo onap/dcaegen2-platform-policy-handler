@@ -1,5 +1,3 @@
-"""generic class to keep track of app health"""
-
 # org.onap.dcae
 # ================================================================================
 # Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
@@ -18,6 +16,8 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""generic class to keep track of app health"""
 
 import uuid
 from threading import Lock

@@ -18,6 +18,8 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
+"""test of the package for policy-handler of DCAE-Controller"""
+
 import copy
 import json
 import logging

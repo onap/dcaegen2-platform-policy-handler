@@ -1,5 +1,3 @@
-"""contants of policy-handler"""
-
 # org.onap.dcae
 # ================================================================================
 # Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
@@ -18,6 +16,8 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""contants of policy-handler"""
 
 POLICY_ID = 'policy_id'
 POLICY_VERSION = "policyVersion"

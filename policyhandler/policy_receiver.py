@@ -1,13 +1,3 @@
-"""
-policy-receiver communicates with policy-engine
-thru web-socket to receive push notifications
-on updates and removal of policies.
-
-on receiving the policy-notifications, the policy-receiver
-filters them out by the policy scope(s) provided in policy-handler config
-and passes the notifications to policy-updater
-"""
-
 # org.onap.dcae
 # ================================================================================
 # Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
@@ -26,6 +16,16 @@ and passes the notifications to policy-updater
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""
+policy-receiver communicates with policy-engine
+thru web-socket to receive push notifications
+on updates and removal of policies.
+
+on receiving the policy-notifications, the policy-receiver
+filters them out by the policy scope(s) provided in policy-handler config
+and passes the notifications to policy-updater
+"""
 
 import json
 import logging

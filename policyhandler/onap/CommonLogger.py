@@ -1,15 +1,5 @@
 #!/usr/bin/python
 # -*- indent-tabs-mode: nil -*- vi: set expandtab:
-"""ECOMP Common Logging library in Python.
-
-CommonLogger.py
-
-Original Written by:    Terry Schmalzried
-Date written:  October 1, 2015
-Last updated:  December 1, 2016
-
-version 0.8
-"""
 
 # org.onap.dcae
 # ================================================================================
@@ -29,6 +19,17 @@ version 0.8
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""ECOMP Common Logging library in Python.
+
+CommonLogger.py
+
+Original Written by:    Terry Schmalzried
+Date written:  October 1, 2015
+Last updated:  December 1, 2016
+
+version 0.8
+"""
 
 from __future__ import print_function
 import os, sys, getopt, logging, logging.handlers, time, re, uuid, socket, threading, collections
@@ -203,7 +204,7 @@ class CommonLogger:
                 self._logHandler = logging.handlers.RotatingFileHandler(self._logFile, \
                                                                         mode=self._sizeRotateMode, maxBytes=self._sizeMaxBytes, \
                                                                         backupCount=self._backupCount, encoding=None, delay=False)
-                
+
             else:
                 self._logHandler = logging.handlers.WatchedFileHandler(self._logFile, \
                                                                        mode=self._sizeRotateMode, \
@@ -860,7 +861,7 @@ if __name__ == "__main__":
     parser.add_argument("-k", "--keeplogs", help="Keep the log files after finishing the tests", action="store_true")
     parser.add_argument("-v", "--verbose", help="Print debugging messages", action="store_true")
     args = parser.parse_args()
-        
+
     spid = str(os.getpid())
     if args.keeplogs:
         spid = ""
@@ -878,7 +879,7 @@ if __name__ == "__main__":
                 os.remove(f)
             except:
                 pass
-    if not args.keeplogs: 
+    if not args.keeplogs:
         atexit.register(cleanupTmps)
 
     with open(logcfg, "w") as o:

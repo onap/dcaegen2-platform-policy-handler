@@ -1,5 +1,3 @@
-"""client to talk to consul at the standard port 8500"""
-
 # org.onap.dcae
 # ================================================================================
 # Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
@@ -18,6 +16,8 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""client to talk to consul at the standard port 8500"""
 
 import logging
 import json
