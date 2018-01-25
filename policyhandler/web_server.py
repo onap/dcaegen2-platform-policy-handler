@@ -1,6 +1,6 @@
 # org.onap.dcae
 # ================================================================================
-# Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,14 +61,16 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("%s policy_id=%s headers=%s", \
             req_info, policy_id, json.dumps(cherrypy.request.headers))
 
-        res = PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
+        latest_policy = PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
 
-        PolicyWeb.logger.info("res %s policy_id=%s res=%s", req_info, policy_id, json.dumps(res))
+        PolicyWeb.logger.info("res %s policy_id=%s latest_policy=%s",
+                              req_info, policy_id, json.dumps(latest_policy))
 
-        success, http_status_code, response_description = audit.audit_done(result=json.dumps(res))
+        success, http_status_code, _ = audit.audit_done(result=json.dumps(latest_policy))
         if not success:
-            raise cherrypy.HTTPError(http_status_code, response_description)
-        return res
+            cherrypy.response.status = http_status_code
+
+        return latest_policy
 
     def _get_all_policies_latest(self):
         """retireves all the latest policies on GET /policies_latest"""
@@ -82,9 +84,10 @@ class _PolicyWeb(object):
         res = {"valid_policies": valid_policies, "errored_policies": errored_policies}
         PolicyWeb.logger.info("result %s: %s", req_info, json.dumps(res))
 
-        success, http_status_code, response_description = audit.audit_done(result=json.dumps(res))
+        success, http_status_code, _ = audit.audit_done(result=json.dumps(res))
         if not success:
-            raise cherrypy.HTTPError(http_status_code, response_description)
+            cherrypy.response.status = http_status_code
+
         return res
 
     @cherrypy.expose
@@ -127,7 +130,7 @@ class _PolicyWeb(object):
                     "property": null,
                     "config": {
                         "foo": "bar",
-                        "foo_updated": "2017-10-06T16:54:31.696Z"
+                        "foo_updated": "2018-10-06T16:54:31.696Z"
                     },
                     "policyVersion": "3"
                 },
@@ -155,9 +158,10 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("result %s: policy_filter=%s res=%s", \
             req_info, str_policy_filter, json.dumps(res))
 
-        success, http_status_code, response_description = audit.audit_done(result=json.dumps(res))
+        success, http_status_code, _ = audit.audit_done(result=json.dumps(res))
         if not success:
-            raise cherrypy.HTTPError(http_status_code, response_description)
+            cherrypy.response.status = http_status_code
+
         return res
 
     @cherrypy.expose

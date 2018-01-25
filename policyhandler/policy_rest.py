@@ -1,6 +1,6 @@
 # org.onap.dcae
 # ================================================================================
-# Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,11 @@ class PolicyRest(object):
     POLICY_GET_CONFIG = 'getConfig'
     POLICY_CONFIG_STATUS = "policyConfigStatus"
     CONFIG_RETRIEVED = "CONFIG_RETRIEVED"
+    CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND"
     POLICY_CONFIG_MESSAGE = "policyConfigMessage"
     NO_RESPONSE_RECEIVED = "No Response Received"
+    POLICY_ENGINE_STATUS_CODE_ERROR = 400
+    PE_DATA_NOT_FOUND = "PE300 - Data Issue: Incorrect Params passed: Decision not a Permit."
 
     MIN_VERSION_EXPECTED = "min_version_expected"
     IGNORE_POLICY_NAMES = "ignore_policy_names"
@@ -131,10 +134,10 @@ class PolicyRest(object):
             res_data = res.json()
 
             if res_data and isinstance(res_data, list) and len(res_data) == 1:
-                result = res_data[0]
-                if result and not result.get(POLICY_NAME):
+                rslt = res_data[0]
+                if rslt and not rslt.get(POLICY_NAME):
                     res_data = None
-                if result.get(PolicyRest.POLICY_CONFIG_MESSAGE) == PolicyRest.NO_RESPONSE_RECEIVED:
+                if rslt.get(PolicyRest.POLICY_CONFIG_MESSAGE) == PolicyRest.NO_RESPONSE_RECEIVED:
                     error_code = AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
                     error_msg = "unexpected {0}".format(log_line)
 
@@ -143,6 +146,24 @@ class PolicyRest(object):
                     audit.set_http_status_code(error_code)
                     sub_aud.metrics(error_msg)
                     return (error_code, None)
+
+        elif res.status_code == PolicyRest.POLICY_ENGINE_STATUS_CODE_ERROR:
+            try:
+                rslt = res.json()
+                if rslt and isinstance(rslt, list) and len(rslt) == 1:
+                    rslt = rslt[0]
+                    if rslt and not rslt.get(POLICY_NAME) \
+                    and rslt.get(PolicyRest.POLICY_CONFIG_STATUS) == PolicyRest.CONFIG_NOT_FOUND \
+                    and rslt.get(PolicyRest.POLICY_CONFIG_MESSAGE) == PolicyRest.PE_DATA_NOT_FOUND:
+                        status_code = AuditHttpCode.DATA_NOT_FOUND_ERROR.value
+                        info_msg = "not found {0}".format(log_line)
+
+                        PolicyRest._logger.info(info_msg)
+                        sub_aud.set_http_status_code(status_code)
+                        sub_aud.metrics(info_msg)
+                        return (status_code, None)
+            except ValueError:
+                pass
 
         sub_aud.set_http_status_code(res.status_code)
         sub_aud.metrics(log_line)
