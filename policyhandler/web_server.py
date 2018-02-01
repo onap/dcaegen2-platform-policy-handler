@@ -79,16 +79,15 @@ class _PolicyWeb(object):
 
         PolicyWeb.logger.info("%s", req_info)
 
-        valid_policies, errored_policies = PolicyRest.get_latest_policies(audit)
+        result = PolicyRest.get_latest_policies(audit)
 
-        res = {"valid_policies": valid_policies, "errored_policies": errored_policies}
-        PolicyWeb.logger.info("result %s: %s", req_info, json.dumps(res))
+        PolicyWeb.logger.info("result %s: %s", req_info, json.dumps(result))
 
-        success, http_status_code, _ = audit.audit_done(result=json.dumps(res))
+        success, http_status_code, _ = audit.audit_done(result=json.dumps(result))
         if not success:
             cherrypy.response.status = http_status_code
 
-        return res
+        return result
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -153,16 +152,16 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("%s: policy_filter=%s headers=%s", \
             req_info, str_policy_filter, json.dumps(cherrypy.request.headers))
 
-        res, _ = PolicyRest.get_latest_policies(audit, policy_filter=policy_filter) or {}
+        result = PolicyRest.get_latest_policies(audit, policy_filter=policy_filter) or {}
 
-        PolicyWeb.logger.info("result %s: policy_filter=%s res=%s", \
-            req_info, str_policy_filter, json.dumps(res))
+        PolicyWeb.logger.info("result %s: policy_filter=%s result=%s", \
+            req_info, str_policy_filter, json.dumps(result))
 
-        success, http_status_code, _ = audit.audit_done(result=json.dumps(res))
+        success, http_status_code, _ = audit.audit_done(result=json.dumps(result))
         if not success:
             cherrypy.response.status = http_status_code
 
-        return res
+        return result
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

@@ -1,7 +1,7 @@
 # ============LICENSE_START=======================================================
 # org.onap.dcae
 # ================================================================================
-# Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import uuid
 from datetime import datetime
 
 import pytest
-
 import cherrypy
 from cherrypy.test.helper import CPWebCase
 
@@ -39,8 +38,10 @@ from policyhandler.deploy_handler import DeployHandler
 from policyhandler.discovery import DiscoveryClient
 from policyhandler.onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit,
                                       AuditHttpCode)
-from policyhandler.policy_consts import (POLICY_BODY, POLICY_CONFIG, POLICY_ID,
-                                         POLICY_NAME, POLICY_VERSION)
+from policyhandler.policy_consts import (ERRORED_POLICIES, ERRORED_SCOPES,
+                                         LATEST_POLICIES, POLICY_BODY,
+                                         POLICY_CONFIG, POLICY_ID, POLICY_NAME,
+                                         POLICY_VERSION, SCOPE_PREFIXES)
 from policyhandler.policy_handler import LogWriter
 from policyhandler.policy_receiver import (LOADED_POLICIES, POLICY_VER,
                                            REMOVED_POLICIES, PolicyReceiver)
@@ -162,6 +163,11 @@ class MonkeyPolicyBody(object):
 
             val_1 = policy_body_1[key]
             val_2 = policy_body_2[key]
+            if isinstance(val_1, list) and isinstance(val_2, list):
+                if sorted(val_1) != sorted(val_1):
+                    return False
+                continue
+
             if isinstance(val_1, dict) \
             and not MonkeyPolicyBody.is_the_same_dict(val_1, val_2):
                 return False
@@ -216,19 +222,27 @@ class MonkeyPolicyEngine(object):
     @staticmethod
     def gen_all_policies_latest():
         """generate all latest policies"""
-        return dict(
-            MonkeyPolicyEngine.gen_policy_latest(policy_index)
-            for policy_index in range(len(MonkeyPolicyEngine.LOREM_IPSUM))
-        )
+        return {
+            LATEST_POLICIES: dict(MonkeyPolicyEngine.gen_policy_latest(policy_index)
+                                  for policy_index in range(len(MonkeyPolicyEngine.LOREM_IPSUM))),
+            ERRORED_SCOPES: ["DCAE.Config_*"],
+            SCOPE_PREFIXES: ["DCAE.Config_*"],
+            ERRORED_POLICIES: {}
+        }
 
     @staticmethod
     def gen_policies_latest(match_to_policy_name):
         """generate all latest policies"""
-        return dict(
-            (k, v)
-            for k, v in MonkeyPolicyEngine.gen_all_policies_latest().iteritems()
-            if re.match(match_to_policy_name, k)
-        )
+        return {
+            LATEST_POLICIES:
+                dict((k, v)
+                     for k, v in MonkeyPolicyEngine.gen_all_policies_latest()
+                     [LATEST_POLICIES].iteritems()
+                     if re.match(match_to_policy_name, k)),
+            ERRORED_SCOPES: [],
+            ERRORED_POLICIES: {}
+        }
+
 
 MonkeyPolicyEngine.init()
 
@@ -415,6 +429,7 @@ class WebServerTest(CPWebCase):
     def test_web_all_policies_latest(self):
         """test GET /policies_latest"""
         expected_policies = MonkeyPolicyEngine.gen_all_policies_latest()
+        expected_policies = expected_policies[LATEST_POLICIES]
 
         result = self.getPage("/policies_latest")
         Settings.logger.info("result: %s", result)
@@ -422,8 +437,8 @@ class WebServerTest(CPWebCase):
         self.assertStatus('200 OK')
 
         policies_latest = json.loads(self.body)
-        self.assertIn("valid_policies", policies_latest)
-        policies_latest = policies_latest["valid_policies"]
+        self.assertIn(LATEST_POLICIES, policies_latest)
+        policies_latest = policies_latest[LATEST_POLICIES]
 
         Settings.logger.info("policies_latest: %s", json.dumps(policies_latest))
         Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))
@@ -434,6 +449,7 @@ class WebServerTest(CPWebCase):
         """test POST /policies_latest with policyName"""
         match_to_policy_name = Config.config["scope_prefixes"][0] + "amet.*"
         expected_policies = MonkeyPolicyEngine.gen_policies_latest(match_to_policy_name)
+        expected_policies = expected_policies[LATEST_POLICIES]
 
         body = json.dumps({POLICY_NAME: match_to_policy_name})
         result = self.getPage("/policies_latest", method='POST',
@@ -447,7 +463,7 @@ class WebServerTest(CPWebCase):
         Settings.logger.info("body: %s", self.body)
         self.assertStatus('200 OK')
 
-        policies_latest = json.loads(self.body)
+        policies_latest = json.loads(self.body)[LATEST_POLICIES]
 
         Settings.logger.info("policies_latest: %s", json.dumps(policies_latest))
         Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))

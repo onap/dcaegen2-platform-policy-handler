@@ -19,17 +19,22 @@
 
 """policy-client communicates with policy-engine thru REST API"""
 
-import logging
-import json
 import copy
+import json
+import logging
 import time
 from multiprocessing.dummy import Pool as ThreadPool
+
 import requests
 
 from .config import Config
-from .policy_consts import POLICY_ID, POLICY_NAME, POLICY_BODY, POLICY_CONFIG
-from .onap.audit import REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode, AuditResponseCode
+from .onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode,
+                         AuditResponseCode)
+from .policy_consts import (ERRORED_POLICIES, ERRORED_SCOPES, POLICY_BODY,
+                            POLICY_CONFIG, POLICY_FILTER, POLICY_ID,
+                            POLICY_NAME, SCOPE_PREFIXES, LATEST_POLICIES)
 from .policy_utils import PolicyUtils
+
 
 class PolicyRest(object):
     """ policy-engine """
@@ -171,7 +176,7 @@ class PolicyRest(object):
         return res.status_code, res_data
 
     @staticmethod
-    def validate_policy(policy):
+    def _validate_policy(policy):
         """Validates the config on policy"""
         if not policy:
             return
@@ -183,22 +188,6 @@ class PolicyRest(object):
             and policy_body.get(PolicyRest.POLICY_CONFIG_STATUS) == PolicyRest.CONFIG_RETRIEVED
             and policy_body.get(POLICY_CONFIG)
         )
-
-    @staticmethod
-    def validate_policies(policies):
-        """Validate the config on policies.  Returns (valid, errored) tuple"""
-        if not policies:
-            return None, policies
-
-        valid_policies = {}
-        errored_policies = {}
-        for (policy_id, policy) in policies.iteritems():
-            if PolicyRest.validate_policy(policy):
-                valid_policies[policy_id] = policy
-            else:
-                errored_policies[policy_id] = policy
-
-        return valid_policies, errored_policies
 
     @staticmethod
     def get_latest_policy(aud_policy_id):
@@ -260,7 +249,7 @@ class PolicyRest(object):
             return None
 
         audit.set_http_status_code(status_code)
-        if not PolicyRest.validate_policy(latest_policy):
+        if not PolicyRest._validate_policy(latest_policy):
             audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
             audit.error(
                 "received invalid policy from PDP: {0}".format(json.dumps(latest_policy)),
@@ -369,7 +358,7 @@ class PolicyRest(object):
         get the latest policies by policy_filter
         or all the latest policies of the same scope from the policy-engine
         """
-        audit, policy_filter, error_if_not_found = aud_policy_filter
+        audit, policy_filter, scope_prefix = aud_policy_filter
         str_policy_filter = json.dumps(policy_filter)
         PolicyRest._logger.debug("%s", str_policy_filter)
 
@@ -379,8 +368,18 @@ class PolicyRest(object):
                                  str_policy_filter, json.dumps(policy_configs or []))
 
         latest_policies = PolicyUtils.select_latest_policies(policy_configs)
+
+        if scope_prefix and not policy_configs \
+        and status_code != AuditHttpCode.DATA_NOT_FOUND_ERROR.value:
+            audit.warn("PDP error {0} on scope_prefix {1}".format(status_code, scope_prefix),
+                       errorCode=AuditResponseCode.DATA_ERROR.value,
+                       errorDescription=AuditResponseCode.get_human_text(
+                           AuditResponseCode.DATA_ERROR)
+                      )
+            return None, latest_policies, scope_prefix
+
         if not latest_policies:
-            if error_if_not_found:
+            if not scope_prefix:
                 audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
                 audit.warn(
                     "received no policies from PDP for policy_filter {0}: {1}"
@@ -389,28 +388,38 @@ class PolicyRest(object):
                     errorDescription=AuditResponseCode.get_human_text(
                         AuditResponseCode.DATA_ERROR)
                 )
-            return None, latest_policies
+            return None, latest_policies, None
 
         audit.set_http_status_code(status_code)
-        return PolicyRest.validate_policies(latest_policies)
+        valid_policies = {}
+        errored_policies = {}
+        for (policy_id, policy) in latest_policies.iteritems():
+            if PolicyRest._validate_policy(policy):
+                valid_policies[policy_id] = policy
+            else:
+                errored_policies[policy_id] = policy
+        return valid_policies, errored_policies, None
 
     @staticmethod
     def get_latest_policies(audit, policy_filter=None):
         """Get the latest policies of the same scope from the policy-engine"""
         PolicyRest._lazy_init()
 
+        result = {}
         aud_policy_filters = None
         str_metrics = None
         str_policy_filters = json.dumps(policy_filter or PolicyRest._scope_prefixes)
         if policy_filter is not None:
-            aud_policy_filters = [(audit, policy_filter, True)]
+            aud_policy_filters = [(audit, policy_filter, None)]
             str_metrics = "get_latest_policies for policy_filter {0}".format(
                 str_policy_filters)
+            result[POLICY_FILTER] = copy.deepcopy(policy_filter)
         else:
-            aud_policy_filters = [(audit, {POLICY_NAME:scope_prefix + ".*"}, False)
+            aud_policy_filters = [(audit, {POLICY_NAME:scope_prefix + ".*"}, scope_prefix)
                                   for scope_prefix in PolicyRest._scope_prefixes]
             str_metrics = "get_latest_policies for scopes {0} {1}".format( \
                 len(PolicyRest._scope_prefixes), str_policy_filters)
+            result[SCOPE_PREFIXES] = copy.deepcopy(PolicyRest._scope_prefixes)
 
         PolicyRest._logger.debug("%s", str_policy_filters)
         audit.metrics_start(str_metrics)
@@ -429,15 +438,16 @@ class PolicyRest(object):
             str_metrics, len(latest_policies), json.dumps(latest_policies)), \
             targetEntity=PolicyRest._target_entity, targetServiceName=PolicyRest._url_get_config)
 
-        # latest_policies == [(valid_policies, errored_policies), ...]
-        valid_policies = dict(
-            pair for (vps, _) in latest_policies if vps for pair in vps.iteritems())
+        # latest_policies == [(valid_policies, errored_policies, errored_scope_prefix), ...]
+        result[LATEST_POLICIES] = dict(
+            pair for (vps, _, _) in latest_policies if vps for pair in vps.iteritems())
 
-        errored_policies = dict(
-            pair for (_, eps) in latest_policies if eps for pair in eps.iteritems())
+        result[ERRORED_POLICIES] = dict(
+            pair for (_, eps, _) in latest_policies if eps for pair in eps.iteritems())
 
-        PolicyRest._logger.debug(
-            "got policies for policy_filters: %s. valid_policies: %s errored_policies: %s",
-            str_policy_filters, json.dumps(valid_policies), json.dumps(errored_policies))
+        result[ERRORED_SCOPES] = [esp for (_, _, esp) in latest_policies if esp]
 
-        return valid_policies, errored_policies
+        PolicyRest._logger.debug("got policies for policy_filters: %s. result: %s",
+                                 str_policy_filters, json.dumps(result))
+
+        return result

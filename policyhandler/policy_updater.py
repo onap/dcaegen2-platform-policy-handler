@@ -1,6 +1,6 @@
 # org.onap.dcae
 # ================================================================================
-# Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,14 +19,15 @@
 
 """policy-updater thread"""
 
-import logging
 import json
+import logging
 from Queue import Queue
-from threading import Thread, Lock
+from threading import Lock, Thread
 
-from .policy_rest import PolicyRest
 from .deploy_handler import DeployHandler
 from .onap.audit import Audit
+from .policy_consts import CATCH_UP, LATEST_POLICIES, REMOVED_POLICIES
+from .policy_rest import PolicyRest
 
 class PolicyUpdater(Thread):
     """queue and handle the policy-updates in a separate thread"""
@@ -72,7 +73,8 @@ class PolicyUpdater(Thread):
             updated_policies, removed_policies = PolicyRest.get_latest_updated_policies(
                 (audit, policies_updated, policies_removed))
 
-            DeployHandler.policy_update(audit, updated_policies, removed_policies=removed_policies)
+            message = {LATEST_POLICIES: updated_policies, REMOVED_POLICIES: removed_policies}
+            DeployHandler.policy_update(audit, message)
             audit.audit_done()
             self._queue.task_done()
 
@@ -114,15 +116,16 @@ class PolicyUpdater(Thread):
             return False
 
         PolicyUpdater._logger.info("catch_up")
-        latest_policies, errored_policies = PolicyRest.get_latest_policies(aud_catch_up)
+
+        result = PolicyRest.get_latest_policies(aud_catch_up)
+        result[CATCH_UP] = True
 
         if not aud_catch_up.is_success():
             PolicyUpdater._logger.warn("not sending catch-up to deployment-handler due to errors")
             if not audit:
                 self._queue.task_done()
         else:
-            DeployHandler.policy_update(
-                aud_catch_up, latest_policies, errored_policies=errored_policies, catch_up=True)
+            DeployHandler.policy_update(aud_catch_up, result)
             self._reset_queue()
         success, _, _ = aud_catch_up.audit_done()
         PolicyUpdater._logger.info("policy_handler health: %s", json.dumps(Audit.health()))

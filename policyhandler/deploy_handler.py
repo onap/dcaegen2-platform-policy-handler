@@ -1,6 +1,6 @@
 # org.onap.dcae
 # ================================================================================
-# Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,33 +63,20 @@ class DeployHandler(object):
         DeployHandler._logger.info("DeployHandler url(%s)", DeployHandler._url)
 
     @staticmethod
-    def policy_update(audit, latest_policies, removed_policies=None,
-                      errored_policies=None, catch_up=False):
+    def policy_update(audit, message):
         """post policy_updated message to deploy-handler"""
-        if not latest_policies and not removed_policies and not catch_up:
+        if not message:
             return
 
-        latest_policies = latest_policies or {}
-        removed_policies = removed_policies or {}
-        errored_policies = errored_policies or {}
-
         DeployHandler._lazy_init()
-        msg = {
-            "catch_up" : catch_up,
-            "latest_policies" : latest_policies,
-            "removed_policies" : removed_policies,
-            "errored_policies" : errored_policies
-        }
         sub_aud = Audit(aud_parent=audit, targetEntity=DeployHandler._target_entity,
                         targetServiceName=DeployHandler._url_path)
         headers = {REQUEST_X_ECOMP_REQUESTID : sub_aud.request_id}
 
-        msg_str = json.dumps(msg)
+        msg_str = json.dumps(message)
         headers_str = json.dumps(headers)
 
-        DeployHandler._logger.info(
-            "catch_up(%s) latest_policies[%s], removed_policies[%s], errored_policies[%s]",
-            catch_up, len(latest_policies), len(removed_policies), len(errored_policies))
+        DeployHandler._logger.info("message: %s", msg_str)
         log_line = "post to deployment-handler {0} msg={1} headers={2}".format(
             DeployHandler._url_path, msg_str, headers_str)
 
@@ -107,7 +94,7 @@ class DeployHandler(object):
         res = None
         try:
             res = DeployHandler._requests_session.post(
-                DeployHandler._url_path, json=msg, headers=headers
+                DeployHandler._url_path, json=message, headers=headers
             )
         except requests.exceptions.RequestException as ex:
             error_msg = "failed to post to deployment-handler {0} {1} msg={2} headers={3}" \

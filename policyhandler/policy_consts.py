@@ -1,6 +1,6 @@
 # org.onap.dcae
 # ================================================================================
-# Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,3 +24,11 @@ POLICY_VERSION = "policyVersion"
 POLICY_NAME = "policyName"
 POLICY_BODY = 'policy_body'
 POLICY_CONFIG = 'config'
+
+CATCH_UP = "catch_up"
+LATEST_POLICIES = "latest_policies"
+REMOVED_POLICIES = "removed_policies"
+ERRORED_POLICIES = "errored_policies"
+ERRORED_SCOPES = "errored_scopes"
+SCOPE_PREFIXES = "scope_prefixes"
+POLICY_FILTER = "policy_filter"
