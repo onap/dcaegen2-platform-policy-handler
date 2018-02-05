@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5a93c517_36f2dcd2",
+        "filename": "policyhandler/deploy_handler.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2018-02-05T17:51:35Z",
+      "side": 1,
+      "message": "this needs to say 2017-2018",
+      "revId": "ac779d374ca12099eaeb8e5d89e65df37fd8a8f4",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_56ed28ee",
+        "filename": "policyhandler/policy_consts.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2018-02-05T17:51:35Z",
+      "side": 1,
+      "message": "this needs to say 2017-2018",
+      "revId": "ac779d374ca12099eaeb8e5d89e65df37fd8a8f4",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_f6bb14e3",
+        "filename": "policyhandler/policy_updater.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2018-02-05T17:51:35Z",
+      "side": 1,
+      "message": "this needs to say 2017-2018",
+      "revId": "ac779d374ca12099eaeb8e5d89e65df37fd8a8f4",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_16bfa0d1",
+        "filename": "tests/test_policyhandler.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2018-02-05T17:51:35Z",
+      "side": 1,
+      "message": "this needs to say 2017-2018",
+      "revId": "ac779d374ca12099eaeb8e5d89e65df37fd8a8f4",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
