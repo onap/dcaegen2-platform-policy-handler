@@ -1,0 +1,8 @@
+Verified+1: ONAP Jobbuilder <onap-jobbuilder@jenkins.onap.org>
+Code-Review+1: Alex Shatov <alexs@att.com>
+Code-Review+2: Vijay Venkatesh Kumar <vv770d@att.com>
+Submitted-by: Vijay Venkatesh Kumar <vv770d@att.com>
+Submitted-at: Mon, 12 Feb 2018 17:47:58 +0000
+Reviewed-on: https://gerrit.onap.org/r/31449
+Project: dcaegen2/platform/policy-handler
+Branch: refs/heads/master
