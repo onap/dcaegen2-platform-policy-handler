@@ -31,7 +31,7 @@ ECOMP is a trademark and service mark of AT&T Intellectual Property.
   <artifactId>policy-handler</artifactId>
   <name>dcaegen2-platform-policy-handler</name>
 
-  <version>2.0.0-SNAPSHOT</version>
+  <version>2.0.1-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,6 +44,7 @@ ECOMP is a trademark and service mark of AT&T Intellectual Property.
     <sonar.language>py</sonar.language>
     <sonar.pluginName>Python</sonar.pluginName>
     <sonar.inclusions>**/*.py</sonar.inclusions>
+    <sonar.exclusions>target/**,tests/**,setup.py,**/__init__.py</sonar.exclusions>
     <!-- for JavaScaript -->
     <!--
     <sonar.language>js</sonar.language>
