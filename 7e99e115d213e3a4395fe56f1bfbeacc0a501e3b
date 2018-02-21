@@ -1,0 +1,9 @@
+Verified+1: ONAP Jobbuilder <onap-jobbuilder@jenkins.onap.org>
+Code-Review+1: Alex Shatov <alexs@att.com>
+Code-Review+1: Bharath Thiruveedula <bharath.thiruveedula@verizon.com>
+Code-Review+2: Vijay Venkatesh Kumar <vv770d@att.com>
+Submitted-by: Vijay Venkatesh Kumar <vv770d@att.com>
+Submitted-at: Wed, 21 Feb 2018 03:46:38 +0000
+Reviewed-on: https://gerrit.onap.org/r/32161
+Project: dcaegen2/platform/policy-handler
+Branch: refs/heads/master
