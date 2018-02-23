@@ -164,7 +164,7 @@ class MonkeyPolicyBody(object):
             val_1 = policy_body_1[key]
             val_2 = policy_body_2[key]
             if isinstance(val_1, list) and isinstance(val_2, list):
-                if sorted(val_1) != sorted(val_1):
+                if sorted(val_1) != sorted(val_2):
                     return False
                 continue
 
