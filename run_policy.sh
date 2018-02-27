@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # ============LICENSE_START=======================================================
-# org.onap.dcae
-# ================================================================================
 # Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");

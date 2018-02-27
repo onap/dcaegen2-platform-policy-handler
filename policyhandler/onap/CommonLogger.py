@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- indent-tabs-mode: nil -*- vi: set expandtab:
 
-# org.onap.dcae
 # ================================================================================
 # Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
