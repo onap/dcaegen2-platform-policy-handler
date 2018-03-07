@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "5a93c517_278d68d3",
+        "filename": "policyhandler/customize/__init__.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2018-03-07T22:34:20Z",
+      "side": 1,
+      "message": "upper cased CUSTOMIZER would be a constant rather than a module level object - I could have a static class with the only static member there, but that is an overkill \n\n- not sure why the pylint complains about vars on the module level when nobody really follows that rule including you... :-P",
+      "parentUuid": "5a93c517_a7ead871",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a93c517_87e79cab",
         "filename": "policyhandler/customize/customizer.py",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2018-03-07T22:13:13Z",
       "side": 1,
       "message": "This to me belongs in a README or doc, lots of commented out code is a smell.",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_0792acf5",
+        "filename": "policyhandler/customize/customizer.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2018-03-07T22:34:20Z",
+      "side": 1,
+      "message": "good point - I will change that - thank you",
+      "parentUuid": "5a93c517_87e79cab",
       "revId": "84a19607547d18399397d983c4a852ec4a02c726",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "5a93c517_6787f0b5",
+        "filename": "policyhandler/deploy_handler.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2018-03-07T22:34:20Z",
+      "side": 1,
+      "message": "this is a static private variable that is not expected to change - only lazily initialized once",
+      "parentUuid": "5a93c517_47051444",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a93c517_27dfa8d7",
         "filename": "policyhandler/discovery.py",
         "patchSetId": 1
@@ -64,6 +118,24 @@
       "writtenOn": "2018-03-07T22:13:13Z",
       "side": 1,
       "message": "This to me looks like accessing what was supposed to be a private variable of a class so I would make this .logger and not a private variable",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_a7a17847",
+        "filename": "policyhandler/discovery.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2018-03-07T22:34:20Z",
+      "side": 1,
+      "message": "this might look like a matter of taste - I see no reason to make _logger public unless it has to be public and there is no reason for that to be public",
+      "parentUuid": "5a93c517_27dfa8d7",
       "revId": "84a19607547d18399397d983c4a852ec4a02c726",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "5a93c517_879ebc05",
+        "filename": "policyhandler/web_server.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2018-03-07T22:34:20Z",
+      "side": 1,
+      "message": "this is the copy-paste from the Policy-Engine API - outside of our scope",
+      "parentUuid": "5a93c517_c7f1246c",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a93c517_e7f4605c",
         "filename": "setup.py",
         "patchSetId": 1
@@ -98,6 +188,24 @@
       "writtenOn": "2018-03-07T22:13:13Z",
       "side": 1,
       "message": "lol",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_478c34da",
+        "filename": "setup.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2018-03-07T22:34:20Z",
+      "side": 1,
+      "message": "yep - lesson learned",
+      "parentUuid": "5a93c517_e7f4605c",
       "revId": "84a19607547d18399397d983c4a852ec4a02c726",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
