@@ -18,11 +18,11 @@
 
 """read and use the config"""
 
-import os
-import json
 import copy
+import json
 import logging
 import logging.config
+import os
 
 from .discovery import DiscoveryClient
 
@@ -78,7 +78,7 @@ class Config(object):
             discovery_key, json.dumps(new_config))
         Config._logger.debug("config before merge from discovery: %s", json.dumps(Config.config))
         Config.merge(new_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
-        Config._logger.debug("merged config from discovery: %s", json.dumps(Config.config))
+        Config._logger.info("merged config from discovery: %s", json.dumps(Config.config))
 
     @staticmethod
     def load_from_file(file_path=None):
@@ -92,7 +92,7 @@ class Config(object):
                 loaded_config = json.load(config_json)
 
         if not loaded_config:
-            Config._logger.info("config not loaded from file: %s", file_path)
+            Config._logger.warn("config not loaded from file: %s", file_path)
             return
 
         Config._logger.info("config loaded from file: %s", file_path)
@@ -102,4 +102,5 @@ class Config(object):
 
         Config.wservice_port = loaded_config.get(Config.FIELD_WSERVICE_PORT, Config.wservice_port)
         Config.merge(loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
+        Config._logger.info("config loaded from file: %s", json.dumps(Config.config))
         return True

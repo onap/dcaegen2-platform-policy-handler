@@ -23,7 +23,7 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="2.1.0",
+    version="2.2.0",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,
@@ -31,7 +31,7 @@ setup(
         "CherryPy>=10.2.2,<11.0",
         "enum34>=1.1.6",
         "requests>=2.13.0,<3.0.0",
-        "websocket-client>=0.40.0"
+        "websocket-client>=0.40.0,<1.0.0"
     ],
     keywords='policy dcae controller',
     classifiers=[
