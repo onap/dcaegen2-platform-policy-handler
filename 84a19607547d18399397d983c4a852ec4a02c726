@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "5a93c517_e769c0f9",
+        "filename": "policyhandler/customize/__init__.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2018-03-07T23:08:48Z",
+      "side": 1,
+      "message": "I will not block the PR for this. But, for the record, this is a pylint violation whether you are happy with that or not, and I have started doing this on all future PRs of mine to abide.",
+      "parentUuid": "5a93c517_278d68d3",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a93c517_87e79cab",
         "filename": "policyhandler/customize/customizer.py",
         "patchSetId": 1
@@ -107,6 +125,24 @@
     },
     {
       "key": {
+        "uuid": "5a93c517_876c7c09",
+        "filename": "policyhandler/deploy_handler.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2018-03-07T23:08:48Z",
+      "side": 1,
+      "message": "actually my bad. I see you are setting this *insdide* the class itself, my mistake, +1",
+      "parentUuid": "5a93c517_6787f0b5",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a93c517_27dfa8d7",
         "filename": "policyhandler/discovery.py",
         "patchSetId": 1
@@ -142,6 +178,24 @@
     },
     {
       "key": {
+        "uuid": "5a93c517_477af4bd",
+        "filename": "policyhandler/discovery.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2018-03-07T23:08:48Z",
+      "side": 1,
+      "message": "again, my bad; you are doing this *inside* a class method, mea culpa.",
+      "parentUuid": "5a93c517_a7a17847",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a93c517_c7f1246c",
         "filename": "policyhandler/web_server.py",
         "patchSetId": 1
@@ -171,6 +225,24 @@
       "side": 1,
       "message": "this is the copy-paste from the Policy-Engine API - outside of our scope",
       "parentUuid": "5a93c517_c7f1246c",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_6775b0c9",
+        "filename": "policyhandler/web_server.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2018-03-07T23:08:48Z",
+      "side": 1,
+      "message": "ok",
+      "parentUuid": "5a93c517_879ebc05",
       "revId": "84a19607547d18399397d983c4a852ec4a02c726",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
