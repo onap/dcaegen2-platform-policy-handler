@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5a93c517_c766042a",
+        "filename": "README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2018-03-07T23:08:48Z",
+      "side": 1,
+      "message": "better",
+      "revId": "64fce8296847be4edad4c4c1e234a1f43f437951",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a93c517_27a48849",
+        "filename": "policyhandler/customize/customizer.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 515
+      },
+      "writtenOn": "2018-03-07T23:08:48Z",
+      "side": 1,
+      "message": "better",
+      "revId": "64fce8296847be4edad4c4c1e234a1f43f437951",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
