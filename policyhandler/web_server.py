@@ -104,7 +104,7 @@ class _PolicyWeb(object):
         {
             "configAttributes": { "key1":"value1" },
             "configName": "alex_config_name",
-            "ecompName": "DCAE",
+            "onapName": "DCAE",
             "policyName": "DCAE_alex.Config_alex_.*",
             "unique": false
         }
@@ -122,7 +122,7 @@ class _PolicyWeb(object):
                     "matchingConditions": {
                         "priority": "10",
                         "key1": "value1",
-                        "ECOMPName": "DCAE",
+                        "ONAPName": "DCAE",
                         "ConfigName": "alex_config_name"
                     },
                     "property": null,
