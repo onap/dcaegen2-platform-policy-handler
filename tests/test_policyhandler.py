@@ -47,7 +47,7 @@ from policyhandler.policy_rest import PolicyRest
 from policyhandler.policy_utils import PolicyUtils
 from policyhandler.web_server import _PolicyWeb
 
-POLICY_HANDLER_VERSION = "2.0.0"
+POLICY_HANDLER_VERSION = "2.2.0"
 
 class MonkeyHttpResponse(object):
     """Monkey http reposne"""
@@ -77,8 +77,8 @@ def monkeyed_discovery(full_path):
     res_json = {}
     if full_path == DiscoveryClient.CONSUL_SERVICE_MASK.format(Config.config["deploy_handler"]):
         res_json = [{
-            DiscoveryClient.SERVICE_ADDRESS: "1.1.1.1",
-            DiscoveryClient.SERVICE_PORT: "123"
+            "ServiceAddress": "1.1.1.1",
+            "ServicePort": "123"
         }]
     elif full_path == DiscoveryClient.CONSUL_KV_MASK.format(Config.get_system_name()):
         res_json = copy.deepcopy(Settings.dicovered_config)
@@ -267,7 +267,8 @@ def monkeyed_deploy_handler(full_path, json=None, headers=None):
 def fix_deploy_handler(monkeypatch, fix_discovery):
     """monkeyed discovery request.get"""
     Settings.logger.info("setup fix_deploy_handler")
-    DeployHandler._lazy_init()
+    audit = Audit(req_message="fix_deploy_handler")
+    DeployHandler._lazy_init(audit)
     monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.post',
                         monkeyed_deploy_handler)
     yield fix_deploy_handler  # provide the fixture value
