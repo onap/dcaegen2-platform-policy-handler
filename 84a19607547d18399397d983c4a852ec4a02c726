@@ -55,6 +55,24 @@
     },
     {
       "key": {
+        "uuid": "5a93c517_f2089bdb",
+        "filename": "policyhandler/customize/__init__.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2018-03-08T15:26:57Z",
+      "side": 1,
+      "message": "ok - i will replace the member-variable with the unprotected polymorphic singleton for this - that will be clearly implemented intention",
+      "parentUuid": "5a93c517_e769c0f9",
+      "revId": "84a19607547d18399397d983c4a852ec4a02c726",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5a93c517_87e79cab",
         "filename": "policyhandler/customize/customizer.py",
         "patchSetId": 1
