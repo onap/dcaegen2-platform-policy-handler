@@ -25,6 +25,7 @@ POLICY_BODY = 'policy_body'
 POLICY_CONFIG = 'config'
 
 CATCH_UP = "catch_up"
+AUTO_CATCH_UP = "auto catch_up"
 LATEST_POLICIES = "latest_policies"
 REMOVED_POLICIES = "removed_policies"
 ERRORED_POLICIES = "errored_policies"

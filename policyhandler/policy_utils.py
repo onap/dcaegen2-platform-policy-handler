@@ -18,27 +18,17 @@
 
 """policy-client communicates with policy-engine thru REST API"""
 
-import logging
 import json
+import logging
 import re
 
-from .policy_consts import POLICY_ID, POLICY_VERSION, POLICY_NAME, POLICY_BODY, POLICY_CONFIG
+from .policy_consts import (POLICY_BODY, POLICY_CONFIG, POLICY_ID, POLICY_NAME,
+                            POLICY_VERSION)
 
 class PolicyUtils(object):
     """policy-client utils"""
     _logger = logging.getLogger("policy_handler.policy_utils")
     _policy_name_ext = re.compile('[.][0-9]+[.][a-zA-Z]+$')
-
-    @staticmethod
-    def safe_json_parse(json_str):
-        """try parsing json without exception - returns the json_str back if fails"""
-        if not json_str:
-            return json_str
-        try:
-            return json.loads(json_str)
-        except (ValueError, TypeError) as err:
-            PolicyUtils._logger.warn("unexpected json %s: %s", str(json_str), str(err))
-        return json_str
 
     @staticmethod
     def extract_policy_id(policy_name):
@@ -65,7 +55,7 @@ class PolicyUtils(object):
             return policy
         config = policy.get(POLICY_BODY, {}).get(POLICY_CONFIG)
         if config:
-            policy[POLICY_BODY][POLICY_CONFIG] = PolicyUtils.safe_json_parse(config)
+            policy[POLICY_BODY][POLICY_CONFIG] = Utils.safe_json_parse(config)
         return policy
 
     @staticmethod
@@ -131,3 +121,54 @@ class PolicyUtils(object):
             policies[policy_id] = PolicyUtils.parse_policy_config(policies[policy_id])
 
         return policies
+
+class Utils(object):
+    """general purpose utils"""
+    _logger = logging.getLogger("policy_handler.utils")
+
+    @staticmethod
+    def safe_json_parse(json_str):
+        """try parsing json without exception - returns the json_str back if fails"""
+        if not json_str:
+            return json_str
+        try:
+            return json.loads(json_str)
+        except (ValueError, TypeError) as err:
+            Utils._logger.warn("unexpected json %s: %s", str(json_str), str(err))
+        return json_str
+
+    @staticmethod
+    def are_the_same(body_1, body_2):
+        """check whether both objects are the same"""
+        if (body_1 and not body_2) or (not body_1 and body_2):
+            Utils._logger.debug("only one is empty %s != %s", body_1, body_2)
+            return False
+
+        if body_1 is None and body_2 is None:
+            return True
+
+        if isinstance(body_1, list) and isinstance(body_2, list):
+            if len(body_1) != len(body_2):
+                Utils._logger.debug("len %s != %s", json.dumps(body_1), json.dumps(body_2))
+                return False
+
+            for val_1, val_2 in zip(body_1, body_2):
+                if not Utils.are_the_same(val_1, val_2):
+                    return False
+            return True
+
+        if isinstance(body_1, dict) and isinstance(body_2, dict):
+            if body_1.viewkeys() ^ body_2.viewkeys():
+                Utils._logger.debug("keys %s != %s", json.dumps(body_1), json.dumps(body_2))
+                return False
+
+            for key, val_1 in body_1.iteritems():
+                if not Utils.are_the_same(val_1, body_2[key]):
+                    return False
+            return True
+
+        # ... here when primitive values or mismatched types ...
+        the_same_values = (body_1 == body_2)
+        if not the_same_values:
+            Utils._logger.debug("values %s != %s", body_1, body_2)
+        return the_same_values

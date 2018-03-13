@@ -44,7 +44,7 @@ from policyhandler.policy_handler import LogWriter
 from policyhandler.policy_receiver import (LOADED_POLICIES, POLICY_VER,
                                            REMOVED_POLICIES, PolicyReceiver)
 from policyhandler.policy_rest import PolicyRest
-from policyhandler.policy_utils import PolicyUtils
+from policyhandler.policy_utils import PolicyUtils, Utils
 from policyhandler.web_server import _PolicyWeb
 
 POLICY_HANDLER_VERSION = "2.2.0"
@@ -149,31 +149,6 @@ class MonkeyPolicyBody(object):
             "responseAttributes": {},
             "property": None
         }
-
-    @staticmethod
-    def is_the_same_dict(policy_body_1, policy_body_2):
-        """check whether both policy_body objects are the same"""
-        if not isinstance(policy_body_1, dict) or not isinstance(policy_body_2, dict):
-            return False
-        for key in policy_body_1.keys():
-            if key not in policy_body_2:
-                return False
-
-            val_1 = policy_body_1[key]
-            val_2 = policy_body_2[key]
-            if isinstance(val_1, list) and isinstance(val_2, list):
-                if sorted(val_1) != sorted(val_2):
-                    return False
-                continue
-
-            if isinstance(val_1, dict) \
-            and not MonkeyPolicyBody.is_the_same_dict(val_1, val_2):
-                return False
-            if (val_1 is None and val_2 is not None) \
-            or (val_1 is not None and val_2 is None) \
-            or (val_1 != val_2):
-                return False
-        return True
 
 class MonkeyPolicyEngine(object):
     """pretend this is the policy-engine"""
@@ -358,8 +333,7 @@ def test_get_policy_latest(fix_pdp_post):
 
     Settings.logger.info("expected_policy: %s", json.dumps(expected_policy))
     Settings.logger.info("policy_latest: %s", json.dumps(policy_latest))
-    assert MonkeyPolicyBody.is_the_same_dict(policy_latest, expected_policy)
-    assert MonkeyPolicyBody.is_the_same_dict(expected_policy, policy_latest)
+    assert Utils.are_the_same(policy_latest, expected_policy)
 
 def test_healthcheck():
     """test /healthcheck"""
@@ -422,8 +396,7 @@ class WebServerTest(CPWebCase):
 
         Settings.logger.info("policy_latest: %s", self.body)
         Settings.logger.info("expected_policy: %s", json.dumps(expected_policy))
-        assert MonkeyPolicyBody.is_the_same_dict(policy_latest, expected_policy)
-        assert MonkeyPolicyBody.is_the_same_dict(expected_policy, policy_latest)
+        assert Utils.are_the_same(policy_latest, expected_policy)
 
     def test_web_all_policies_latest(self):
         """test GET /policies_latest"""
@@ -441,8 +414,7 @@ class WebServerTest(CPWebCase):
 
         Settings.logger.info("policies_latest: %s", json.dumps(policies_latest))
         Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))
-        assert MonkeyPolicyBody.is_the_same_dict(policies_latest, expected_policies)
-        assert MonkeyPolicyBody.is_the_same_dict(expected_policies, policies_latest)
+        assert Utils.are_the_same(policies_latest, expected_policies)
 
     def test_web_policies_latest(self):
         """test POST /policies_latest with policyName"""
@@ -466,8 +438,7 @@ class WebServerTest(CPWebCase):
 
         Settings.logger.info("policies_latest: %s", json.dumps(policies_latest))
         Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))
-        assert MonkeyPolicyBody.is_the_same_dict(policies_latest, expected_policies)
-        assert MonkeyPolicyBody.is_the_same_dict(expected_policies, policies_latest)
+        assert Utils.are_the_same(policies_latest, expected_policies)
 
     @pytest.mark.usefixtures(
         "fix_deploy_handler",

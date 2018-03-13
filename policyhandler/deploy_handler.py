@@ -41,6 +41,7 @@ class DeployHandler(object):
     _url_path = None
     _target_entity = None
     _custom_kwargs = None
+    _server_instance_uuid = None
 
     @staticmethod
     def _lazy_init(audit):
@@ -72,7 +73,11 @@ class DeployHandler(object):
 
     @staticmethod
     def policy_update(audit, message):
-        """post policy_updated message to deploy-handler"""
+        """
+        post policy_updated message to deploy-handler
+
+        returns condition whether it needs to catch_up
+        """
         if not message:
             return
 
@@ -116,8 +121,24 @@ class DeployHandler(object):
         sub_aud.set_http_status_code(res.status_code)
         audit.set_http_status_code(res.status_code)
 
-        sub_aud.metrics("response {0} from {1}: text={2}{3}" \
-            .format(res.status_code, log_action, res.text, log_data))
+        log_line = "response {0} from {1}: text={2}{3}" \
+            .format(res.status_code, log_action, res.text, log_data)
+        sub_aud.metrics(log_line)
+        DeployHandler._logger.info(log_line)
 
-        if res.status_code == requests.codes.ok:
-            return res.json()
+        if res.status_code != requests.codes.ok:
+            return
+
+        result = res.json() or {}
+        prev_server_instance_uuid = DeployHandler._server_instance_uuid
+        DeployHandler._server_instance_uuid = result.get("server_instance_uuid")
+
+        need_to_catch_up = (prev_server_instance_uuid
+            and prev_server_instance_uuid != DeployHandler._server_instance_uuid)
+        if need_to_catch_up:
+            log_line = "need_to_catch_up: {1} != {0}" \
+                .format(prev_server_instance_uuid, DeployHandler._server_instance_uuid)
+            sub_aud.info(log_line)
+            DeployHandler._logger.info(log_line)
+
+        return need_to_catch_up

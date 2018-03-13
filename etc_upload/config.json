@@ -6,6 +6,10 @@
         "scope_prefixes" : ["DCAE_alex.Config_", "DCAE.Config_"],
         "policy_retry_count" : 5,
         "policy_retry_sleep" : 5,
+        "catch_up" : {
+            "interval" : 1200,
+            "max_skips" : 5
+        },
         "policy_engine" : {
             "url" : "https://peawiv9nspd01.pedc.sbc.com:8081",
             "path_pdp" :"/pdp/",
