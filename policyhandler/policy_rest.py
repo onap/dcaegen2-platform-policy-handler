@@ -444,7 +444,7 @@ class PolicyRest(object):
         result[ERRORED_POLICIES] = dict(
             pair for (_, eps, _) in latest_policies if eps for pair in eps.iteritems())
 
-        result[ERRORED_SCOPES] = [esp for (_, _, esp) in latest_policies if esp]
+        result[ERRORED_SCOPES] = sorted([esp for (_, _, esp) in latest_policies if esp])
 
         PolicyRest._logger.debug("got policies for policy_filters: %s. result: %s",
                                  str_policy_filters, json.dumps(result))

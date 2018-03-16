@@ -133,12 +133,12 @@ class DeployHandler(object):
         prev_server_instance_uuid = DeployHandler._server_instance_uuid
         DeployHandler._server_instance_uuid = result.get("server_instance_uuid")
 
-        need_to_catch_up = (prev_server_instance_uuid
+        deployment_handler_changed = (prev_server_instance_uuid
             and prev_server_instance_uuid != DeployHandler._server_instance_uuid)
-        if need_to_catch_up:
-            log_line = "need_to_catch_up: {1} != {0}" \
+        if deployment_handler_changed:
+            log_line = "deployment_handler_changed: {1} != {0}" \
                 .format(prev_server_instance_uuid, DeployHandler._server_instance_uuid)
             sub_aud.info(log_line)
             DeployHandler._logger.info(log_line)
 
-        return need_to_catch_up
+        return deployment_handler_changed
