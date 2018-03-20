@@ -24,9 +24,9 @@ import logging
 import requests
 
 from .config import Config
+from .customize import CustomizerUser
 from .discovery import DiscoveryClient
 from .onap.audit import REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode
-from .customize import CustomizerUser
 
 POOL_SIZE = 1
 
@@ -38,7 +38,7 @@ class DeployHandler(object):
     _requests_session = None
     _config = None
     _url = None
-    _url_path = None
+    _url_policy = None
     _target_entity = None
     _custom_kwargs = None
     _server_instance_uuid = None
@@ -66,10 +66,30 @@ class DeployHandler(object):
             requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
         )
 
-        DeployHandler._target_entity = Config.config.get("deploy_handler", "deploy_handler")
-        DeployHandler._url = DiscoveryClient.get_service_url(audit, DeployHandler._target_entity)
-        DeployHandler._url_path = (DeployHandler._url or "") + '/policy'
-        DeployHandler._logger.info("DeployHandler url(%s)", DeployHandler._url)
+        config_dh = Config.config.get("deploy_handler")
+        if config_dh and isinstance(config_dh, dict):
+            # dns based routing to deployment-handler
+            # config for policy-handler >= 2.4.0
+            # "deploy_handler" : {
+            #     "target_entity" : "deployment_handler",
+            #     "url" : "http://deployment_handler:8188"
+            # }
+            DeployHandler._target_entity = config_dh.get("target_entity", "deployment_handler")
+            DeployHandler._url = config_dh.get("url")
+            DeployHandler._logger.info("dns based routing to %s: url(%s)",
+                DeployHandler._target_entity, DeployHandler._url)
+
+        if not DeployHandler._url:
+            # discover routing to deployment-handler at consul-services
+            if not isinstance(config_dh, dict):
+                # config for policy-handler <= 2.3.1
+                # "deploy_handler" : "deployment_handler"
+                DeployHandler._target_entity = str(config_dh or "deployment_handler")
+            DeployHandler._url = DiscoveryClient.get_service_url(audit, DeployHandler._target_entity)
+
+        DeployHandler._url_policy = str(DeployHandler._url or "") + '/policy'
+        DeployHandler._logger.info(
+            "got %s policy url(%s)", DeployHandler._target_entity, DeployHandler._url_policy)
 
     @staticmethod
     def policy_update(audit, message):
@@ -83,14 +103,14 @@ class DeployHandler(object):
 
         DeployHandler._lazy_init(audit)
         sub_aud = Audit(aud_parent=audit, targetEntity=DeployHandler._target_entity,
-                        targetServiceName=DeployHandler._url_path)
+                        targetServiceName=DeployHandler._url_policy)
         headers = {REQUEST_X_ECOMP_REQUESTID : sub_aud.request_id}
 
         msg_str = json.dumps(message)
         headers_str = json.dumps(headers)
 
         log_action = "post to {0} at {1}".format(
-            DeployHandler._target_entity, DeployHandler._url_path)
+            DeployHandler._target_entity, DeployHandler._url_policy)
         log_data = " msg={0} headers={1}".format(msg_str, headers_str)
         log_line = log_action + log_data
         DeployHandler._logger.info(log_line)
@@ -107,7 +127,7 @@ class DeployHandler(object):
         res = None
         try:
             res = DeployHandler._requests_session.post(
-                DeployHandler._url_path, json=message, headers=headers,
+                DeployHandler._url_policy, json=message, headers=headers,
                 **DeployHandler._custom_kwargs
             )
         except requests.exceptions.RequestException as ex:

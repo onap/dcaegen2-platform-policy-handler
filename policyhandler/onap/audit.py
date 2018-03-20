@@ -25,16 +25,15 @@
  audit = Audit(request_id=None, headers=None, msg=None)
 """
 
+import copy
+import json
 import os
 import sys
-import json
-import uuid
 import time
-import copy
+import uuid
 from datetime import datetime
-from threading import Lock
 from enum import Enum
-from pip import utils as pip_utils
+from threading import Lock
 
 from .CommonLogger import CommonLogger
 from .health import Health
@@ -125,8 +124,6 @@ class Audit(object):
     _logger_audit = None
     _health = Health()
     _py_ver = sys.version.replace("\n", "")
-    _packages = sorted([pckg.project_name + "==" + pckg.version
-                        for pckg in pip_utils.get_installed_distributions()])
 
     @staticmethod
     def init(service_name, service_version, config_file_path):
@@ -154,8 +151,7 @@ class Audit(object):
             "started" : str(Audit._started),
             "now" : str(now),
             "uptime" : str(now - Audit._started),
-            "stats" : Audit._health.dump(),
-            "packages" : Audit._packages
+            "stats" : Audit._health.dump()
         }
 
     def __init__(self, request_id=None, req_message=None, aud_parent=None, **kwargs):

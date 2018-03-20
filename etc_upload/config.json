@@ -23,6 +23,9 @@
             },
             "target_entity" : "policy_engine"
         },
-        "deploy_handler" : "deployment_handler"
+        "deploy_handler" : {
+            "target_entity" : "deployment_handler",
+            "url" : "http://deployment_handler:8188"
+        }
     }
 }

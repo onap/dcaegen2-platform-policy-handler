@@ -28,6 +28,7 @@ import uuid
 from datetime import datetime
 
 import pytest
+
 import cherrypy
 from cherrypy.test.helper import CPWebCase
 
@@ -47,7 +48,7 @@ from policyhandler.policy_rest import PolicyRest
 from policyhandler.policy_utils import PolicyUtils, Utils
 from policyhandler.web_server import _PolicyWeb
 
-POLICY_HANDLER_VERSION = "2.2.0"
+POLICY_HANDLER_VERSION = "2.4.0"
 
 class MonkeyHttpResponse(object):
     """Monkey http reposne"""
