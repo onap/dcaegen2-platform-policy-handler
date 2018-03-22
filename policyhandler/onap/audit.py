@@ -28,6 +28,7 @@
 import copy
 import json
 import os
+import subprocess
 import sys
 import time
 import uuid
@@ -116,7 +117,7 @@ class Audit(object):
     """
     _service_name = ""
     _service_version = ""
-    _service_instance_UUID = str(uuid.uuid4())
+    _service_instance_uuid = str(uuid.uuid4())
     _started = datetime.now()
     _logger_debug = None
     _logger_error = None
@@ -124,6 +125,10 @@ class Audit(object):
     _logger_audit = None
     _health = Health()
     _py_ver = sys.version.replace("\n", "")
+    try:
+        _packages = filter(None, subprocess.check_output(["pip", "freeze"]).splitlines())
+    except subprocess.CalledProcessError:
+        _packages = []
 
     @staticmethod
     def init(service_name, service_version, config_file_path):
@@ -131,13 +136,13 @@ class Audit(object):
         Audit._service_name = service_name
         Audit._service_version = service_version
         Audit._logger_debug = CommonLogger(config_file_path, "debug", \
-            instanceUUID=Audit._service_instance_UUID, serviceName=Audit._service_name)
+            instanceUUID=Audit._service_instance_uuid, serviceName=Audit._service_name)
         Audit._logger_error = CommonLogger(config_file_path, "error", \
-            instanceUUID=Audit._service_instance_UUID, serviceName=Audit._service_name)
+            instanceUUID=Audit._service_instance_uuid, serviceName=Audit._service_name)
         Audit._logger_metrics = CommonLogger(config_file_path, "metrics", \
-            instanceUUID=Audit._service_instance_UUID, serviceName=Audit._service_name)
+            instanceUUID=Audit._service_instance_uuid, serviceName=Audit._service_name)
         Audit._logger_audit = CommonLogger(config_file_path, "audit", \
-            instanceUUID=Audit._service_instance_UUID, serviceName=Audit._service_name)
+            instanceUUID=Audit._service_instance_uuid, serviceName=Audit._service_name)
 
     @staticmethod
     def health():
@@ -146,12 +151,13 @@ class Audit(object):
         return {
             "service_name" : Audit._service_name,
             "service_version" : Audit._service_version,
-            "service_instance_UUID" : Audit._service_instance_UUID,
+            "service_instance_uuid" : Audit._service_instance_uuid,
             "python" : Audit._py_ver,
             "started" : str(Audit._started),
             "now" : str(now),
             "uptime" : str(now - Audit._started),
-            "stats" : Audit._health.dump()
+            "stats" : Audit._health.dump(),
+            "packages" : Audit._packages
         }
 
     def __init__(self, request_id=None, req_message=None, aud_parent=None, **kwargs):

@@ -139,19 +139,20 @@ class PolicyUpdater(Thread):
             "catch_up_timer",
             self._catch_up_interval,
             PolicyUpdater.catch_up,
+            PolicyUpdater._logger,
             self
         )
         self._catch_up_timer.start()
         self._logger.info("started catch_up_timer in %s", self._catch_up_interval)
 
     def _pause_catch_up_timer(self):
-        """stop catch_up_timer"""
+        """pause catch_up_timer"""
         if self._catch_up_timer:
             self._logger.info("pause catch_up_timer")
             self._catch_up_timer.pause()
 
     def _stop_catch_up_timer(self):
-        """stop catch_up_timer"""
+        """stop and destroy the catch_up_timer"""
         if self._catch_up_timer:
             self._logger.info("stopping catch_up_timer")
             self._catch_up_timer.stop()
