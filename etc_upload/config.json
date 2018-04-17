@@ -3,7 +3,7 @@
         "system" : "policy_handler",
         "thread_pool_size" : 4,
         "pool_connections" : 20,
-        "scope_prefixes" : ["DCAE_alex.Config_", "DCAE.Config_"],
+        "scope_prefixes" : ["DCAE.Config_", "CLAMP"],
         "policy_retry_count" : 5,
         "policy_retry_sleep" : 5,
         "catch_up" : {
