@@ -28,6 +28,7 @@
 import copy
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -48,6 +49,8 @@ AUDIT_REQUESTID = 'requestID'
 AUDIT_IPADDRESS = 'IPAddress'
 AUDIT_SERVER = 'server'
 AUDIT_TARGET_ENTITY = 'targetEntity'
+AUDIT_METRICS = 'metrics'
+AUDIT_TOTAL_STATS = 'audit_total_stats'
 
 HEADER_CLIENTAUTH = "clientauth"
 HEADER_AUTHORIZATION = "authorization"
@@ -119,6 +122,7 @@ class Audit(object):
     _service_version = ""
     _service_instance_uuid = str(uuid.uuid4())
     _started = datetime.now()
+    _key_format = re.compile(r"\W")
     _logger_debug = None
     _logger_error = None
     _logger_metrics = None
@@ -160,14 +164,16 @@ class Audit(object):
             "packages" : Audit._packages
         }
 
-    def __init__(self, request_id=None, req_message=None, aud_parent=None, **kwargs):
+    def __init__(self, job_name=None, request_id=None, req_message=None, aud_parent=None, **kwargs):
         """create audit object per each request in the system
 
+        :job_name: is the name of the audit job for health stats
         :request_id: is the X-ECOMP-RequestID for tracing
         :req_message: is the request message string for logging
         :aud_parent: is the parent Audit - used for sub-query metrics to other systems
         :kwargs: - put any request related params into kwargs
         """
+        self.job_name = Audit._key_format.sub('_', job_name or req_message or Audit._service_name)
         self.request_id = request_id
         self.req_message = req_message or ""
         self.aud_parent = aud_parent
@@ -178,6 +184,8 @@ class Audit(object):
         self._lock = Lock()
 
         if self.aud_parent:
+            self.job_name = Audit._key_format.sub(
+                '_', job_name or self.aud_parent.job_name or Audit._service_name)
             if not self.request_id:
                 self.request_id = self.aud_parent.request_id
             if not self.req_message:
@@ -330,17 +338,19 @@ class Audit(object):
             self._get_response_status()
         metrics_func = None
         timer = Audit.get_elapsed_time(self._metrics_started)
+        metrics_job = Audit._key_format.sub(
+            '_', all_kwargs.get(AUDIT_TARGET_ENTITY, AUDIT_METRICS + "_" + self.job_name))
         if success:
             log_line = "done: {0}".format(log_line)
             self.info(log_line, **all_kwargs)
             metrics_func = Audit._logger_metrics.info
-            Audit._health.success(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
+            Audit._health.success(metrics_job, timer)
         else:
             log_line = "failed: {0}".format(log_line)
             self.error(log_line, errorCode=response_code.value, \
                 errorDescription=response_description, **all_kwargs)
             metrics_func = Audit._logger_metrics.error
-            Audit._health.error(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
+            Audit._health.error(metrics_job, timer)
 
         metrics_func(log_line, begTime=self._metrics_start_event, timer=timer,
                      statusCode=Audit.get_status_code(success), responseCode=response_code.value,
@@ -363,13 +373,15 @@ class Audit(object):
             log_line = "done: {0}".format(log_line)
             self.info(log_line, **all_kwargs)
             audit_func = Audit._logger_audit.info
-            Audit._health.success(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
+            Audit._health.success(self.job_name, timer)
+            Audit._health.success(AUDIT_TOTAL_STATS, timer)
         else:
             log_line = "failed: {0}".format(log_line)
             self.error(log_line, errorCode=response_code.value,
                        errorDescription=response_description, **all_kwargs)
             audit_func = Audit._logger_audit.error
-            Audit._health.error(all_kwargs.get(AUDIT_TARGET_ENTITY, Audit._service_name), timer)
+            Audit._health.error(self.job_name, timer)
+            Audit._health.error(AUDIT_TOTAL_STATS, timer)
 
         audit_func(log_line, begTime=self._start_event, timer=timer,
                    statusCode=Audit.get_status_code(success),

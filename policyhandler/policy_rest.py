@@ -406,18 +406,26 @@ class PolicyRest(object):
 
         result = {}
         aud_policy_filters = None
+        str_policy_filters = None
         str_metrics = None
-        str_policy_filters = json.dumps(policy_filter or PolicyRest._scope_prefixes)
+        target_entity = None
+
         if policy_filter is not None:
             aud_policy_filters = [(audit, policy_filter, None)]
+            str_policy_filters = json.dumps(policy_filter)
             str_metrics = "get_latest_policies for policy_filter {0}".format(
                 str_policy_filters)
+            target_entity = ("{0} total get_latest_policies by policy_filter"
+                             .format(PolicyRest._target_entity))
             result[POLICY_FILTER] = copy.deepcopy(policy_filter)
         else:
             aud_policy_filters = [(audit, {POLICY_NAME:scope_prefix + ".*"}, scope_prefix)
                                   for scope_prefix in PolicyRest._scope_prefixes]
+            str_policy_filters = json.dumps(PolicyRest._scope_prefixes)
             str_metrics = "get_latest_policies for scopes {0} {1}".format( \
                 len(PolicyRest._scope_prefixes), str_policy_filters)
+            target_entity = ("{0} total get_latest_policies by scope_prefixes"
+                             .format(PolicyRest._target_entity))
             result[SCOPE_PREFIXES] = copy.deepcopy(PolicyRest._scope_prefixes)
 
         PolicyRest._logger.debug("%s", str_policy_filters)
@@ -433,9 +441,10 @@ class PolicyRest(object):
             pool.close()
             pool.join()
 
-        audit.metrics("total result {0}: {1} {2}".format(
-            str_metrics, len(latest_policies), json.dumps(latest_policies)), \
-            targetEntity=PolicyRest._target_entity, targetServiceName=PolicyRest._url_get_config)
+        audit.metrics(
+            "total result {0}: {1} {2}".format(
+                str_metrics, len(latest_policies), json.dumps(latest_policies)),
+            targetEntity=target_entity, targetServiceName=PolicyRest._url_get_config)
 
         # latest_policies == [(valid_policies, errored_policies, errored_scope_prefix), ...]
         result[LATEST_POLICIES] = dict(

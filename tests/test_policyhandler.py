@@ -53,10 +53,12 @@ try:
 except subprocess.CalledProcessError:
     POLICY_HANDLER_VERSION = "2.4.1"
 
+
 class MonkeyHttpResponse(object):
     """Monkey http reposne"""
     def __init__(self, headers):
         self.headers = headers or {}
+
 
 class MonkeyedResponse(object):
     """Monkey response"""
@@ -76,6 +78,7 @@ class MonkeyedResponse(object):
         """ignoring"""
         pass
 
+
 def monkeyed_discovery(full_path):
     """monkeypatch for get from consul"""
     res_json = {}
@@ -88,6 +91,7 @@ def monkeyed_discovery(full_path):
         res_json = copy.deepcopy(Settings.dicovered_config)
     return MonkeyedResponse(full_path, res_json)
 
+
 @pytest.fixture()
 def fix_discovery(monkeypatch):
     """monkeyed discovery request.get"""
@@ -95,6 +99,7 @@ def fix_discovery(monkeypatch):
     monkeypatch.setattr('policyhandler.discovery.requests.get', monkeyed_discovery)
     yield fix_discovery  # provide the fixture value
     Settings.logger.info("teardown fix_discovery")
+
 
 class Settings(object):
     """init all locals"""
@@ -113,7 +118,7 @@ class Settings(object):
 
         Config.load_from_file("etc_upload/config.json")
 
-        Config.config["catch_up"] = {"interval" : 10, "max_skips" : 2}
+        Config.config["catch_up"] = {"interval": 10, "max_skips": 2}
 
         Settings.logger = logging.getLogger("policy_handler.unit_test")
         sys.stdout = LogWriter(Settings.logger.info)
@@ -126,7 +131,9 @@ class Settings(object):
         Settings.logger.info("starting policy_handler with config:")
         Settings.logger.info(Audit.log_json_dumps(Config.config))
 
+
 Settings.init()
+
 
 class MonkeyPolicyBody(object):
     """policy body that policy-engine returns"""
@@ -156,6 +163,7 @@ class MonkeyPolicyBody(object):
             "responseAttributes": {},
             "property": None
         }
+
 
 class MonkeyPolicyEngine(object):
     """pretend this is the policy-engine"""
@@ -194,8 +202,8 @@ class MonkeyPolicyEngine(object):
         """generate the policy response by policy_index = version - 1"""
         policy_id = MonkeyPolicyEngine.get_policy_id(policy_index)
         expected_policy = {
-            POLICY_ID : policy_id,
-            POLICY_BODY : MonkeyPolicyBody.create_policy_body(policy_id, policy_index + 1)
+            POLICY_ID: policy_id,
+            POLICY_BODY: MonkeyPolicyBody.create_policy_body(policy_id, policy_index + 1)
         }
         return policy_id, PolicyUtils.parse_policy_config(expected_policy)
 
@@ -226,10 +234,12 @@ class MonkeyPolicyEngine(object):
 
 MonkeyPolicyEngine.init()
 
+
 def monkeyed_policy_rest_post(full_path, json=None, headers=None):
     """monkeypatch for the POST to policy-engine"""
     res_json = MonkeyPolicyEngine.get_config(json.get(POLICY_NAME))
     return MonkeyedResponse(full_path, res_json, json, headers)
+
 
 @pytest.fixture()
 def fix_pdp_post(monkeypatch):
@@ -241,12 +251,14 @@ def fix_pdp_post(monkeypatch):
     yield fix_pdp_post  # provide the fixture value
     Settings.logger.info("teardown fix_pdp_post")
 
+
 def monkeyed_deploy_handler(full_path, json=None, headers=None):
     """monkeypatch for deploy_handler"""
     return MonkeyedResponse(full_path,
         {"server_instance_uuid": Settings.deploy_handler_instance_uuid},
         json, headers
     )
+
 
 @pytest.fixture()
 def fix_deploy_handler(monkeypatch, fix_discovery):
@@ -259,9 +271,11 @@ def fix_deploy_handler(monkeypatch, fix_discovery):
     yield fix_deploy_handler  # provide the fixture value
     Settings.logger.info("teardown fix_deploy_handler")
 
+
 def monkeyed_cherrypy_engine_exit():
     """monkeypatch for deploy_handler"""
     Settings.logger.info("cherrypy_engine_exit()")
+
 
 @pytest.fixture()
 def fix_cherrypy_engine_exit(monkeypatch):
@@ -271,6 +285,7 @@ def fix_cherrypy_engine_exit(monkeypatch):
                         monkeyed_cherrypy_engine_exit)
     yield fix_cherrypy_engine_exit  # provide the fixture value
     Settings.logger.info("teardown fix_cherrypy_engine_exit")
+
 
 class MonkeyedWebSocket(object):
     """Monkey websocket"""
@@ -282,7 +297,7 @@ class MonkeyedWebSocket(object):
         if not MonkeyedWebSocket.on_message:
             return
         message = {
-            LOADED_POLICIES : [
+            LOADED_POLICIES: [
                 {POLICY_NAME: "{0}.{1}.xml".format(
                     MonkeyPolicyEngine.get_policy_id(policy_index), policy_index + 1),
                  POLICY_VER: str(policy_index + 1)}
@@ -327,6 +342,7 @@ class MonkeyedWebSocket(object):
             """close socket"""
             self.sock.connected = False
 
+
 @pytest.fixture()
 def fix_policy_receiver_websocket(monkeypatch):
     """monkeyed websocket for policy_receiver"""
@@ -335,11 +351,13 @@ def fix_policy_receiver_websocket(monkeypatch):
     yield fix_policy_receiver_websocket  # provide the fixture value
     Settings.logger.info("teardown fix_policy_receiver_websocket")
 
+
 def test_get_policy_latest(fix_pdp_post):
     """test /policy_latest/<policy-id>"""
     policy_id, expected_policy = MonkeyPolicyEngine.gen_policy_latest(3)
 
-    audit = Audit(req_message="get /policy_latest/{0}".format(policy_id or ""))
+    audit = Audit(job_name="test_get_policy_latest",
+                  req_message="get /policy_latest/{0}".format(policy_id or ""))
     policy_latest = PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
     audit.audit_done(result=json.dumps(policy_latest))
 
@@ -347,22 +365,24 @@ def test_get_policy_latest(fix_pdp_post):
     Settings.logger.info("policy_latest: %s", json.dumps(policy_latest))
     assert Utils.are_the_same(policy_latest, expected_policy)
 
+
 def test_healthcheck():
     """test /healthcheck"""
-    audit = Audit(req_message="get /healthcheck")
+    audit = Audit(job_name="test_healthcheck", req_message="get /healthcheck")
     audit.metrics_start("test /healthcheck")
     time.sleep(0.1)
 
-    audit.metrics("test /healthcheck")
+    audit.metrics("test /healthcheck", targetEntity="test_healthcheck")
     health = Audit.health()
     audit.audit_done(result=json.dumps(health))
 
     Settings.logger.info("healthcheck: %s", json.dumps(health))
     assert bool(health)
 
+
 def test_healthcheck_with_error():
     """test /healthcheck"""
-    audit = Audit(req_message="get /healthcheck")
+    audit = Audit(job_name="test_healthcheck_with_error", req_message="get /healthcheck")
     audit.metrics_start("test /healthcheck")
     time.sleep(0.2)
     audit.error("error from test_healthcheck_with_error")
@@ -373,13 +393,14 @@ def test_healthcheck_with_error():
     if audit.is_success():
         audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
     audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
-    audit.metrics("test /healthcheck")
+    audit.metrics("test /healthcheck", targetEntity="test_healthcheck_with_error")
 
     health = Audit.health()
     audit.audit_done(result=json.dumps(health))
 
     Settings.logger.info("healthcheck: %s", json.dumps(health))
     assert bool(health)
+
 
 @pytest.mark.usefixtures("fix_pdp_post")
 class WebServerTest(CPWebCase):
@@ -456,7 +477,8 @@ class WebServerTest(CPWebCase):
     def test_zzz_policy_updates_and_catch_ups(self):
         """test run policy handler with policy updates and catchups"""
         Settings.logger.info("start policy_updates_and_catch_ups")
-        audit = Audit(req_message="start policy_updates_and_catch_ups")
+        audit = Audit(job_name="test_zzz_policy_updates_and_catch_ups",
+                      req_message="start policy_updates_and_catch_ups")
         PolicyReceiver.run(audit)
 
         Settings.logger.info("sleep before send_notification...")
@@ -476,7 +498,8 @@ class WebServerTest(CPWebCase):
     def test_zzz_catch_up_on_deploy_handler_changed(self):
         """test run policy handler with deployment-handler changed underneath"""
         Settings.logger.info("start zzz_catch_up_on_deploy_handler_changed")
-        audit = Audit(req_message="start zzz_catch_up_on_deploy_handler_changed")
+        audit = Audit(job_name="test_zzz_catch_up_on_deploy_handler_changed",
+                      req_message="start zzz_catch_up_on_deploy_handler_changed")
         PolicyReceiver.run(audit)
 
         Settings.logger.info("sleep before send_notification...")
@@ -503,7 +526,7 @@ class WebServerTest(CPWebCase):
     def test_zzz_get_catch_up(self):
         """test /catch_up"""
         Settings.logger.info("start /catch_up")
-        audit = Audit(req_message="start /catch_up")
+        audit = Audit(job_name="test_zzz_get_catch_up", req_message="start /catch_up")
         PolicyReceiver.run(audit)
         time.sleep(5)
         result = self.getPage("/catch_up")
@@ -524,7 +547,7 @@ class WebServerTest(CPWebCase):
     def test_zzzzz_shutdown(self):
         """test shutdown"""
         Settings.logger.info("start shutdown")
-        audit = Audit(req_message="start shutdown")
+        audit = Audit(job_name="test_zzzzz_shutdown", req_message="start shutdown")
         PolicyReceiver.run(audit)
 
         Settings.logger.info("sleep before send_notification...")

@@ -56,7 +56,8 @@ class _PolicyWeb(object):
     def policy_latest(self, policy_id):
         """retireves the latest policy identified by policy_id"""
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
-        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+        audit = Audit(job_name="get_latest_policy",
+                      req_message=req_info, headers=cherrypy.request.headers)
         PolicyWeb.logger.info("%s policy_id=%s headers=%s", \
             req_info, policy_id, json.dumps(cherrypy.request.headers))
 
@@ -74,7 +75,8 @@ class _PolicyWeb(object):
     def _get_all_policies_latest(self):
         """retireves all the latest policies on GET /policies_latest"""
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
-        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+        audit = Audit(job_name="get_all_policies_latest",
+                      req_message=req_info, headers=cherrypy.request.headers)
 
         PolicyWeb.logger.info("%s", req_info)
 
@@ -146,7 +148,8 @@ class _PolicyWeb(object):
         str_policy_filter = json.dumps(policy_filter)
 
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
-        audit = Audit(req_message="{0}: {1}".format(req_info, str_policy_filter), \
+        audit = Audit(job_name="get_latest_policies",
+                      req_message="{0}: {1}".format(req_info, str_policy_filter), \
             headers=cherrypy.request.headers)
         PolicyWeb.logger.info("%s: policy_filter=%s headers=%s", \
             req_info, str_policy_filter, json.dumps(cherrypy.request.headers))
@@ -168,7 +171,7 @@ class _PolicyWeb(object):
         """catch up with all DCAE policies"""
         started = str(datetime.now())
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
-        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+        audit = Audit(job_name="catch_up", req_message=req_info, headers=cherrypy.request.headers)
 
         PolicyWeb.logger.info("%s", req_info)
         PolicyReceiver.catch_up(audit)
@@ -182,7 +185,7 @@ class _PolicyWeb(object):
     def shutdown(self):
         """Shutdown the policy-handler"""
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
-        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+        audit = Audit(job_name="shutdown", req_message=req_info, headers=cherrypy.request.headers)
 
         PolicyWeb.logger.info("%s: --- stopping REST API of policy-handler ---", req_info)
 
@@ -203,7 +206,8 @@ class _PolicyWeb(object):
     def healthcheck(self):
         """returns the healthcheck results"""
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
-        audit = Audit(req_message=req_info, headers=cherrypy.request.headers)
+        audit = Audit(job_name="healthcheck",
+                      req_message=req_info, headers=cherrypy.request.headers)
 
         PolicyWeb.logger.info("%s", req_info)
 

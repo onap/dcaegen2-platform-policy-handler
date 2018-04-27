@@ -136,8 +136,9 @@ class _PolicyReceiver(Thread):
             )
             return
 
-        audit = Audit(req_message="policy-notification - updated[{0}], removed[{1}]" \
-                        .format(len(policies_updated), len(policies_removed)))
+        audit = Audit(job_name="policy_update",
+                      req_message="policy-notification - updated[{0}], removed[{1}]"
+                      .format(len(policies_updated), len(policies_removed)))
         audit.retry_get_config = True
         self._policy_updater.enqueue(audit, policies_updated, policies_removed)
 

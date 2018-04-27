@@ -47,7 +47,7 @@ class PolicyUpdater(Thread):
         self._aud_shutdown = None
         self._aud_catch_up = None
 
-        catch_up_config = Config.config.get("catch_up", {})
+        catch_up_config = Config.config.get(CATCH_UP, {})
         self._catch_up_interval = catch_up_config.get("interval") or 15*60
         self._catch_up_max_skips = catch_up_config.get("max_skips") or 3
         self._catch_up_skips = 0
@@ -120,8 +120,10 @@ class PolicyUpdater(Thread):
         """need to bring the latest policies to DCAE-Controller"""
         with self._lock:
             self._aud_catch_up = audit or Audit(req_message=AUTO_CATCH_UP)
-            PolicyUpdater._logger.info("catch_up %s request_id %s",
-                self._aud_catch_up.req_message, self._aud_catch_up.request_id)
+            PolicyUpdater._logger.info(
+                "catch_up %s request_id %s",
+                self._aud_catch_up.req_message, self._aud_catch_up.request_id
+            )
 
         self.enqueue()
 
@@ -131,8 +133,8 @@ class PolicyUpdater(Thread):
             return
 
         if self._catch_up_timer:
-            self._catch_up_timer.next()
             self._logger.info("next step catch_up_timer in %s", self._catch_up_interval)
+            self._catch_up_timer.next()
             return
 
         self._catch_up_timer = StepTimer(
@@ -142,8 +144,8 @@ class PolicyUpdater(Thread):
             PolicyUpdater._logger,
             self
         )
-        self._catch_up_timer.start()
         self._logger.info("started catch_up_timer in %s", self._catch_up_interval)
+        self._catch_up_timer.start()
 
     def _pause_catch_up_timer(self):
         """pause catch_up_timer"""

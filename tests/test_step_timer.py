@@ -20,7 +20,6 @@
 
 import json
 import logging
-import sys
 import time
 from datetime import datetime
 
@@ -28,6 +27,7 @@ from policyhandler.config import Config
 from policyhandler.step_timer import StepTimer
 
 Config.load_from_file()
+
 
 class MockTimer(object):
     """testing step_timer"""
@@ -131,8 +131,9 @@ class MockTimer(object):
             str(self.status_ts), str(self.exe_ts)
         )
         if self.step_timer:
-            return "{0}: {1}".format(status, self.step_timer.get_status())
+            return "{0}: {1}".format(status, self.step_timer.get_timer_status())
         return status
+
 
 def test_step_timer():
     """test step_timer"""
@@ -160,6 +161,7 @@ def test_step_timer():
         step_timer.run_timer()
         time.sleep(3 * step_timer.interval)
         step_timer.verify_last_event()
+
 
 def test_interrupt_step_timer():
     """test step_timer"""
