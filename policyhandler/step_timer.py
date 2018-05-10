@@ -18,6 +18,7 @@
 
 """periodically callback"""
 
+import json
 from datetime import datetime
 from threading import Event, RLock, Thread
 
@@ -51,11 +52,11 @@ class StepTimer(Thread):
         self._request = StepTimer.INIT
         self._req_count = 0
         self._req_time = 0
-        self._req_ts = datetime.now()
+        self._req_ts = datetime.utcnow()
 
         self._substep = None
         self._substep_time = 0
-        self._substep_ts = datetime.now()
+        self._substep_ts = datetime.utcnow()
 
     def get_timer_status(self):
         """returns timer status"""
@@ -104,9 +105,9 @@ class StepTimer(Thread):
 
             prev_req = self._request
             self._request = request
-            now = datetime.now()
-            self._req_time = (now - self._req_ts).total_seconds()
-            self._req_ts = now
+            utcnow = datetime.utcnow()
+            self._req_time = (utcnow - self._req_ts).total_seconds()
+            self._req_ts = utcnow
             self._logger.info("{0}[{1}] {2}->{3}".format(
                 self.name, self._req_time, prev_req, self.get_timer_status()))
 
@@ -114,9 +115,9 @@ class StepTimer(Thread):
         """log exe step"""
         with self._lock:
             self._substep = substep
-            now = datetime.now()
-            self._substep_time = (now - self._substep_ts).total_seconds()
-            self._substep_ts = now
+            utcnow = datetime.utcnow()
+            self._substep_time = (utcnow - self._substep_ts).total_seconds()
+            self._substep_ts = utcnow
             self._logger.info("[{0}] {1}".format(self._substep_time, self.get_timer_status()))
 
     def run(self):
@@ -147,8 +148,14 @@ class StepTimer(Thread):
             if self._paused:
                 self._timer_substep("paused - skip on_time event")
             else:
-                self._timer_substep("on_time event")
-                self._on_time(*self._args, **self._kwargs)
+                try:
+                    self._timer_substep("on_time event")
+                    self._on_time(*self._args, **self._kwargs)
+                except Exception as ex:
+                    error_msg = ("{0}: crash {1} {2} at {3}: args({4}), kwargs({5})"
+                                 .format(self.name, type(ex).__name__, str(ex), "_on_time",
+                                         json.dumps(self._args), json.dumps(self._kwargs)))
+                    self._logger.exception(error_msg)
 
             self._timer_substep("waiting for next...")
             self._next.wait()

@@ -169,7 +169,7 @@ class _PolicyWeb(object):
     @cherrypy.tools.json_out()
     def catch_up(self):
         """catch up with all DCAE policies"""
-        started = str(datetime.now())
+        started = str(datetime.utcnow())
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
         audit = Audit(job_name="catch_up", req_message=req_info, headers=cherrypy.request.headers)
 
@@ -193,11 +193,10 @@ class _PolicyWeb(object):
 
         PolicyReceiver.shutdown(audit)
 
-        health = json.dumps(Audit.health())
-        audit.info("policy_handler health: {0}".format(health))
-        PolicyWeb.logger.info("policy_handler health: %s", health)
+        PolicyWeb.logger.info("policy_handler health: {0}"
+                              .format(json.dumps(audit.health(full=True))))
         PolicyWeb.logger.info("%s: --------- the end -----------", req_info)
-        res = str(datetime.now())
+        res = str(datetime.utcnow())
         audit.info_requested(res)
         return "goodbye! shutdown requested {0}".format(res)
 
@@ -211,7 +210,7 @@ class _PolicyWeb(object):
 
         PolicyWeb.logger.info("%s", req_info)
 
-        res = Audit.health()
+        res = audit.health()
 
         PolicyWeb.logger.info("healthcheck %s: res=%s", req_info, json.dumps(res))
 

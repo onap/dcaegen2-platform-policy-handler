@@ -47,7 +47,7 @@ class MockTimer(object):
         self.step_timer = None
         self.status = None
         self.run_counter = 0
-        self.status_ts = datetime.now()
+        self.status_ts = datetime.utcnow()
         self.exe_ts = None
         self.exe_interval = None
         self.set_status(MockTimer.INIT)
@@ -62,7 +62,7 @@ class MockTimer(object):
 
     def on_time(self, *args, **kwargs):
         """timer event"""
-        self.exe_ts = datetime.now()
+        self.exe_ts = datetime.utcnow()
         self.exe_interval = (self.exe_ts - self.status_ts).total_seconds()
         MockTimer.logger.info("run on_time[%s] (%s, %s) in %s for %s",
             self.run_counter, json.dumps(args), json.dumps(kwargs),
@@ -119,9 +119,9 @@ class MockTimer(object):
             self.run_counter += 1
 
         self.status = status
-        now = datetime.now()
-        time_step = (now - self.status_ts).total_seconds()
-        self.status_ts = now
+        utcnow = datetime.utcnow()
+        time_step = (utcnow - self.status_ts).total_seconds()
+        self.status_ts = utcnow
         MockTimer.logger.info("%s: %s", time_step, self.get_status())
 
     def get_status(self):

@@ -36,7 +36,7 @@ from policyhandler.config import Config
 from policyhandler.deploy_handler import DeployHandler
 from policyhandler.discovery import DiscoveryClient
 from policyhandler.onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit,
-                                      AuditHttpCode)
+                                      AuditHttpCode, Metrics)
 from policyhandler.policy_consts import (ERRORED_POLICIES, ERRORED_SCOPES,
                                          LATEST_POLICIES, POLICY_BODY,
                                          POLICY_CONFIG, POLICY_ID, POLICY_NAME,
@@ -235,15 +235,14 @@ class MonkeyPolicyEngine(object):
 MonkeyPolicyEngine.init()
 
 
-def monkeyed_policy_rest_post(full_path, json=None, headers=None):
-    """monkeypatch for the POST to policy-engine"""
-    res_json = MonkeyPolicyEngine.get_config(json.get(POLICY_NAME))
-    return MonkeyedResponse(full_path, res_json, json, headers)
-
-
 @pytest.fixture()
 def fix_pdp_post(monkeypatch):
     """monkeyed request /getConfig to PDP"""
+    def monkeyed_policy_rest_post(full_path, json=None, headers=None):
+        """monkeypatch for the POST to policy-engine"""
+        res_json = MonkeyPolicyEngine.get_config(json.get(POLICY_NAME))
+        return MonkeyedResponse(full_path, res_json, json, headers)
+
     Settings.logger.info("setup fix_pdp_post")
     PolicyRest._lazy_init()
     monkeypatch.setattr('policyhandler.policy_rest.PolicyRest._requests_session.post',
@@ -251,10 +250,49 @@ def fix_pdp_post(monkeypatch):
     yield fix_pdp_post  # provide the fixture value
     Settings.logger.info("teardown fix_pdp_post")
 
+class MockException(Exception):
+    """mock exception"""
+    pass
+
+
+@pytest.fixture()
+def fix_pdp_post_boom(monkeypatch):
+    """monkeyed request /getConfig to PDP - exception"""
+    def monkeyed_policy_rest_post_boom(full_path, json=None, headers=None):
+        """monkeypatch for the POST to policy-engine"""
+        raise MockException("fix_pdp_post_boom")
+
+    Settings.logger.info("setup fix_pdp_post_boom")
+    PolicyRest._lazy_init()
+    monkeypatch.setattr('policyhandler.policy_rest.PolicyRest._requests_session.post',
+                        monkeyed_policy_rest_post_boom)
+    yield fix_pdp_post_boom
+    Settings.logger.info("teardown fix_pdp_post_boom")
+
+@staticmethod
+def monkeyed_boom(*args, **kwargs):
+    """monkeypatch for the select_latest_policies"""
+    raise MockException("monkeyed_boom")
+
+@pytest.fixture()
+def fix_select_latest_policies_boom(monkeypatch):
+    """monkeyed exception"""
+
+    Settings.logger.info("setup fix_select_latest_policies_boom")
+    monkeypatch.setattr('policyhandler.policy_utils.PolicyUtils.select_latest_policies',
+                        monkeyed_boom)
+    monkeypatch.setattr('policyhandler.policy_utils.PolicyUtils.select_latest_policy',
+                        monkeyed_boom)
+    monkeypatch.setattr('policyhandler.policy_utils.PolicyUtils.extract_policy_id',
+                        monkeyed_boom)
+
+    yield fix_select_latest_policies_boom
+    Settings.logger.info("teardown fix_select_latest_policies_boom")
 
 def monkeyed_deploy_handler(full_path, json=None, headers=None):
     """monkeypatch for deploy_handler"""
-    return MonkeyedResponse(full_path,
+    return MonkeyedResponse(
+        full_path,
         {"server_instance_uuid": Settings.deploy_handler_instance_uuid},
         json, headers
     )
@@ -368,12 +406,14 @@ def test_get_policy_latest(fix_pdp_post):
 
 def test_healthcheck():
     """test /healthcheck"""
-    audit = Audit(job_name="test_healthcheck", req_message="get /healthcheck")
-    audit.metrics_start("test /healthcheck")
+    audit = Audit(job_name="test_healthcheck",
+                  req_message="get /healthcheck")
+    metrics = Metrics(aud_parent=audit, targetEntity="test_healthcheck")
+    metrics.metrics_start("test /healthcheck")
     time.sleep(0.1)
 
-    audit.metrics("test /healthcheck", targetEntity="test_healthcheck")
-    health = Audit.health()
+    metrics.metrics("test /healthcheck")
+    health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
     Settings.logger.info("healthcheck: %s", json.dumps(health))
@@ -382,8 +422,10 @@ def test_healthcheck():
 
 def test_healthcheck_with_error():
     """test /healthcheck"""
-    audit = Audit(job_name="test_healthcheck_with_error", req_message="get /healthcheck")
-    audit.metrics_start("test /healthcheck")
+    audit = Audit(job_name="test_healthcheck_with_error",
+                  req_message="get /healthcheck")
+    metrics = Metrics(aud_parent=audit, targetEntity="test_healthcheck_with_error")
+    metrics.metrics_start("test /healthcheck")
     time.sleep(0.2)
     audit.error("error from test_healthcheck_with_error")
     audit.fatal("fatal from test_healthcheck_with_error")
@@ -393,9 +435,9 @@ def test_healthcheck_with_error():
     if audit.is_success():
         audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
     audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
-    audit.metrics("test /healthcheck", targetEntity="test_healthcheck_with_error")
+    metrics.metrics("test /healthcheck")
 
-    health = Audit.health()
+    health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
     Settings.logger.info("healthcheck: %s", json.dumps(health))
@@ -431,6 +473,9 @@ class WebServerTest(CPWebCase):
         Settings.logger.info("expected_policy: %s", json.dumps(expected_policy))
         assert Utils.are_the_same(policy_latest, expected_policy)
 
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
     def test_web_all_policies_latest(self):
         """test GET /policies_latest"""
         expected_policies = MonkeyPolicyEngine.gen_all_policies_latest()
@@ -448,6 +493,9 @@ class WebServerTest(CPWebCase):
         Settings.logger.info("policies_latest: %s", json.dumps(policies_latest))
         Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))
         assert Utils.are_the_same(policies_latest, expected_policies)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
 
     def test_web_policies_latest(self):
         """test POST /policies_latest with policyName"""
@@ -473,6 +521,9 @@ class WebServerTest(CPWebCase):
         Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))
         assert Utils.are_the_same(policies_latest, expected_policies)
 
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
     @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
     def test_zzz_policy_updates_and_catch_ups(self):
         """test run policy handler with policy updates and catchups"""
@@ -490,6 +541,9 @@ class WebServerTest(CPWebCase):
 
         Settings.logger.info("sleep 30 before shutdown...")
         time.sleep(30)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
 
         PolicyReceiver.shutdown(audit)
         time.sleep(1)
@@ -519,6 +573,9 @@ class WebServerTest(CPWebCase):
         Settings.logger.info("sleep 5 before shutdown...")
         time.sleep(5)
 
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
         PolicyReceiver.shutdown(audit)
         time.sleep(1)
 
@@ -536,6 +593,9 @@ class WebServerTest(CPWebCase):
 
         Settings.logger.info("sleep 5 before shutdown...")
         time.sleep(5)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
 
         PolicyReceiver.shutdown(audit)
         time.sleep(1)
@@ -556,6 +616,326 @@ class WebServerTest(CPWebCase):
         MonkeyedWebSocket.send_notification([1, 3, 5])
         Settings.logger.info("sleep after send_notification...")
         time.sleep(3)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        Settings.logger.info("shutdown...")
+        result = self.getPage("/shutdown")
+        Settings.logger.info("shutdown result: %s", result)
+        self.assertStatus('200 OK')
+        Settings.logger.info("got shutdown: %s", self.body)
+        time.sleep(1)
+
+@pytest.mark.usefixtures("fix_pdp_post_boom")
+class WebServerPDPBoomTest(CPWebCase):
+    """testing the web-server - runs tests in alphabetical order of method names"""
+    def setup_server():
+        """setup the web-server"""
+        cherrypy.tree.mount(_PolicyWeb(), '/')
+
+    setup_server = staticmethod(setup_server)
+
+    def test_web_healthcheck(self):
+        """test /healthcheck"""
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+        Settings.logger.info("got healthcheck: %s", self.body)
+        self.assertStatus('200 OK')
+
+    def test_web_policy_latest(self):
+        """test /policy_latest/<policy-id>"""
+        policy_id, _ = MonkeyPolicyEngine.gen_policy_latest(3)
+
+        self.getPage("/policy_latest/{0}".format(policy_id or ""))
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+    def test_web_all_policies_latest(self):
+        """test GET /policies_latest"""
+        result = self.getPage("/policies_latest")
+        Settings.logger.info("result: %s", result)
+        Settings.logger.info("body: %s", self.body)
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+    def test_web_policies_latest(self):
+        """test POST /policies_latest with policyName"""
+        match_to_policy_name = Config.config["scope_prefixes"][0] + "amet.*"
+
+        body = json.dumps({POLICY_NAME: match_to_policy_name})
+        result = self.getPage("/policies_latest", method='POST',
+                              body=body,
+                              headers=[
+                                  (REQUEST_X_ECOMP_REQUESTID, str(uuid.uuid4())),
+                                  ("Content-Type", "application/json"),
+                                  ('Content-Length', str(len(body)))
+                              ])
+        Settings.logger.info("result: %s", result)
+        Settings.logger.info("body: %s", self.body)
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+    @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
+    def test_zzz_policy_updates_and_catch_ups(self):
+        """test run policy handler with policy updates and catchups"""
+        Settings.logger.info("start policy_updates_and_catch_ups")
+        audit = Audit(job_name="test_zzz_policy_updates_and_catch_ups",
+                      req_message="start policy_updates_and_catch_ups")
+        PolicyReceiver.run(audit)
+
+        Settings.logger.info("sleep before send_notification...")
+        time.sleep(2)
+
+        MonkeyedWebSocket.send_notification([1, 3, 5])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        Settings.logger.info("sleep 30 before shutdown...")
+        time.sleep(30)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        PolicyReceiver.shutdown(audit)
+        time.sleep(1)
+
+    @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
+    def test_zzz_catch_up_on_deploy_handler_changed(self):
+        """test run policy handler with deployment-handler changed underneath"""
+        Settings.logger.info("start zzz_catch_up_on_deploy_handler_changed")
+        audit = Audit(job_name="test_zzz_catch_up_on_deploy_handler_changed",
+                      req_message="start zzz_catch_up_on_deploy_handler_changed")
+        PolicyReceiver.run(audit)
+
+        Settings.logger.info("sleep before send_notification...")
+        time.sleep(2)
+
+        MonkeyedWebSocket.send_notification([1])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        Settings.deploy_handler_instance_uuid = str(uuid.uuid4())
+        Settings.logger.info("new deploy-handler uuid=%s", Settings.deploy_handler_instance_uuid)
+
+        MonkeyedWebSocket.send_notification([2, 4])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        Settings.logger.info("sleep 5 before shutdown...")
+        time.sleep(5)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        PolicyReceiver.shutdown(audit)
+        time.sleep(1)
+
+    @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
+    def test_zzz_get_catch_up(self):
+        """test /catch_up"""
+        Settings.logger.info("start /catch_up")
+        audit = Audit(job_name="test_zzz_get_catch_up", req_message="start /catch_up")
+        PolicyReceiver.run(audit)
+        time.sleep(5)
+        result = self.getPage("/catch_up")
+        Settings.logger.info("catch_up result: %s", result)
+        self.assertStatus('200 OK')
+        Settings.logger.info("got catch_up: %s", self.body)
+
+        Settings.logger.info("sleep 5 before shutdown...")
+        time.sleep(5)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        PolicyReceiver.shutdown(audit)
+        time.sleep(1)
+
+    @pytest.mark.usefixtures(
+        "fix_deploy_handler",
+        "fix_policy_receiver_websocket",
+        "fix_cherrypy_engine_exit")
+    def test_zzzzz_shutdown(self):
+        """test shutdown"""
+        Settings.logger.info("start shutdown")
+        audit = Audit(job_name="test_zzzzz_shutdown", req_message="start shutdown")
+        PolicyReceiver.run(audit)
+
+        Settings.logger.info("sleep before send_notification...")
+        time.sleep(2)
+
+        MonkeyedWebSocket.send_notification([1, 3, 5])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        Settings.logger.info("shutdown...")
+        result = self.getPage("/shutdown")
+        Settings.logger.info("shutdown result: %s", result)
+        self.assertStatus('200 OK')
+        Settings.logger.info("got shutdown: %s", self.body)
+        time.sleep(1)
+
+
+@pytest.mark.usefixtures("fix_pdp_post", "fix_select_latest_policies_boom")
+class WebServerInternalBoomTest(CPWebCase):
+    """testing the web-server - runs tests in alphabetical order of method names"""
+    def setup_server():
+        """setup the web-server"""
+        cherrypy.tree.mount(_PolicyWeb(), '/')
+
+    setup_server = staticmethod(setup_server)
+
+    def test_web_healthcheck(self):
+        """test /healthcheck"""
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+        Settings.logger.info("got healthcheck: %s", self.body)
+        self.assertStatus('200 OK')
+
+    def test_web_policy_latest(self):
+        """test /policy_latest/<policy-id>"""
+        policy_id, _ = MonkeyPolicyEngine.gen_policy_latest(3)
+
+        self.getPage("/policy_latest/{0}".format(policy_id or ""))
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+    def test_web_all_policies_latest(self):
+        """test GET /policies_latest"""
+        result = self.getPage("/policies_latest")
+        Settings.logger.info("result: %s", result)
+        Settings.logger.info("body: %s", self.body)
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+    def test_web_policies_latest(self):
+        """test POST /policies_latest with policyName"""
+        match_to_policy_name = Config.config["scope_prefixes"][0] + "amet.*"
+
+        body = json.dumps({POLICY_NAME: match_to_policy_name})
+        result = self.getPage("/policies_latest", method='POST',
+                              body=body,
+                              headers=[
+                                  (REQUEST_X_ECOMP_REQUESTID, str(uuid.uuid4())),
+                                  ("Content-Type", "application/json"),
+                                  ('Content-Length', str(len(body)))
+                              ])
+        Settings.logger.info("result: %s", result)
+        Settings.logger.info("body: %s", self.body)
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+    @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
+    def test_zzz_policy_updates_and_catch_ups(self):
+        """test run policy handler with policy updates and catchups"""
+        Settings.logger.info("start policy_updates_and_catch_ups")
+        audit = Audit(job_name="test_zzz_policy_updates_and_catch_ups",
+                      req_message="start policy_updates_and_catch_ups")
+        PolicyReceiver.run(audit)
+
+        Settings.logger.info("sleep before send_notification...")
+        time.sleep(2)
+
+        MonkeyedWebSocket.send_notification([1, 3, 5])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        Settings.logger.info("sleep 30 before shutdown...")
+        time.sleep(30)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        PolicyReceiver.shutdown(audit)
+        time.sleep(1)
+
+    @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
+    def test_zzz_catch_up_on_deploy_handler_changed(self):
+        """test run policy handler with deployment-handler changed underneath"""
+        Settings.logger.info("start zzz_catch_up_on_deploy_handler_changed")
+        audit = Audit(job_name="test_zzz_catch_up_on_deploy_handler_changed",
+                      req_message="start zzz_catch_up_on_deploy_handler_changed")
+        PolicyReceiver.run(audit)
+
+        Settings.logger.info("sleep before send_notification...")
+        time.sleep(2)
+
+        MonkeyedWebSocket.send_notification([1])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        Settings.deploy_handler_instance_uuid = str(uuid.uuid4())
+        Settings.logger.info("new deploy-handler uuid=%s", Settings.deploy_handler_instance_uuid)
+
+        MonkeyedWebSocket.send_notification([2, 4])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        Settings.logger.info("sleep 5 before shutdown...")
+        time.sleep(5)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        PolicyReceiver.shutdown(audit)
+        time.sleep(1)
+
+    @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
+    def test_zzz_get_catch_up(self):
+        """test /catch_up"""
+        Settings.logger.info("start /catch_up")
+        audit = Audit(job_name="test_zzz_get_catch_up", req_message="start /catch_up")
+        PolicyReceiver.run(audit)
+        time.sleep(5)
+        result = self.getPage("/catch_up")
+        Settings.logger.info("catch_up result: %s", result)
+        self.assertStatus('200 OK')
+        Settings.logger.info("got catch_up: %s", self.body)
+
+        Settings.logger.info("sleep 5 before shutdown...")
+        time.sleep(5)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
+
+        PolicyReceiver.shutdown(audit)
+        time.sleep(1)
+
+    @pytest.mark.usefixtures(
+        "fix_deploy_handler",
+        "fix_policy_receiver_websocket",
+        "fix_cherrypy_engine_exit")
+    def test_zzzzz_shutdown(self):
+        """test shutdown"""
+        Settings.logger.info("start shutdown")
+        audit = Audit(job_name="test_zzzzz_shutdown", req_message="start shutdown")
+        PolicyReceiver.run(audit)
+
+        Settings.logger.info("sleep before send_notification...")
+        time.sleep(2)
+
+        MonkeyedWebSocket.send_notification([1, 3, 5])
+        Settings.logger.info("sleep after send_notification...")
+        time.sleep(3)
+
+        result = self.getPage("/healthcheck")
+        Settings.logger.info("healthcheck result: %s", result)
 
         Settings.logger.info("shutdown...")
         result = self.getPage("/shutdown")

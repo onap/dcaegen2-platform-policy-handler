@@ -26,7 +26,7 @@ import requests
 from .config import Config
 from .customize import CustomizerUser
 from .discovery import DiscoveryClient
-from .onap.audit import REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode
+from .onap.audit import REQUEST_X_ECOMP_REQUESTID, AuditHttpCode, Metrics
 
 POOL_SIZE = 1
 
@@ -44,27 +44,27 @@ class DeployHandler(object):
     _server_instance_uuid = None
 
     @staticmethod
-    def _lazy_init(audit):
+    def _lazy_init(audit, rediscover=False):
         """ set static properties """
-        if DeployHandler._lazy_inited:
+        if DeployHandler._lazy_inited and not rediscover:
             return
-        DeployHandler._lazy_inited = True
 
-        DeployHandler._custom_kwargs = CustomizerUser.get_customizer() \
-                                            .get_deploy_handler_kwargs(audit)
-        if not DeployHandler._custom_kwargs \
-        or not isinstance(DeployHandler._custom_kwargs, dict):
+        DeployHandler._custom_kwargs = (CustomizerUser.get_customizer()
+                                        .get_deploy_handler_kwargs(audit))
+        if (not DeployHandler._custom_kwargs
+                or not isinstance(DeployHandler._custom_kwargs, dict)):
             DeployHandler._custom_kwargs = {}
 
-        DeployHandler._requests_session = requests.Session()
-        DeployHandler._requests_session.mount(
-            'https://',
-            requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
-        )
-        DeployHandler._requests_session.mount(
-            'http://',
-            requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
-        )
+        if not DeployHandler._requests_session:
+            DeployHandler._requests_session = requests.Session()
+            DeployHandler._requests_session.mount(
+                'https://',
+                requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
+            )
+            DeployHandler._requests_session.mount(
+                'http://',
+                requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
+            )
 
         config_dh = Config.config.get("deploy_handler")
         if config_dh and isinstance(config_dh, dict):
@@ -77,7 +77,7 @@ class DeployHandler(object):
             DeployHandler._target_entity = config_dh.get("target_entity", "deployment_handler")
             DeployHandler._url = config_dh.get("url")
             DeployHandler._logger.info("dns based routing to %s: url(%s)",
-                DeployHandler._target_entity, DeployHandler._url)
+                                       DeployHandler._target_entity, DeployHandler._url)
 
         if not DeployHandler._url:
             # discover routing to deployment-handler at consul-services
@@ -85,14 +85,18 @@ class DeployHandler(object):
                 # config for policy-handler <= 2.3.1
                 # "deploy_handler" : "deployment_handler"
                 DeployHandler._target_entity = str(config_dh or "deployment_handler")
-            DeployHandler._url = DiscoveryClient.get_service_url(audit, DeployHandler._target_entity)
+            DeployHandler._url = DiscoveryClient.get_service_url(audit,
+                                                                 DeployHandler._target_entity)
 
         DeployHandler._url_policy = str(DeployHandler._url or "") + '/policy'
         DeployHandler._logger.info(
             "got %s policy url(%s)", DeployHandler._target_entity, DeployHandler._url_policy)
 
+        DeployHandler._lazy_inited = bool(DeployHandler._url)
+
+
     @staticmethod
-    def policy_update(audit, message):
+    def policy_update(audit, message, rediscover=False):
         """
         post policy_updated message to deploy-handler
 
@@ -101,10 +105,10 @@ class DeployHandler(object):
         if not message:
             return
 
-        DeployHandler._lazy_init(audit)
-        sub_aud = Audit(aud_parent=audit, targetEntity=DeployHandler._target_entity,
-                        targetServiceName=DeployHandler._url_policy)
-        headers = {REQUEST_X_ECOMP_REQUESTID : sub_aud.request_id}
+        DeployHandler._lazy_init(audit, rediscover)
+        metrics = Metrics(aud_parent=audit, targetEntity=DeployHandler._target_entity,
+                          targetServiceName=DeployHandler._url_policy)
+        headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
 
         msg_str = json.dumps(message)
         headers_str = json.dumps(headers)
@@ -114,14 +118,14 @@ class DeployHandler(object):
         log_data = " msg={0} headers={1}".format(msg_str, headers_str)
         log_line = log_action + log_data
         DeployHandler._logger.info(log_line)
-        sub_aud.metrics_start(log_line)
+        metrics.metrics_start(log_line)
 
         if not DeployHandler._url:
             error_msg = "no url found to {0}".format(log_line)
             DeployHandler._logger.error(error_msg)
-            sub_aud.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
+            metrics.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             audit.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
-            sub_aud.metrics(error_msg)
+            metrics.metrics(error_msg)
             return
 
         res = None
@@ -130,25 +134,30 @@ class DeployHandler(object):
                 DeployHandler._url_policy, json=message, headers=headers,
                 **DeployHandler._custom_kwargs
             )
-        except requests.exceptions.RequestException as ex:
-            error_msg = "failed to {0}: {1}{2}".format(log_action, str(ex), log_data)
+        except Exception as ex:
+            error_code = (AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
+                          if isinstance(ex, requests.exceptions.RequestException)
+                          else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+            error_msg = ("failed to {0} {1}: {2}{3}"
+                         .format(log_action, type(ex).__name__, str(ex), log_data))
             DeployHandler._logger.exception(error_msg)
-            sub_aud.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
-            audit.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
-            sub_aud.metrics(error_msg)
+            metrics.set_http_status_code(error_code)
+            audit.set_http_status_code(error_code)
+            metrics.metrics(error_msg)
             return
 
-        sub_aud.set_http_status_code(res.status_code)
+        metrics.set_http_status_code(res.status_code)
         audit.set_http_status_code(res.status_code)
 
         log_line = "response {0} from {1}: text={2}{3}" \
             .format(res.status_code, log_action, res.text, log_data)
-        sub_aud.metrics(log_line)
-        DeployHandler._logger.info(log_line)
+        metrics.metrics(log_line)
 
         if res.status_code != requests.codes.ok:
+            DeployHandler._logger.error(log_line)
             return
 
+        DeployHandler._logger.info(log_line)
         result = res.json() or {}
         prev_server_instance_uuid = DeployHandler._server_instance_uuid
         DeployHandler._server_instance_uuid = result.get("server_instance_uuid")
@@ -156,9 +165,9 @@ class DeployHandler(object):
         deployment_handler_changed = (prev_server_instance_uuid
             and prev_server_instance_uuid != DeployHandler._server_instance_uuid)
         if deployment_handler_changed:
-            log_line = "deployment_handler_changed: {1} != {0}" \
-                .format(prev_server_instance_uuid, DeployHandler._server_instance_uuid)
-            sub_aud.info(log_line)
+            log_line = ("deployment_handler_changed: {1} != {0}"
+                        .format(prev_server_instance_uuid, DeployHandler._server_instance_uuid))
+            metrics.info(log_line)
             DeployHandler._logger.info(log_line)
 
         return deployment_handler_changed
