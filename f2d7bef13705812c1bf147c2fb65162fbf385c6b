@@ -1,0 +1,8 @@
+Verified+1: ONAP Jobbuilder <onap-jobbuilder@jenkins.onap.org>
+Code-Review+1: Andrew Gauld <ag1282@att.com>
+Code-Review+2: Lusheng Ji <lji@research.att.com>
+Submitted-by: Lusheng Ji <lji@research.att.com>
+Submitted-at: Thu, 10 May 2018 14:31:18 +0000
+Reviewed-on: https://gerrit.onap.org/r/47039
+Project: dcaegen2/platform/policy-handler
+Branch: refs/heads/master
