@@ -236,6 +236,7 @@ class PolicyUpdater(Thread):
 
         PolicyUpdater._logger.info("policy_handler health: %s",
                                    json.dumps(aud_catch_up.health(full=True)))
+        PolicyUpdater._logger.info("process_info: %s", json.dumps(aud_catch_up.process_info()))
         return success
 
 

@@ -26,7 +26,6 @@
 """
 
 import copy
-import gc
 import json
 import os
 import re
@@ -38,10 +37,9 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-import psutil
-
 from .CommonLogger import CommonLogger
 from .health import Health
+from .process_info import ProcessInfo
 
 REQUEST_X_ECOMP_REQUESTID = "X-ECOMP-RequestID"
 REQUEST_REMOTE_ADDR = "Remote-Addr"
@@ -117,58 +115,6 @@ class AuditResponseCode(Enum):
         return response_code.name.lower().replace("_", " ")
 
 
-class ProcessInfo(object):
-    """static class to calculate process info"""
-    _KILO_SYMBOLS = ('KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
-    _KILO_POWERS = {}
-
-    @staticmethod
-    def init():
-        """init static constants"""
-        for i, kilo_symbol in enumerate(ProcessInfo._KILO_SYMBOLS):
-            ProcessInfo._KILO_POWERS[kilo_symbol] = 1 << (i + 1) * 10
-        ProcessInfo._KILO_SYMBOLS = list(reversed(ProcessInfo._KILO_SYMBOLS))
-
-    @staticmethod
-    def bytes_to_human(byte_count):
-        """converts byte count to human value in kilo-powers"""
-        for kilo_symbol in ProcessInfo._KILO_SYMBOLS:
-            kilo_power = ProcessInfo._KILO_POWERS[kilo_symbol]
-            if byte_count >= kilo_power:
-                value = float(byte_count) / kilo_power
-                return '%.1f%s' % (value, kilo_symbol)
-        return "%sB" % byte_count
-
-    @staticmethod
-    def mem_info():
-        """calculates the memory usage of the current process"""
-        process = psutil.Process()
-        with process.oneshot():
-            mem = process.memory_full_info()
-            return {
-                "uss" : ProcessInfo.bytes_to_human(mem.uss),
-                "rss" : ProcessInfo.bytes_to_human(mem.rss),
-                "swap" : ProcessInfo.bytes_to_human(getattr(mem, "swap", 0)),
-                "pss" : ProcessInfo.bytes_to_human(getattr(mem, "pss", 0))
-            }
-
-
-    @staticmethod
-    def gc_info(full=False):
-        """gets info from garbage collector"""
-        gc_info = {
-            "gc_count" : str(gc.get_count()),
-            "gc_threshold" : str(gc.get_threshold())
-        }
-        try:
-            if gc.garbage:
-                gc_info["gc_garbage"] = ([repr(stuck) for stuck in gc.garbage]
-                                         if full else len(gc.garbage))
-        except Exception:
-            pass
-        return gc_info
-
-
 class _Audit(object):
     """put the audit object on stack per each initiating request in the system
 
@@ -226,17 +172,22 @@ class _Audit(object):
                 "started" : str(_Audit._started),
                 "utcnow" : str(utcnow),
                 "uptime" : str(utcnow - _Audit._started),
-                "active_threads" : sorted([thr.name for thr in threading.enumerate()]),
+                "active_threads" : ProcessInfo.active_threads(),
                 "gc" : ProcessInfo.gc_info(full),
-                "mem_info" : ProcessInfo.mem_info()
+                "virtual_memory" : ProcessInfo.virtual_memory(),
+                "process_memory" : ProcessInfo.process_memory()
             },
             "stats" : _Audit._health.dump(),
             "soft" : {"python" : _Audit._py_ver, "packages" : _Audit._packages}
         }
-        health_txt = "{} health: {}".format(_Audit._service_name, json.dumps(health))
-        self.info(health_txt)
+        self.info("{} health: {}".format(_Audit._service_name, json.dumps(health)))
         return health
 
+    def process_info(self):
+        """get the debug info on all the threads and memory"""
+        process_info = ProcessInfo.get_all()
+        self.info("{} process_info: {}".format(_Audit._service_name, json.dumps(process_info)))
+        return process_info
 
     def __init__(self, job_name=None, request_id=None, req_message=None, **kwargs):
         """create audit object per each request in the system
