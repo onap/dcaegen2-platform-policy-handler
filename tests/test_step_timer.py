@@ -29,7 +29,7 @@ from policyhandler.step_timer import StepTimer
 Config.load_from_file()
 
 
-class MockTimer(object):
+class MockTimerController(object):
     """testing step_timer"""
     logger = logging.getLogger("policy_handler.unit_test.step_timer")
 
@@ -50,7 +50,7 @@ class MockTimer(object):
         self.status_ts = datetime.utcnow()
         self.exe_ts = None
         self.exe_interval = None
-        self.set_status(MockTimer.INIT)
+        self.set_status(MockTimerController.INIT)
 
     def __enter__(self):
         """constructor"""
@@ -64,65 +64,66 @@ class MockTimer(object):
         """timer event"""
         self.exe_ts = datetime.utcnow()
         self.exe_interval = (self.exe_ts - self.status_ts).total_seconds()
-        MockTimer.logger.info("run on_time[%s] (%s, %s) in %s for %s",
-            self.run_counter, json.dumps(args), json.dumps(kwargs),
-            self.exe_interval, self.get_status())
+        MockTimerController.logger.info("run on_time[%s] (%s, %s) in %s for %s",
+                                        self.run_counter, json.dumps(args), json.dumps(kwargs),
+                                        self.exe_interval, self.get_status())
         time.sleep(3)
-        MockTimer.logger.info("done on_time[%s] (%s, %s) in %s for %s",
-            self.run_counter, json.dumps(args), json.dumps(kwargs),
-            self.exe_interval, self.get_status())
+        MockTimerController.logger.info("done on_time[%s] (%s, %s) in %s for %s",
+                                        self.run_counter, json.dumps(args), json.dumps(kwargs),
+                                        self.exe_interval, self.get_status())
 
     def verify_last_event(self):
         """assertions needs to be in the main thread"""
         if self.exe_interval is None:
-            MockTimer.logger.info("not executed: %s", self.get_status())
+            MockTimerController.logger.info("not executed: %s", self.get_status())
             return
 
-        MockTimer.logger.info("verify exe %s for %s", self.exe_interval, self.get_status())
+        MockTimerController.logger.info("verify exe %s for %s",
+                                        self.exe_interval, self.get_status())
         assert self.exe_interval >= self.interval
         assert self.exe_interval < 2 * self.interval
-        MockTimer.logger.info("success %s", self.get_status())
+        MockTimerController.logger.info("success %s", self.get_status())
 
     def run_timer(self):
         """create and start the step_timer"""
         if self.step_timer:
             self.step_timer.next()
-            self.set_status(MockTimer.NEXT)
+            self.set_status(MockTimerController.NEXT)
             return
 
         self.step_timer = StepTimer(
-            self.name, self.interval, MockTimer.on_time,
-            MockTimer.logger,
+            self.name, self.interval, MockTimerController.on_time,
+            MockTimerController.logger,
             self
         )
         self.step_timer.start()
-        self.set_status(MockTimer.STARTED)
+        self.set_status(MockTimerController.STARTED)
 
     def pause_timer(self):
         """pause step_timer"""
         if self.step_timer:
             self.step_timer.pause()
-            self.set_status(MockTimer.PAUSED)
+            self.set_status(MockTimerController.PAUSED)
 
     def stop_timer(self):
         """stop step_timer"""
         if self.step_timer:
-            self.set_status(MockTimer.STOPPING)
+            self.set_status(MockTimerController.STOPPING)
             self.step_timer.stop()
             self.step_timer.join()
             self.step_timer = None
-            self.set_status(MockTimer.STOPPED)
+            self.set_status(MockTimerController.STOPPED)
 
     def set_status(self, status):
         """set the status of the timer"""
-        if status in [MockTimer.NEXT, MockTimer.STARTED]:
+        if status in [MockTimerController.NEXT, MockTimerController.STARTED]:
             self.run_counter += 1
 
         self.status = status
         utcnow = datetime.utcnow()
         time_step = (utcnow - self.status_ts).total_seconds()
         self.status_ts = utcnow
-        MockTimer.logger.info("%s: %s", time_step, self.get_status())
+        MockTimerController.logger.info("[%s]: %s", time_step, self.get_status())
 
     def get_status(self):
         """string representation"""
@@ -137,8 +138,8 @@ class MockTimer(object):
 
 def test_step_timer():
     """test step_timer"""
-    MockTimer.logger.info("============ test_step_timer =========")
-    with MockTimer("step_timer", 5) as step_timer:
+    MockTimerController.logger.info("============ test_step_timer =========")
+    with MockTimerController("step_timer", 5) as step_timer:
         step_timer.run_timer()
         time.sleep(1)
         step_timer.verify_last_event()
@@ -165,8 +166,8 @@ def test_step_timer():
 
 def test_interrupt_step_timer():
     """test step_timer"""
-    MockTimer.logger.info("============ test_interrupt_step_timer =========")
-    with MockTimer("step_timer", 5) as step_timer:
+    MockTimerController.logger.info("============ test_interrupt_step_timer =========")
+    with MockTimerController("step_timer", 5) as step_timer:
         step_timer.run_timer()
         time.sleep(1)
         step_timer.verify_last_event()

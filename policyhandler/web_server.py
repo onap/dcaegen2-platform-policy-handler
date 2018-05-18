@@ -198,6 +198,7 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("%s: --------- the end -----------", req_info)
         res = str(datetime.utcnow())
         audit.info_requested(res)
+        PolicyWeb.logger.info("process_info: %s", json.dumps(audit.process_info()))
         return "goodbye! shutdown requested {0}".format(res)
 
     @cherrypy.expose

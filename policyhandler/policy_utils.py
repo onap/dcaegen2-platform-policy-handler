@@ -134,7 +134,8 @@ class Utils(object):
         try:
             return json.loads(json_str)
         except (ValueError, TypeError) as err:
-            Utils._logger.warn("unexpected json %s: %s", str(json_str), str(err))
+            Utils._logger.warn("unexpected json error(%s): len(%s) str[:100]: (%s)",
+                               str(err), len(json_str), str(json_str)[:100])
         return json_str
 
     @staticmethod

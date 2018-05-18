@@ -1,5 +1,4 @@
 {
-    "version" : "2.4.3",
     "wservice_port" : 25577,
     "policy_handler" : {
         "system" : "policy_handler"

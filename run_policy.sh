@@ -29,13 +29,19 @@ cat /etc/hosts | tee -a ${LOG_FILE}
 python -m policyhandler/policy_handler >> ${LOG_FILE} 2>&1 &
 PID=$!
 
-echo "running policy_handler as" ${PID} "log" ${LOG_FILE} | tee -a ${LOG_FILE}
 function finish {
   echo "killing policy_handler ${PID}" $(date +%Y_%m%d-%H:%M:%S.%N) | tee -a ${LOG_FILE}
   kill -9 ${PID}
   echo "killed policy_handler ${PID}" $(date +%Y_%m%d-%H:%M:%S.%N)  | tee -a ${LOG_FILE}
 }
 trap finish SIGHUP SIGINT SIGTERM
+
+echo "running policy_handler as" ${PID} "log" ${LOG_FILE} | tee -a ${LOG_FILE}
+uname -a  | tee -a ${LOG_FILE}
+free -h  | tee -a ${LOG_FILE}
+df -h    | tee -a ${LOG_FILE}
+ps afxvw | tee -a ${LOG_FILE}
+ss -aepi | tee -a ${LOG_FILE}
 
 wait ${PID}
 echo "---------------------------------------------" >> ${LOG_FILE} 2>&1
