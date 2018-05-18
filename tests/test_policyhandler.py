@@ -20,15 +20,12 @@
 
 import copy
 import json
-import logging
 import re
-import subprocess
-import sys
 import time
 import uuid
-from datetime import datetime
 
 import pytest
+
 import cherrypy
 from cherrypy.test.helper import CPWebCase
 
@@ -36,23 +33,21 @@ from policyhandler.config import Config
 from policyhandler.deploy_handler import DeployHandler
 from policyhandler.discovery import DiscoveryClient
 from policyhandler.onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit,
-                                      AuditHttpCode, Metrics)
+                                      AuditHttpCode)
 from policyhandler.policy_consts import (ERRORED_POLICIES, ERRORED_SCOPES,
                                          LATEST_POLICIES, POLICY_BODY,
                                          POLICY_CONFIG, POLICY_ID, POLICY_NAME,
                                          POLICY_VERSION, SCOPE_PREFIXES)
-from policyhandler.policy_handler import LogWriter
 from policyhandler.policy_receiver import (LOADED_POLICIES, POLICY_VER,
                                            REMOVED_POLICIES, PolicyReceiver)
 from policyhandler.policy_rest import PolicyRest
 from policyhandler.policy_utils import PolicyUtils, Utils
 from policyhandler.web_server import _PolicyWeb
 
-try:
-    POLICY_HANDLER_VERSION = subprocess.check_output(["python", "setup.py", "--version"]).strip()
-except subprocess.CalledProcessError:
-    POLICY_HANDLER_VERSION = "2.4.1"
+from .mock_settings import Settings
 
+
+Settings.init()
 
 class MonkeyHttpResponse(object):
     """Monkey http reposne"""
@@ -101,40 +96,6 @@ def fix_discovery(monkeypatch):
     Settings.logger.info("teardown fix_discovery")
 
 
-class Settings(object):
-    """init all locals"""
-    logger = None
-    RUN_TS = datetime.utcnow().isoformat()[:-3] + 'Z'
-    dicovered_config = None
-    deploy_handler_instance_uuid = str(uuid.uuid4())
-
-    @staticmethod
-    def init():
-        """init configs"""
-        Config.load_from_file()
-
-        with open("etc_upload/config.json", 'r') as config_json:
-            Settings.dicovered_config = json.load(config_json)
-
-        Config.load_from_file("etc_upload/config.json")
-
-        Config.config["catch_up"] = {"interval": 10, "max_skips": 2}
-
-        Settings.logger = logging.getLogger("policy_handler.unit_test")
-        sys.stdout = LogWriter(Settings.logger.info)
-        sys.stderr = LogWriter(Settings.logger.error)
-
-        print "print ========== run_policy_handler =========="
-        Settings.logger.info("========== run_policy_handler ==========")
-        Audit.init(Config.get_system_name(), POLICY_HANDLER_VERSION, Config.LOGGER_CONFIG_FILE_PATH)
-
-        Settings.logger.info("starting policy_handler with config:")
-        Settings.logger.info(Audit.log_json_dumps(Config.config))
-
-
-Settings.init()
-
-
 class MonkeyPolicyBody(object):
     """policy body that policy-engine returns"""
     @staticmethod
@@ -169,6 +130,7 @@ class MonkeyPolicyEngine(object):
     """pretend this is the policy-engine"""
     _scope_prefix = Config.config["scope_prefixes"][0]
     LOREM_IPSUM = """Lorem ipsum dolor sit amet consectetur ametist""".split()
+    LONG_TEXT = "0123456789" * 100
     _policies = []
 
     @staticmethod
@@ -192,10 +154,20 @@ class MonkeyPolicyEngine(object):
                 if re.match(policy_name, policy[POLICY_NAME])]
 
     @staticmethod
+    def get_configs_all():
+        """get all policies the way the policy-engine finds"""
+        policies = [copy.deepcopy(policy)
+                    for policy in MonkeyPolicyEngine._policies]
+        for policy in policies:
+            policy["config"] = MonkeyPolicyEngine.LONG_TEXT
+        return policies
+
+    @staticmethod
     def get_policy_id(policy_index):
         """get the policy_id by index"""
-        return MonkeyPolicyEngine._scope_prefix \
-             + MonkeyPolicyEngine.LOREM_IPSUM[policy_index % len(MonkeyPolicyEngine.LOREM_IPSUM)]
+        return (MonkeyPolicyEngine._scope_prefix
+                + MonkeyPolicyEngine.LOREM_IPSUM[
+                    policy_index % len(MonkeyPolicyEngine.LOREM_IPSUM)])
 
     @staticmethod
     def gen_policy_latest(policy_index):
@@ -250,6 +222,23 @@ def fix_pdp_post(monkeypatch):
     yield fix_pdp_post  # provide the fixture value
     Settings.logger.info("teardown fix_pdp_post")
 
+
+@pytest.fixture()
+def fix_pdp_post_big(monkeypatch):
+    """monkeyed request /getConfig to PDP"""
+    def monkeyed_policy_rest_post(full_path, json=None, headers=None):
+        """monkeypatch for the POST to policy-engine"""
+        res_json = MonkeyPolicyEngine.get_configs_all()
+        return MonkeyedResponse(full_path, res_json, json, headers)
+
+    Settings.logger.info("setup fix_pdp_post_big")
+    PolicyRest._lazy_init()
+    monkeypatch.setattr('policyhandler.policy_rest.PolicyRest._requests_session.post',
+                        monkeyed_policy_rest_post)
+    yield fix_pdp_post_big  # provide the fixture value
+    Settings.logger.info("teardown fix_pdp_post_big")
+
+
 class MockException(Exception):
     """mock exception"""
     pass
@@ -289,18 +278,18 @@ def fix_select_latest_policies_boom(monkeypatch):
     yield fix_select_latest_policies_boom
     Settings.logger.info("teardown fix_select_latest_policies_boom")
 
-def monkeyed_deploy_handler(full_path, json=None, headers=None):
-    """monkeypatch for deploy_handler"""
-    return MonkeyedResponse(
-        full_path,
-        {"server_instance_uuid": Settings.deploy_handler_instance_uuid},
-        json, headers
-    )
-
 
 @pytest.fixture()
 def fix_deploy_handler(monkeypatch, fix_discovery):
     """monkeyed discovery request.get"""
+    def monkeyed_deploy_handler(full_path, json=None, headers=None):
+        """monkeypatch for deploy_handler"""
+        return MonkeyedResponse(
+            full_path,
+            {"server_instance_uuid": Settings.deploy_handler_instance_uuid},
+            json, headers
+        )
+
     Settings.logger.info("setup fix_deploy_handler")
     audit = Audit(req_message="fix_deploy_handler")
     DeployHandler._lazy_init(audit)
@@ -308,6 +297,39 @@ def fix_deploy_handler(monkeypatch, fix_discovery):
                         monkeyed_deploy_handler)
     yield fix_deploy_handler  # provide the fixture value
     Settings.logger.info("teardown fix_deploy_handler")
+
+
+@pytest.fixture()
+def fix_deploy_handler_fail(monkeypatch, fix_discovery):
+    """monkeyed failed discovery request.get"""
+    def monkeyed_deploy_handler(full_path, json=None, headers=None):
+        """monkeypatch for deploy_handler"""
+        res = MonkeyedResponse(
+            full_path,
+            {"server_instance_uuid": Settings.deploy_handler_instance_uuid},
+            json, headers
+        )
+        res.status_code = 413
+        return res
+
+    @staticmethod
+    def monkeyed_deploy_handler_init(audit_ignore, rediscover=False):
+        """monkeypatch for deploy_handler init"""
+        DeployHandler._url = None
+
+    Settings.logger.info("setup fix_deploy_handler_fail")
+    config_catch_up = Config.config["catch_up"]
+    Config.config["catch_up"] = {"interval": 1, "max_skips": 0}
+
+    audit = Audit(req_message="fix_deploy_handler_fail")
+    DeployHandler._lazy_init(audit, rediscover=True)
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.post',
+                        monkeyed_deploy_handler)
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._lazy_init',
+                        monkeyed_deploy_handler_init)
+    yield fix_deploy_handler_fail
+    Settings.logger.info("teardown fix_deploy_handler_fail")
+    Config.config["catch_up"] = config_catch_up
 
 
 def monkeyed_cherrypy_engine_exit():
@@ -403,45 +425,6 @@ def test_get_policy_latest(fix_pdp_post):
     Settings.logger.info("policy_latest: %s", json.dumps(policy_latest))
     assert Utils.are_the_same(policy_latest, expected_policy)
 
-
-def test_healthcheck():
-    """test /healthcheck"""
-    audit = Audit(job_name="test_healthcheck",
-                  req_message="get /healthcheck")
-    metrics = Metrics(aud_parent=audit, targetEntity="test_healthcheck")
-    metrics.metrics_start("test /healthcheck")
-    time.sleep(0.1)
-
-    metrics.metrics("test /healthcheck")
-    health = audit.health(full=True)
-    audit.audit_done(result=json.dumps(health))
-
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
-    assert bool(health)
-
-
-def test_healthcheck_with_error():
-    """test /healthcheck"""
-    audit = Audit(job_name="test_healthcheck_with_error",
-                  req_message="get /healthcheck")
-    metrics = Metrics(aud_parent=audit, targetEntity="test_healthcheck_with_error")
-    metrics.metrics_start("test /healthcheck")
-    time.sleep(0.2)
-    audit.error("error from test_healthcheck_with_error")
-    audit.fatal("fatal from test_healthcheck_with_error")
-    audit.debug("debug from test_healthcheck_with_error")
-    audit.warn("debug from test_healthcheck_with_error")
-    audit.info_requested("debug from test_healthcheck_with_error")
-    if audit.is_success():
-        audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
-    audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
-    metrics.metrics("test /healthcheck")
-
-    health = audit.health(full=True)
-    audit.audit_done(result=json.dumps(health))
-
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
-    assert bool(health)
 
 
 @pytest.mark.usefixtures("fix_pdp_post")
@@ -943,3 +926,31 @@ class WebServerInternalBoomTest(CPWebCase):
         self.assertStatus('200 OK')
         Settings.logger.info("got shutdown: %s", self.body)
         time.sleep(1)
+
+
+@pytest.mark.usefixtures(
+    "fix_pdp_post_big",
+    "fix_deploy_handler_fail",
+    "fix_policy_receiver_websocket"
+)
+def test_catch_ups_failed_dh():
+    """test run policy handler with catchups and failed deployment-handler"""
+    Settings.logger.info("start test_catch_ups_failed_dh")
+    audit = Audit(job_name="test_catch_ups_failed_dh",
+                  req_message="start test_catch_ups_failed_dh")
+    PolicyReceiver.run(audit)
+
+    Settings.logger.info("sleep 50 before shutdown...")
+    time.sleep(50)
+
+    health = audit.health(full=True)
+    audit.audit_done(result=json.dumps(health))
+
+    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    assert bool(health)
+
+    PolicyReceiver.shutdown(audit)
+    time.sleep(1)
+
+    health = audit.health(full=True)
+    Settings.logger.info("healthcheck: %s", json.dumps(health))

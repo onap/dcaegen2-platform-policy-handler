@@ -20,20 +20,13 @@
 
 import gc
 import json
-import logging
-import subprocess
-import sys
+import time
 
-from policyhandler.config import Config
-from policyhandler.onap.audit import Audit
-from policyhandler.policy_handler import LogWriter
+from policyhandler.onap.audit import Audit, AuditHttpCode, Metrics
 
-Config.load_from_file()
+from .mock_settings import Settings
 
-try:
-    POLICY_HANDLER_VERSION = subprocess.check_output(["python", "setup.py", "--version"]).strip()
-except subprocess.CalledProcessError:
-    POLICY_HANDLER_VERSION = "2.4.1"
+Settings.init()
 
 class Node(object):
     """making the cycled objects"""
@@ -44,16 +37,49 @@ class Node(object):
         return '%s(%s)' % (self.__class__.__name__, self.name)
 
 
+def test_healthcheck():
+    """test /healthcheck"""
+    audit = Audit(job_name="test_healthcheck",
+                  req_message="get /healthcheck")
+    metrics = Metrics(aud_parent=audit, targetEntity="test_healthcheck")
+    metrics.metrics_start("test /healthcheck")
+    time.sleep(0.1)
+
+    metrics.metrics("test /healthcheck")
+    health = audit.health(full=True)
+    audit.audit_done(result=json.dumps(health))
+
+    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    assert bool(health)
+
+
+def test_healthcheck_with_error():
+    """test /healthcheck"""
+    audit = Audit(job_name="test_healthcheck_with_error",
+                  req_message="get /healthcheck")
+    metrics = Metrics(aud_parent=audit, targetEntity="test_healthcheck_with_error")
+    metrics.metrics_start("test /healthcheck")
+    time.sleep(0.2)
+    audit.error("error from test_healthcheck_with_error")
+    audit.fatal("fatal from test_healthcheck_with_error")
+    audit.debug("debug from test_healthcheck_with_error")
+    audit.warn("debug from test_healthcheck_with_error")
+    audit.info_requested("debug from test_healthcheck_with_error")
+    if audit.is_success():
+        audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
+    audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+    metrics.metrics("test /healthcheck")
+
+    health = audit.health(full=True)
+    audit.audit_done(result=json.dumps(health))
+
+    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    assert bool(health)
+
+
 def test_healthcheck_with_garbage():
     """test /healthcheck"""
-
-    Audit.init(Config.get_system_name(), POLICY_HANDLER_VERSION, Config.LOGGER_CONFIG_FILE_PATH)
-
-
-    logger = logging.getLogger("policy_handler.unit_test_memory")
-    sys.stdout = LogWriter(logger.info)
-    sys.stderr = LogWriter(logger.error)
-
+    gc_found = gc.collect()
     gc.set_debug(gc.DEBUG_LEAK)
 
     node1 = Node("one")
@@ -70,19 +96,22 @@ def test_healthcheck_with_garbage():
     health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
-    logger.info("test_healthcheck_with_garbage[%s]: %s", gc_found, json.dumps(health))
+    Settings.logger.info("test_healthcheck_with_garbage[%s]: %s", gc_found, json.dumps(health))
     assert bool(health)
     assert bool(health.get("runtime", {}).get("gc", {}).get("gc_garbage"))
 
-    logger.info("clearing up garbage...")
+    Settings.logger.info("clearing up garbage...")
     for obj in gc.garbage:
         if isinstance(obj, Node):
-            logger.info("in garbage: %s 0x%x", obj, id(obj))
+            Settings.logger.info("in garbage: %s 0x%x", obj, id(obj))
             obj.next = None
 
     gc_found = gc.collect()
-    health = audit.health(full=True)
-    logger.info("after clear test_healthcheck_with_garbage[%s]: %s", gc_found, json.dumps(health))
-    assert bool(health)
+    Settings.logger.info("after clear test_healthcheck_with_garbage[%s]: %s",
+                         gc_found, json.dumps(audit.health(full=True)))
 
-    gc.set_debug(not gc.DEBUG_LEAK)
+    gc.set_debug(False)
+
+    gc_found = gc.collect()
+    Settings.logger.info("after turned off gc debug test_healthcheck_with_garbage[%s]: %s",
+                         gc_found, json.dumps(audit.health(full=True)))
