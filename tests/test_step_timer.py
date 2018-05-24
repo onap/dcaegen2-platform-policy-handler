@@ -80,7 +80,7 @@ class MockTimerController(object):
 
         MockTimerController.logger.info("verify exe %s for %s",
                                         self.exe_interval, self.get_status())
-        assert self.exe_interval >= self.interval
+        assert self.exe_interval >= (self.interval - 0.01)
         assert self.exe_interval < 2 * self.interval
         MockTimerController.logger.info("success %s", self.get_status())
 

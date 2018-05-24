@@ -46,7 +46,6 @@ from policyhandler.web_server import _PolicyWeb
 
 from .mock_settings import Settings
 
-
 Settings.init()
 
 class MonkeyHttpResponse(object):
@@ -603,12 +602,14 @@ class WebServerTest(CPWebCase):
         result = self.getPage("/healthcheck")
         Settings.logger.info("healthcheck result: %s", result)
 
+        WebServerTest.do_gc_test = False
         Settings.logger.info("shutdown...")
         result = self.getPage("/shutdown")
         Settings.logger.info("shutdown result: %s", result)
         self.assertStatus('200 OK')
         Settings.logger.info("got shutdown: %s", self.body)
         time.sleep(1)
+
 
 @pytest.mark.usefixtures("fix_pdp_post_boom")
 class WebServerPDPBoomTest(CPWebCase):
@@ -761,6 +762,7 @@ class WebServerPDPBoomTest(CPWebCase):
         result = self.getPage("/healthcheck")
         Settings.logger.info("healthcheck result: %s", result)
 
+        WebServerPDPBoomTest.do_gc_test = False
         Settings.logger.info("shutdown...")
         result = self.getPage("/shutdown")
         Settings.logger.info("shutdown result: %s", result)
@@ -920,6 +922,7 @@ class WebServerInternalBoomTest(CPWebCase):
         result = self.getPage("/healthcheck")
         Settings.logger.info("healthcheck result: %s", result)
 
+        WebServerInternalBoomTest.do_gc_test = False
         Settings.logger.info("shutdown...")
         result = self.getPage("/shutdown")
         Settings.logger.info("shutdown result: %s", result)
