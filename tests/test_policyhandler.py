@@ -196,7 +196,7 @@ class MonkeyPolicyEngine(object):
             LATEST_POLICIES:
                 dict((k, v)
                      for k, v in MonkeyPolicyEngine.gen_all_policies_latest()
-                     [LATEST_POLICIES].iteritems()
+                     [LATEST_POLICIES].items()
                      if re.match(match_to_policy_name, k)),
             ERRORED_SCOPES: [],
             ERRORED_POLICIES: {}

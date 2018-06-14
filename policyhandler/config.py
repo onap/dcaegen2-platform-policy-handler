@@ -71,7 +71,7 @@ class Config(object):
         new_config = DiscoveryClient.get_value(discovery_key)
 
         if not new_config or not isinstance(new_config, dict):
-            Config._logger.warn("unexpected config from discovery: %s", new_config)
+            Config._logger.warning("unexpected config from discovery: %s", new_config)
             return
 
         Config._logger.debug("loaded config from discovery(%s): %s", \
@@ -92,7 +92,7 @@ class Config(object):
                 loaded_config = json.load(config_json)
 
         if not loaded_config:
-            Config._logger.warn("config not loaded from file: %s", file_path)
+            Config._logger.warning("config not loaded from file: %s", file_path)
             return
 
         Config._logger.info("config loaded from file: %s", file_path)

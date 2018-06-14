@@ -21,7 +21,7 @@
 import copy
 import json
 import logging
-from Queue import Queue
+from queue import Queue
 from threading import Lock, Thread
 
 from .config import Config
@@ -206,14 +206,14 @@ class PolicyUpdater(Thread):
             catch_up_result = ""
             if not aud_catch_up.is_success():
                 catch_up_result = "- not sending catch-up to deployment-handler due to errors"
-                PolicyUpdater._logger.warn(catch_up_result)
+                PolicyUpdater._logger.warning(catch_up_result)
             elif not self._need_to_send_catch_up(aud_catch_up, catch_up_message):
                 catch_up_result = "- skipped sending the same policies"
             else:
                 DeployHandler.policy_update(aud_catch_up, catch_up_message, rediscover=True)
                 if not aud_catch_up.is_success():
                     catch_up_result = "- failed to send catch-up to deployment-handler"
-                    PolicyUpdater._logger.warn(catch_up_result)
+                    PolicyUpdater._logger.warning(catch_up_result)
                 else:
                     catch_up_result = "- sent catch-up to deployment-handler"
             success, _, _ = aud_catch_up.audit_done(result=catch_up_result)
@@ -255,13 +255,13 @@ class PolicyUpdater(Thread):
 
             if not queued_audit.is_success():
                 result = "- not sending policy-updates to deployment-handler due to errors"
-                PolicyUpdater._logger.warn(result)
+                PolicyUpdater._logger.warning(result)
             else:
                 message = {LATEST_POLICIES: updated_policies, REMOVED_POLICIES: removed_policies}
                 deployment_handler_changed = DeployHandler.policy_update(queued_audit, message)
                 if not queued_audit.is_success():
                     result = "- failed to send policy-updates to deployment-handler"
-                    PolicyUpdater._logger.warn(result)
+                    PolicyUpdater._logger.warning(result)
                 else:
                     result = "- sent policy-updates to deployment-handler"
 

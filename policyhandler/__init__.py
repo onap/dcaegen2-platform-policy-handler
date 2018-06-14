@@ -15,3 +15,20 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+"""policyhandler package"""
+
+class LogWriter(object):
+    """redirect the standard out + err to the logger"""
+    def __init__(self, logger_func):
+        self.logger_func = logger_func
+
+    def write(self, log_line):
+        """actual writer to be used in place of stdout or stderr"""
+        log_line = log_line.rstrip()
+        if log_line:
+            self.logger_func(log_line)
+
+    def flush(self):
+        """no real flushing of the buffer"""
+        pass

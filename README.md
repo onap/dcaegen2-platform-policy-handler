@@ -109,7 +109,7 @@ class Customizer(CustomizerBase):
     """
     def __init__(self):
         """class that contains the customization"""
-        super(Customizer, self).__init__()
+        super().__init__()
 
     def get_service_url(self, audit, service_name, service):
         """
@@ -117,7 +117,7 @@ class Customizer(CustomizerBase):
 
         this is just a sample code - replace it with the real customization
         """
-        service_url = super(Customizer, self).get_service_url(audit, service_name, service)
+        service_url = super().get_service_url(audit, service_name, service)
         audit.info("TODO: customization for service_url on {0}".format(service_name))
         return service_url
 

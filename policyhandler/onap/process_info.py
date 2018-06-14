@@ -38,7 +38,7 @@ def safe_operation(func):
         try:
             return func(*args, **kwargs)
         except Exception as ex:
-            return "%s: %s" % (type(ex).__name__, str(ex))
+            return {type(ex).__name__ : str(ex)}
     return wrapper
 
 
@@ -86,7 +86,7 @@ class ProcessInfo(object):
         process = psutil.Process()
         with process.oneshot():
             return dict((k, ProcessInfo.bytes_to_bibytes(v))
-                        for k, v in process.memory_full_info()._asdict().iteritems())
+                        for k, v in process.memory_full_info()._asdict().items())
 
 
     @staticmethod
@@ -94,7 +94,7 @@ class ProcessInfo(object):
     def virtual_memory():
         """calculates the virtual memory usage of the whole vm"""
         return dict((k, ProcessInfo.bytes_to_bibytes(v))
-                    for k, v in psutil.virtual_memory()._asdict().iteritems())
+                    for k, v in psutil.virtual_memory()._asdict().items())
 
 
     @staticmethod

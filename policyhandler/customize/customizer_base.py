@@ -35,7 +35,8 @@ class CustomizerBase(object):
 
     policy-hanlder is using the instance of the child Customizer class to get the overriden methods
 
-    the methods defined in this class are the placeholders and are expected to be overriden by the Customizer class
+    the methods defined in this class are the placeholders and are expected
+    to be overriden by the Customizer class
     """
 
     def __init__(self):

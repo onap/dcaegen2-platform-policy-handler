@@ -156,5 +156,5 @@ class Health(object):
     def dump(self):
         """returns dict of stats"""
         with self._lock:
-            stats = dict((k, v.dump()) for (k, v) in self._all_stats.iteritems())
+            stats = dict((k, v.dump()) for (k, v) in self._all_stats.items())
         return stats

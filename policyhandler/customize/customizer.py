@@ -26,10 +26,13 @@ class Customizer(CustomizerBase):
 
     :Customizer: class is owned by the company that needs to customize the policy-handler
 
-    :override: any method defined in the CustomizerBase class to customize the behavior of the policy-handler
+    :override: any method defined in the CustomizerBase class to customize
+    the behavior of the policy-handler
 
     see README.md for the sample of the customizer.py
     """
-    def __init__(self):
-        """class that contains the customization"""
-        super(Customizer, self).__init__()
+    # def __init__(self):
+    #     """class that contains the customization"""
+    #     super().__init__()
+
+    pass

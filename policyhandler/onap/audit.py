@@ -140,10 +140,9 @@ class _Audit(object):
     _packages = []
 
     @staticmethod
-    def init(service_name, service_version, config_file_path):
+    def init(service_name, config_file_path):
         """init static invariants and loggers"""
         _Audit._service_name = service_name
-        _Audit._service_version = service_version
         _Audit._logger_debug = CommonLogger(config_file_path, "debug", \
             instanceUUID=_Audit._service_instance_uuid, serviceName=_Audit._service_name)
         _Audit._logger_error = CommonLogger(config_file_path, "error", \
@@ -154,7 +153,14 @@ class _Audit(object):
             instanceUUID=_Audit._service_instance_uuid, serviceName=_Audit._service_name)
         ProcessInfo.init()
         try:
-            _Audit._packages = filter(None, subprocess.check_output(["pip", "freeze"]).splitlines())
+            _Audit._service_version = subprocess.check_output(
+                ["python", "setup.py", "--version"], universal_newlines=True).strip()
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            _Audit._packages = list(
+                filter(None, subprocess.check_output(["pip", "freeze"],
+                                                     universal_newlines=True).splitlines()))
         except subprocess.CalledProcessError:
             pass
 
@@ -337,10 +343,10 @@ class Audit(_Audit):
         :aud_parent: is the parent Audit - used for sub-query metrics to other systems
         :kwargs: - put any request related params into kwargs
         """
-        super(Audit, self).__init__(job_name=job_name,
-                                    request_id=request_id,
-                                    req_message=req_message,
-                                    **kwargs)
+        super().__init__(job_name=job_name,
+                         request_id=request_id,
+                         req_message=req_message,
+                         **kwargs)
 
         headers = self.kwargs.get("headers", {})
         if headers:
@@ -411,10 +417,10 @@ class Metrics(_Audit):
         :aud_parent: is the parent Audit - used for sub-query metrics to other systems
         :kwargs: - put any request related params into kwargs
         """
-        super(Metrics, self).__init__(job_name=aud_parent.job_name,
-                                      request_id=aud_parent.request_id,
-                                      req_message=aud_parent.req_message,
-                                      **aud_parent.merge_all_kwargs(**kwargs))
+        super().__init__(job_name=aud_parent.job_name,
+                         request_id=aud_parent.request_id,
+                         req_message=aud_parent.req_message,
+                         **aud_parent.merge_all_kwargs(**kwargs))
         self.aud_parent = aud_parent
         self._metrics_name = _Audit._key_format.sub(
             '_', AUDIT_METRICS + "_" + self.kwargs.get(AUDIT_TARGET_ENTITY, self.job_name))

@@ -21,12 +21,13 @@
 mkdir -p logs
 LOG_FILE=logs/policy_handler.log
 echo "---------------------------------------------" >> ${LOG_FILE} 2>&1
-export APP_VER=$(python setup.py --version)
-echo "APP_VER=${APP_VER}" | tee -a ${LOG_FILE}
-
+echo "APP_VER =" $(python setup.py --version) | tee -a ${LOG_FILE}
+uname -a  | tee -a ${LOG_FILE}
 echo "/etc/hosts" | tee -a ${LOG_FILE}
 cat /etc/hosts | tee -a ${LOG_FILE}
-python -m policyhandler/policy_handler >> ${LOG_FILE} 2>&1 &
+pwd | tee -a ${LOG_FILE}
+
+python -m policyhandler >> ${LOG_FILE} 2>&1 &
 PID=$!
 
 function finish {
@@ -37,7 +38,6 @@ function finish {
 trap finish SIGHUP SIGINT SIGTERM
 
 echo "running policy_handler as" ${PID} "log" ${LOG_FILE} | tee -a ${LOG_FILE}
-uname -a  | tee -a ${LOG_FILE}
 free -h  | tee -a ${LOG_FILE}
 df -h    | tee -a ${LOG_FILE}
 ps afxvw | tee -a ${LOG_FILE}

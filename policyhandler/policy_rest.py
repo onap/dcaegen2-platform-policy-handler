@@ -207,7 +207,7 @@ class PolicyRest(object):
             latest_policy = None
             expect_policy_removed = (ignore_policy_names and not min_version_expected)
 
-            for retry in xrange(1, PolicyRest._policy_retry_count + 1):
+            for retry in range(1, PolicyRest._policy_retry_count + 1):
                 PolicyRest._logger.debug(str_metrics)
 
                 status_code, policy_configs = PolicyRest._pdp_get_config(
@@ -323,7 +323,7 @@ class PolicyRest(object):
             apns = [(audit, policy_id,
                      policy_to_find.get(PolicyRest.MIN_VERSION_EXPECTED),
                      policy_to_find.get(PolicyRest.IGNORE_POLICY_NAMES))
-                    for (policy_id, policy_to_find) in policies_to_find.iteritems()]
+                    for (policy_id, policy_to_find) in policies_to_find.items()]
 
             policies = None
             apns_length = len(apns)
@@ -343,13 +343,13 @@ class PolicyRest(object):
                                     if policy and policy.get(POLICY_ID))
 
             removed_policies = dict((policy_id, True)
-                                    for (policy_id, policy_to_find) in policies_to_find.iteritems()
+                                    for (policy_id, policy_to_find) in policies_to_find.items()
                                     if not policy_to_find.get(PolicyRest.MIN_VERSION_EXPECTED)
                                     and policy_to_find.get(PolicyRest.IGNORE_POLICY_NAMES)
                                     and policy_id not in updated_policies)
 
             errored_policies = dict((policy_id, policy_to_find)
-                                    for (policy_id, policy_to_find) in policies_to_find.iteritems()
+                                    for (policy_id, policy_to_find) in policies_to_find.items()
                                     if policy_id not in updated_policies
                                     and policy_id not in removed_policies)
 
@@ -413,7 +413,7 @@ class PolicyRest(object):
             audit.set_http_status_code(status_code)
             valid_policies = {}
             errored_policies = {}
-            for (policy_id, policy) in latest_policies.iteritems():
+            for (policy_id, policy) in latest_policies.items():
                 if PolicyRest._validate_policy(policy):
                     valid_policies[policy_id] = policy
                 else:
@@ -481,10 +481,10 @@ class PolicyRest(object):
 
             # latest_policies == [(valid_policies, errored_policies, errored_scope_prefix), ...]
             result[LATEST_POLICIES] = dict(
-                pair for (vps, _, _) in latest_policies if vps for pair in vps.iteritems())
+                pair for (vps, _, _) in latest_policies if vps for pair in vps.items())
 
             result[ERRORED_POLICIES] = dict(
-                pair for (_, eps, _) in latest_policies if eps for pair in eps.iteritems())
+                pair for (_, eps, _) in latest_policies if eps for pair in eps.items())
 
             result[ERRORED_SCOPES] = sorted([esp for (_, _, esp) in latest_policies if esp])
 

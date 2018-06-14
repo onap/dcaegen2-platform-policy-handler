@@ -17,7 +17,7 @@
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 # Use the official Python as the base image
-FROM python:2.7
+FROM python:3.6
 
 ENV INSROOT /opt/app
 ENV APPUSER policy_handler

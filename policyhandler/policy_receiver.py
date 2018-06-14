@@ -122,7 +122,8 @@ class _PolicyReceiver(Thread):
             message = json.loads(message)
 
             if not message or not isinstance(message, dict):
-                _PolicyReceiver._logger.warn("unexpected message from PDP: %s", json.dumps(message))
+                _PolicyReceiver._logger.warning("unexpected message from PDP: %s",
+                                                json.dumps(message))
                 return
 
             policies_updated = [(policy.get(POLICY_NAME), policy.get(POLICY_VER))

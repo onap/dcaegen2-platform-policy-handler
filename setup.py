@@ -23,21 +23,19 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="2.4.5",
+    version="3.0.0",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,
     install_requires=[
-        "CherryPy>=10.2.2,<11.0",
+        "CherryPy>=15.0.0,<16.0.0",
         "enum34>=1.1.6",
         "psutil>=5.4.5,<6.0.0",
-        "requests>=2.13.0,<3.0.0",
-        "websocket-client>=0.40.0,<1.0.0"
+        "requests>=2.18.4,<3.0.0",
+        "websocket-client>=0.48.0,<1.0.0"
     ],
     keywords='policy dcae controller',
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'Programming Language :: Python :: 2.7'
+        'Programming Language :: Python :: 3.6'
     ]
 )

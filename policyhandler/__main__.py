@@ -16,31 +16,22 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
-"""run as server: python -m policyhandler/policy_handler"""
+"""
+    run as server:
+    python -m policyhandler
 
-import os
-import sys
+    that will invoke this module __main__.py in folder of policyhandler
+"""
+
 import logging
+import sys
 
+from policyhandler import LogWriter
 from policyhandler.config import Config
 from policyhandler.onap.audit import Audit
-from policyhandler.web_server import PolicyWeb
 from policyhandler.policy_receiver import PolicyReceiver
+from policyhandler.web_server import PolicyWeb
 
-class LogWriter(object):
-    """redirect the standard out + err to the logger"""
-    def __init__(self, logger_func):
-        self.logger_func = logger_func
-
-    def write(self, log_line):
-        """actual writer to be used in place of stdout or stderr"""
-        log_line = log_line.rstrip()
-        if log_line:
-            self.logger_func(log_line)
-
-    def flush(self):
-        """no real flushing of the buffer"""
-        pass
 
 def run_policy_handler():
     """main run function for policy-handler"""
@@ -51,10 +42,8 @@ def run_policy_handler():
     sys.stdout = LogWriter(logger.info)
     sys.stderr = LogWriter(logger.error)
 
-    logger.info("========== run_policy_handler ==========")
-    policy_handler_version = os.getenv("APP_VER")
-    logger.info("policy_handler_version %s", policy_handler_version)
-    Audit.init(Config.get_system_name(), policy_handler_version, Config.LOGGER_CONFIG_FILE_PATH)
+    logger.info("========== run_policy_handler ========== %s", __package__)
+    Audit.init(Config.get_system_name(), Config.LOGGER_CONFIG_FILE_PATH)
 
     logger.info("starting policy_handler with config:")
     logger.info(Audit.log_json_dumps(Config.config))
@@ -62,6 +51,7 @@ def run_policy_handler():
     audit = Audit(req_message="start policy handler")
     PolicyReceiver.run(audit)
     PolicyWeb.run_forever(audit)
+
 
 if __name__ == "__main__":
     run_policy_handler()

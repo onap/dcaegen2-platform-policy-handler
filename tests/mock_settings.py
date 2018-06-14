@@ -15,22 +15,17 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+"""settings that are general to all tests"""
 
 import json
 import logging
-import subprocess
 import sys
 import uuid
 from datetime import datetime
 
+from policyhandler import LogWriter
 from policyhandler.config import Config
 from policyhandler.onap.audit import Audit
-from policyhandler.policy_handler import LogWriter
-
-try:
-    POLICY_HANDLER_VERSION = subprocess.check_output(["python", "setup.py", "--version"]).strip()
-except subprocess.CalledProcessError:
-    POLICY_HANDLER_VERSION = "2.4.1"
 
 
 class Settings(object):
@@ -56,9 +51,9 @@ class Settings(object):
         sys.stdout = LogWriter(Settings.logger.info)
         sys.stderr = LogWriter(Settings.logger.error)
 
-        print "print ========== run_policy_handler =========="
+        print("print ========== run_policy_handler ==========")
         Settings.logger.info("========== run_policy_handler ==========")
-        Audit.init(Config.get_system_name(), POLICY_HANDLER_VERSION, Config.LOGGER_CONFIG_FILE_PATH)
+        Audit.init(Config.get_system_name(), Config.LOGGER_CONFIG_FILE_PATH)
 
         Settings.logger.info("starting policy_handler with config:")
         Settings.logger.info(Audit.log_json_dumps(Config.config))

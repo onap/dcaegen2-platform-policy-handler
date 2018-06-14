@@ -134,8 +134,8 @@ class Utils(object):
         try:
             return json.loads(json_str)
         except (ValueError, TypeError) as err:
-            Utils._logger.warn("unexpected json error(%s): len(%s) str[:100]: (%s)",
-                               str(err), len(json_str), str(json_str)[:100])
+            Utils._logger.warning("unexpected json error(%s): len(%s) str[:100]: (%s)",
+                                  str(err), len(json_str), str(json_str)[:100])
         return json_str
 
     @staticmethod
@@ -159,11 +159,11 @@ class Utils(object):
             return True
 
         if isinstance(body_1, dict) and isinstance(body_2, dict):
-            if body_1.viewkeys() ^ body_2.viewkeys():
+            if body_1.keys() ^ body_2.keys():
                 Utils._logger.debug("keys %s != %s", json.dumps(body_1), json.dumps(body_2))
                 return False
 
-            for key, val_1 in body_1.iteritems():
+            for key, val_1 in body_1.items():
                 if not Utils.are_the_same(val_1, body_2[key]):
                     return False
             return True
