@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5a93c517_0620f2f6",
+        "filename": "run_policy.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2018-06-15T13:29:56Z",
+      "side": 1,
+      "message": "why not just do this once and get rid of all the tees?\n\nexec \u003e\u003e $LOG_FILE 2\u003e\u00261\n\nall subsequent output (stdout AND stderr) will then be appended to the logfile\n\nIf you don\u0027t want stderr to be included, just use:\n\nexec \u003e\u003e $LOG_FILE\n\nAnother alternative is to wrap the entire section in a pair of braces:\n{\n} \u003e\u003e $LOG_FILE\n\n(include 2\u003e\u00261 if you want to capture stderr too.)\n\nAs it is, it\u0027s a maintenance issue if a tee happens to be missed.",
+      "revId": "c9ec231483d905f3a391c3985c2c2762344ed5c1",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
