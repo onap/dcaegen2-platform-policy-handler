@@ -42,7 +42,7 @@ class Config(object):
     FIELD_POLICY_ENGINE = "policy_engine"
     wservice_port = 25577
     _logger = logging.getLogger("policy_handler.config")
-    config = None
+    settings = None
 
     @staticmethod
     def merge(new_config):
@@ -50,19 +50,19 @@ class Config(object):
         if not new_config:
             return
 
-        if not Config.config:
-            Config.config = new_config
+        if not Config.settings:
+            Config.settings = new_config
             return
 
         new_config = copy.deepcopy(new_config)
-        Config.config.update(new_config)
+        Config.settings.update(new_config)
 
     @staticmethod
     def get_system_name():
         """find the name of the policy-handler system
         to be used as the key in consul-kv for config of policy-handler
         """
-        return (Config.config or {}).get(Config.FIELD_SYSTEM, Config.SERVICE_NAME_POLICY_HANDLER)
+        return (Config.settings or {}).get(Config.FIELD_SYSTEM, Config.SERVICE_NAME_POLICY_HANDLER)
 
     @staticmethod
     def discover():
@@ -76,9 +76,9 @@ class Config(object):
 
         Config._logger.debug("loaded config from discovery(%s): %s", \
             discovery_key, json.dumps(new_config))
-        Config._logger.debug("config before merge from discovery: %s", json.dumps(Config.config))
+        Config._logger.debug("config before merge from discovery: %s", json.dumps(Config.settings))
         Config.merge(new_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
-        Config._logger.info("merged config from discovery: %s", json.dumps(Config.config))
+        Config._logger.info("merged config from discovery: %s", json.dumps(Config.settings))
 
     @staticmethod
     def load_from_file(file_path=None):
@@ -102,5 +102,5 @@ class Config(object):
 
         Config.wservice_port = loaded_config.get(Config.FIELD_WSERVICE_PORT, Config.wservice_port)
         Config.merge(loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
-        Config._logger.info("config loaded from file: %s", json.dumps(Config.config))
+        Config._logger.info("config loaded from file: %s", json.dumps(Config.settings))
         return True

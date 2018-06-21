@@ -46,7 +46,7 @@ def run_policy_handler():
     Audit.init(Config.get_system_name(), Config.LOGGER_CONFIG_FILE_PATH)
 
     logger.info("starting policy_handler with config:")
-    logger.info(Audit.log_json_dumps(Config.config))
+    logger.info(Audit.log_json_dumps(Config.settings))
 
     audit = Audit(req_message="start policy handler")
     PolicyReceiver.run(audit)

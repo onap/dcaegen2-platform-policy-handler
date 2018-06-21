@@ -45,7 +45,7 @@ class Settings(object):
 
         Config.load_from_file("etc_upload/config.json")
 
-        Config.config["catch_up"] = {"interval": 10, "max_skips": 2}
+        Config.settings["catch_up"] = {"interval": 10, "max_skips": 2}
 
         Settings.logger = logging.getLogger("policy_handler.unit_test")
         sys.stdout = LogWriter(Settings.logger.info)
@@ -56,4 +56,4 @@ class Settings(object):
         Audit.init(Config.get_system_name(), Config.LOGGER_CONFIG_FILE_PATH)
 
         Settings.logger.info("starting policy_handler with config:")
-        Settings.logger.info(Audit.log_json_dumps(Config.config))
+        Settings.logger.info(Audit.log_json_dumps(Config.settings))

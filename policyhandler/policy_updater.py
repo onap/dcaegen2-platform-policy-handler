@@ -47,7 +47,7 @@ class PolicyUpdater(Thread):
         self._aud_shutdown = None
         self._aud_catch_up = None
 
-        catch_up_config = Config.config.get(CATCH_UP, {})
+        catch_up_config = Config.settings.get(CATCH_UP, {})
         self._catch_up_interval = catch_up_config.get("interval") or 15*60
         self._catch_up_max_skips = catch_up_config.get("max_skips") or 3
         self._catch_up_skips = 0

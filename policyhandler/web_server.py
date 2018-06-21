@@ -30,13 +30,14 @@ from .policy_receiver import PolicyReceiver
 
 class PolicyWeb(object):
     """run REST API of policy-handler"""
+    SERVER_HOST = "0.0.0.0"
     logger = logging.getLogger("policy_handler.policy_web")
 
     @staticmethod
     def run_forever(audit):
         """run the web-server of the policy-handler forever"""
         PolicyWeb.logger.info("policy_handler web-service at port(%d)...", Config.wservice_port)
-        cherrypy.config.update({"server.socket_host": "0.0.0.0",
+        cherrypy.config.update({"server.socket_host": PolicyWeb.SERVER_HOST,
                                 'server.socket_port': Config.wservice_port})
         cherrypy.tree.mount(_PolicyWeb(), '/')
         audit.info("running policy_handler web-service at port({0})".format(Config.wservice_port))

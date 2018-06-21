@@ -25,12 +25,12 @@ from threading import Event, RLock, Thread
 
 class StepTimer(Thread):
     """call on_time after interval number of seconds, then wait to continue"""
-    INIT = "init"
-    NEXT = "next"
-    STARTED = "started"
-    PAUSED = "paused"
-    STOPPING = "stopping"
-    STOPPED = "stopped"
+    STATE_INIT = "init"
+    STATE_NEXT = "next"
+    STATE_STARTED = "started"
+    STATE_PAUSED = "paused"
+    STATE_STOPPING = "stopping"
+    STATE_STOPPED = "stopped"
 
     def __init__(self, name, interval, on_time, logger, *args, **kwargs):
         """create step timer with controlled start. next step and pause"""
@@ -49,7 +49,7 @@ class StepTimer(Thread):
         self._paused = False
         self._finished = False
 
-        self._request = StepTimer.INIT
+        self._request = StepTimer.STATE_INIT
         self._req_count = 0
         self._req_time = 0
         self._req_ts = datetime.utcnow()
@@ -80,14 +80,14 @@ class StepTimer(Thread):
                 self._timeout.set()
             else:
                 self._next.set()
-            self._request_to_timer(StepTimer.NEXT)
+            self._request_to_timer(StepTimer.STATE_NEXT)
 
     def pause(self):
         """pause the timer"""
         with self._lock:
             self._paused = True
             self._next.clear()
-            self._request_to_timer(StepTimer.PAUSED)
+            self._request_to_timer(StepTimer.STATE_PAUSED)
 
     def stop(self):
         """stop the timer if it hasn't finished yet"""
@@ -95,12 +95,12 @@ class StepTimer(Thread):
             self._finished = True
             self._timeout.set()
             self._next.set()
-            self._request_to_timer(StepTimer.STOPPING)
+            self._request_to_timer(StepTimer.STATE_STOPPING)
 
     def _request_to_timer(self, request):
         """set the request on the timer"""
         with self._lock:
-            if request in [StepTimer.NEXT, StepTimer.STARTED]:
+            if request in [StepTimer.STATE_NEXT, StepTimer.STATE_STARTED]:
                 self._req_count += 1
 
             prev_req = self._request
@@ -111,8 +111,8 @@ class StepTimer(Thread):
             self._logger.info("{0}[{1}] {2}->{3}".format(
                 self.name, self._req_time, prev_req, self.get_timer_status()))
 
-    def _timer_substep(self, substep):
-        """log exe step"""
+    def _log_substep(self, substep):
+        """log timer substep"""
         with self._lock:
             self._substep = substep
             utcnow = datetime.utcnow()
@@ -120,51 +120,56 @@ class StepTimer(Thread):
             self._substep_ts = utcnow
             self._logger.info("[{0}] {1}".format(self._substep_time, self.get_timer_status()))
 
+    def _on_time_event(self):
+        """execute the _on_time event"""
+        if self._paused:
+            self._log_substep("paused - skip on_time event")
+            return
+
+        try:
+            self._log_substep("on_time event")
+            self._on_time(*self._args, **self._kwargs)
+        except Exception as ex:
+            error_msg = ("{0}: crash {1} {2} at {3}: args({4}), kwargs({5})"
+                         .format(self.name, type(ex).__name__, str(ex), "_on_time",
+                                 json.dumps(self._args), json.dumps(self._kwargs)))
+            self._logger.exception(error_msg)
+
     def run(self):
         """loop one step a time until stopped=finished"""
-        self._request_to_timer(StepTimer.STARTED)
+        self._request_to_timer(StepTimer.STATE_STARTED)
         while True:
             with self._lock:
                 self._timeout.clear()
                 self._waiting_for_timeout = True
-                self._timer_substep("waiting for timeout {0}...".format(self._interval))
+                self._log_substep("waiting for timeout {0}...".format(self._interval))
 
             interrupted = self._timeout.wait(self._interval)
 
             with self._lock:
                 self._waiting_for_timeout = False
-                self._timer_substep("woke up after {0}timeout"
-                                    .format((interrupted and "interrupted ") or ""))
+                self._log_substep("woke up after {0}timeout"
+                                  .format((interrupted and "interrupted ") or ""))
 
                 if self._finished:
-                    self._timer_substep("finished")
+                    self._log_substep("finished")
                     break
 
                 if self._next.is_set() and interrupted:
                     self._next.clear()
-                    self._timer_substep("restart timer")
+                    self._log_substep("restart timer")
                     continue
 
-            if self._paused:
-                self._timer_substep("paused - skip on_time event")
-            else:
-                try:
-                    self._timer_substep("on_time event")
-                    self._on_time(*self._args, **self._kwargs)
-                except Exception as ex:
-                    error_msg = ("{0}: crash {1} {2} at {3}: args({4}), kwargs({5})"
-                                 .format(self.name, type(ex).__name__, str(ex), "_on_time",
-                                         json.dumps(self._args), json.dumps(self._kwargs)))
-                    self._logger.exception(error_msg)
+            self._on_time_event()
 
-            self._timer_substep("waiting for next...")
+            self._log_substep("waiting for next...")
             self._next.wait()
             with self._lock:
                 self._next.clear()
-                self._timer_substep("woke up on next")
+                self._log_substep("woke up on next")
 
             if self._finished:
-                self._timer_substep("finished")
+                self._log_substep("finished")
                 break
 
-        self._request_to_timer(StepTimer.STOPPED)
+        self._request_to_timer(StepTimer.STATE_STOPPED)

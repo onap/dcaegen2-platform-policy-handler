@@ -20,29 +20,29 @@
 
 mkdir -p logs
 LOG_FILE=logs/policy_handler.log
-echo "---------------------------------------------" >> ${LOG_FILE} 2>&1
-echo "APP_VER =" $(python setup.py --version) | tee -a ${LOG_FILE}
-uname -a  | tee -a ${LOG_FILE}
-echo "/etc/hosts" | tee -a ${LOG_FILE}
-cat /etc/hosts | tee -a ${LOG_FILE}
-pwd | tee -a ${LOG_FILE}
+exec &>> >(tee -a ${LOG_FILE})
+echo "---------------------------------------------"
+STARTED=$(date +%Y-%m-%d_%T.%N)
+echo "${STARTED}: running ${BASH_SOURCE[0]}"
+echo "APP_VER =" $(python setup.py --version)
+(uname -a; echo "/etc/hosts"; cat /etc/hosts; pwd)
 
-python -m policyhandler >> ${LOG_FILE} 2>&1 &
+python -m policyhandler &
 PID=$!
 
 function finish {
-  echo "killing policy_handler ${PID}" $(date +%Y_%m%d-%H:%M:%S.%N) | tee -a ${LOG_FILE}
+  echo "killing policy_handler ${PID}" $(date +%Y_%m%d-%T.%N)
   kill -9 ${PID}
-  echo "killed policy_handler ${PID}" $(date +%Y_%m%d-%H:%M:%S.%N)  | tee -a ${LOG_FILE}
+  echo "killed policy_handler ${PID}" $(date +%Y_%m%d-%T.%N)
 }
 trap finish SIGHUP SIGINT SIGTERM
 
-echo "running policy_handler as" ${PID} "log" ${LOG_FILE} | tee -a ${LOG_FILE}
-free -h  | tee -a ${LOG_FILE}
-df -h    | tee -a ${LOG_FILE}
-ps afxvw | tee -a ${LOG_FILE}
-ss -aepi | tee -a ${LOG_FILE}
+echo "running policy_handler as ${PID} logs to ${LOG_FILE}"
+(free -h; df -h; ps afxvw; ss -aepi)
 
 wait ${PID}
-echo "---------------------------------------------" >> ${LOG_FILE} 2>&1
+exec &>> >(tee -a ${LOG_FILE})
+echo "---------------------------------------------"
+echo "$(date +%Y-%m-%d_%T.%N): exit ${BASH_SOURCE[0]} that was started on ${STARTED}"
+
 mv ${LOG_FILE} ${LOG_FILE}.$(date +%Y-%m-%d_%H%M%S)

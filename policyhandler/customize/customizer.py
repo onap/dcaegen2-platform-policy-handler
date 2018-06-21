@@ -31,8 +31,4 @@ class Customizer(CustomizerBase):
 
     see README.md for the sample of the customizer.py
     """
-    # def __init__(self):
-    #     """class that contains the customization"""
-    #     super().__init__()
-
     pass

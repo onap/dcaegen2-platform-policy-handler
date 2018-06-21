@@ -76,7 +76,7 @@ class MonkeyedResponse(object):
 def monkeyed_discovery(full_path):
     """monkeypatch for get from consul"""
     res_json = {}
-    if full_path == DiscoveryClient.CONSUL_SERVICE_MASK.format(Config.config["deploy_handler"]):
+    if full_path == DiscoveryClient.CONSUL_SERVICE_MASK.format(Config.settings["deploy_handler"]):
         res_json = [{
             "ServiceAddress": "1.1.1.1",
             "ServicePort": "123"
@@ -127,7 +127,7 @@ class MonkeyPolicyBody(object):
 
 class MonkeyPolicyEngine(object):
     """pretend this is the policy-engine"""
-    _scope_prefix = Config.config["scope_prefixes"][0]
+    _scope_prefix = Config.settings["scope_prefixes"][0]
     LOREM_IPSUM = """Lorem ipsum dolor sit amet consectetur ametist""".split()
     LONG_TEXT = "0123456789" * 100
     _policies = []
@@ -317,8 +317,8 @@ def fix_deploy_handler_fail(monkeypatch, fix_discovery):
         DeployHandler._url = None
 
     Settings.logger.info("setup fix_deploy_handler_fail")
-    config_catch_up = Config.config["catch_up"]
-    Config.config["catch_up"] = {"interval": 1, "max_skips": 0}
+    config_catch_up = Config.settings["catch_up"]
+    Config.settings["catch_up"] = {"interval": 1, "max_skips": 0}
 
     audit = Audit(req_message="fix_deploy_handler_fail")
     DeployHandler._lazy_init(audit, rediscover=True)
@@ -328,7 +328,7 @@ def fix_deploy_handler_fail(monkeypatch, fix_discovery):
                         monkeyed_deploy_handler_init)
     yield fix_deploy_handler_fail
     Settings.logger.info("teardown fix_deploy_handler_fail")
-    Config.config["catch_up"] = config_catch_up
+    Config.settings["catch_up"] = config_catch_up
 
 
 def monkeyed_cherrypy_engine_exit():
@@ -481,7 +481,7 @@ class WebServerTest(CPWebCase):
 
     def test_web_policies_latest(self):
         """test POST /policies_latest with policyName"""
-        match_to_policy_name = Config.config["scope_prefixes"][0] + "amet.*"
+        match_to_policy_name = Config.settings["scope_prefixes"][0] + "amet.*"
         expected_policies = MonkeyPolicyEngine.gen_policies_latest(match_to_policy_name)
         expected_policies = expected_policies[LATEST_POLICIES]
 
@@ -649,7 +649,7 @@ class WebServerPDPBoomTest(CPWebCase):
 
     def test_web_policies_latest(self):
         """test POST /policies_latest with policyName"""
-        match_to_policy_name = Config.config["scope_prefixes"][0] + "amet.*"
+        match_to_policy_name = Config.settings["scope_prefixes"][0] + "amet.*"
 
         body = json.dumps({POLICY_NAME: match_to_policy_name})
         result = self.getPage("/policies_latest", method='POST',
@@ -809,7 +809,7 @@ class WebServerInternalBoomTest(CPWebCase):
 
     def test_web_policies_latest(self):
         """test POST /policies_latest with policyName"""
-        match_to_policy_name = Config.config["scope_prefixes"][0] + "amet.*"
+        match_to_policy_name = Config.settings["scope_prefixes"][0] + "amet.*"
 
         body = json.dumps({POLICY_NAME: match_to_policy_name})
         result = self.getPage("/policies_latest", method='POST',

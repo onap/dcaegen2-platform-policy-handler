@@ -66,7 +66,7 @@ class DeployHandler(object):
                 requests.adapters.HTTPAdapter(pool_connections=POOL_SIZE, pool_maxsize=POOL_SIZE)
             )
 
-        config_dh = Config.config.get("deploy_handler")
+        config_dh = Config.settings.get("deploy_handler")
         if config_dh and isinstance(config_dh, dict):
             # dns based routing to deployment-handler
             # config for policy-handler >= 2.4.0

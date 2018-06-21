@@ -55,7 +55,7 @@ class _PolicyReceiver(Thread):
         self._lock = Lock()
         self._keep_running = True
 
-        config = Config.config[Config.FIELD_POLICY_ENGINE]
+        config = Config.settings[Config.FIELD_POLICY_ENGINE]
         self.web_socket_url = resturl = config["url"] + config["path_pdp"]
 
         if resturl.startswith("https:"):
@@ -66,7 +66,7 @@ class _PolicyReceiver(Thread):
         self._web_socket = None
 
         scope_prefixes = [scope_prefix.replace(".", "[.]")
-                          for scope_prefix in Config.config["scope_prefixes"]]
+                          for scope_prefix in Config.settings["scope_prefixes"]]
         self._policy_scopes = re.compile("(" + "|".join(scope_prefixes) + ")")
         _PolicyReceiver._logger.info("_policy_scopes %s", self._policy_scopes.pattern)
         self._policy_updater = PolicyUpdater()

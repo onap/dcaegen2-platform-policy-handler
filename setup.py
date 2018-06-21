@@ -23,13 +23,12 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="3.0.0",
+    version="3.0.1",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,
     install_requires=[
         "CherryPy>=15.0.0,<16.0.0",
-        "enum34>=1.1.6",
         "psutil>=5.4.5,<6.0.0",
         "requests>=2.18.4,<3.0.0",
         "websocket-client>=0.48.0,<1.0.0"
