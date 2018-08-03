@@ -55,8 +55,8 @@ class CustomizerBase(object):
         return service_url
 
     def get_deploy_handler_kwargs(self, audit):
-        """returns the optional dict-kwargs for requests.post to deploy_handler"""
-        info = "no optional kwargs for requests.post to deploy_handler"
+        """returns the optional dict-kwargs for requests.put to deploy_handler"""
+        info = "no optional kwargs for requests.put to deploy_handler"
         self._logger.info(info)
         audit.info(info)
         kwargs = {}

@@ -42,7 +42,6 @@
 in folder `policy_handler`:
 
     - `config.json` contains
-        - `"scope_prefixes" : ["DCAE.Config_"]` - the list of policy-scope-class values
         - `"policy_engine"` - the http connect info to ONAP **policy-engine**
             - headers.ClientAuth : base64(<mech-id with namespace>:<password>)
             - headers.Authorization : base64(<policy-engine server auth>)

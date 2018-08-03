@@ -3,7 +3,6 @@
         "system" : "policy_handler",
         "thread_pool_size" : 4,
         "pool_connections" : 20,
-        "scope_prefixes" : ["DCAE.Config_", "CLAMP"],
         "policy_retry_count" : 5,
         "policy_retry_sleep" : 5,
         "catch_up" : {
@@ -11,21 +10,22 @@
             "max_skips" : 5
         },
         "policy_engine" : {
-            "url" : "https://peawiv9nspd01.pedc.sbc.com:8081",
-            "path_pdp" :"/pdp/",
+            "url" : "https://policy_engine:8081",
+            "path_pdp" : "/pdp/",
             "path_api" : "/pdp/api/",
             "headers" : {
                 "Accept" : "application/json",
                 "Content-Type" : "application/json",
-                "ClientAuth" : "Basic bTAzOTQ5OnBvbGljeVIwY2sk",
-                "Authorization" : "Basic dGVzdHBkcDphbHBoYTEyMw==",
+                "ClientAuth" : "Basic blah",
+                "Authorization" : "Basic blah",
                 "Environment" : "TEST"
             },
             "target_entity" : "policy_engine"
         },
         "deploy_handler" : {
             "target_entity" : "deployment_handler",
-            "url" : "http://deployment_handler:8188"
+            "url" : "http://deployment_handler:8188",
+            "max_msg_length_mb" : 5
         }
     }
 }

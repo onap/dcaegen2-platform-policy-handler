@@ -22,26 +22,24 @@ thru web-socket to receive push notifications
 on updates and removal of policies.
 
 on receiving the policy-notifications, the policy-receiver
-filters them out by the policy scope(s) provided in policy-handler config
-and passes the notifications to policy-updater
+passes the notifications to policy-updater
 """
 
 import json
 import logging
-import re
 import time
 from threading import Lock, Thread
 
 import websocket
 
 from .config import Config
-from .onap.audit import Audit, AuditHttpCode, AuditResponseCode
+from .policy_consts import MATCHING_CONDITIONS, POLICY_NAME, POLICY_VERSION
 from .policy_updater import PolicyUpdater
 
 LOADED_POLICIES = 'loadedPolicies'
 REMOVED_POLICIES = 'removedPolicies'
-POLICY_NAME = 'policyName'
 POLICY_VER = 'versionNo'
+POLICY_MATCHES = 'matches'
 
 class _PolicyReceiver(Thread):
     """web-socket to PolicyEngine"""
@@ -65,10 +63,6 @@ class _PolicyReceiver(Thread):
 
         self._web_socket = None
 
-        scope_prefixes = [scope_prefix.replace(".", "[.]")
-                          for scope_prefix in Config.settings["scope_prefixes"]]
-        self._policy_scopes = re.compile("(" + "|".join(scope_prefixes) + ")")
-        _PolicyReceiver._logger.info("_policy_scopes %s", self._policy_scopes.pattern)
         self._policy_updater = PolicyUpdater()
         self._policy_updater.start()
 
@@ -126,31 +120,29 @@ class _PolicyReceiver(Thread):
                                                 json.dumps(message))
                 return
 
-            policies_updated = [(policy.get(POLICY_NAME), policy.get(POLICY_VER))
-                                for policy in message.get(LOADED_POLICIES, [])
-                                if self._policy_scopes.match(policy.get(POLICY_NAME))]
-            policies_removed = [(policy.get(POLICY_NAME), policy.get(POLICY_VER))
-                                for policy in message.get(REMOVED_POLICIES, [])
-                                if self._policy_scopes.match(policy.get(POLICY_NAME))]
+            policies_updated = [
+                {POLICY_NAME: policy.get(POLICY_NAME),
+                 POLICY_VERSION: policy.get(POLICY_VER),
+                 MATCHING_CONDITIONS: policy.get(POLICY_MATCHES, {})}
+                for policy in message.get(LOADED_POLICIES, [])
+            ]
+
+            policies_removed = [
+                {POLICY_NAME: removed_policy.get(POLICY_NAME),
+                 POLICY_VERSION: removed_policy.get(POLICY_VER)}
+                for removed_policy in message.get(REMOVED_POLICIES, [])
+            ]
 
             if not policies_updated and not policies_removed:
-                _PolicyReceiver._logger.info("no policy updated or removed for scopes %s",
-                                             self._policy_scopes.pattern)
+                _PolicyReceiver._logger.info("no policy updated or removed")
                 return
 
-            audit = Audit(job_name="policy_update",
-                          req_message="policy-notification - updated[{0}], removed[{1}]"
-                          .format(len(policies_updated), len(policies_removed)),
-                          retry_get_config=True)
-            self._policy_updater.enqueue(audit, policies_updated, policies_removed)
+            self._policy_updater.policy_update(policies_updated, policies_removed)
         except Exception as ex:
             error_msg = "crash {} {} at {}: {}".format(type(ex).__name__, str(ex),
                                                        "on_pdp_message", json.dumps(message))
 
             _PolicyReceiver._logger.exception(error_msg)
-            audit.fatal(error_msg, error_code=AuditResponseCode.BUSINESS_PROCESS_ERROR)
-            audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
-
 
     def _on_ws_error(self, _, error):
         """report an error"""

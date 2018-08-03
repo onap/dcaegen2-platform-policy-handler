@@ -260,15 +260,18 @@ class _Audit(object):
     def debug(self, log_line, **kwargs):
         """debug - the debug=lowest level of logging"""
         _Audit._logger_debug.debug(log_line, **self.merge_all_kwargs(**kwargs))
+        return log_line
 
     def info(self, log_line, **kwargs):
         """debug - the info level of logging"""
         _Audit._logger_debug.info(log_line, **self.merge_all_kwargs(**kwargs))
+        return log_line
 
     def info_requested(self, result=None, **kwargs):
         """info "requested ..." - the info level of logging"""
-        self.info("requested {0} {1}".format(self.req_message, result or ""), \
-            **self.merge_all_kwargs(**kwargs))
+        log_line = "requested {0} {1}".format(self.req_message, result or "")
+        self.info(log_line, **self.merge_all_kwargs(**kwargs))
+        return log_line
 
     def warn(self, log_line, error_code=None, **kwargs):
         """debug+error - the warn level of logging"""
@@ -280,6 +283,7 @@ class _Audit(object):
 
         _Audit._logger_debug.warn(log_line, **all_kwargs)
         _Audit._logger_error.warn(log_line, **all_kwargs)
+        return log_line
 
     def error(self, log_line, error_code=None, **kwargs):
         """debug+error - the error level of logging"""
@@ -291,6 +295,7 @@ class _Audit(object):
 
         _Audit._logger_debug.error(log_line, **all_kwargs)
         _Audit._logger_error.error(log_line, **all_kwargs)
+        return log_line
 
     def fatal(self, log_line, error_code=None, **kwargs):
         """debug+error - the fatal level of logging"""
@@ -302,6 +307,7 @@ class _Audit(object):
 
         _Audit._logger_debug.fatal(log_line, **all_kwargs)
         _Audit._logger_error.fatal(log_line, **all_kwargs)
+        return log_line
 
     @staticmethod
     def hide_secrets(obj):
