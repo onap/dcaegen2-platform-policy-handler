@@ -225,6 +225,12 @@ class _Audit(object):
             if self.max_http_status_code < AuditHttpCode.SERVER_INTERNAL_ERROR.value:
                 self.max_http_status_code = max(http_status_code, self.max_http_status_code)
 
+    def reset_http_status_not_found(self):
+        """resets the highest(worst) http status code if data not found"""
+        with self._lock:
+            if self.max_http_status_code == AuditHttpCode.DATA_NOT_FOUND_ERROR.value:
+                self.max_http_status_code = 0
+
     def get_max_http_status_code(self):
         """returns the highest(worst) http status code"""
         with self._lock:
@@ -244,31 +250,41 @@ class _Audit(object):
                 == AuditResponseCode.get_response_code(status_code).value
                 or self.get_max_http_status_code() >= AuditHttpCode.SERVER_INTERNAL_ERROR.value)
 
-    def _get_response_status(self):
+    def _get_response_status(self, not_found_ok=None):
         """calculates the response status fields from max_http_status_code"""
         max_http_status_code = self.get_max_http_status_code()
         response_code = AuditResponseCode.get_response_code(max_http_status_code)
-        success = (response_code.value == AuditResponseCode.SUCCESS.value)
+        success = ((response_code.value == AuditResponseCode.SUCCESS.value)
+                   or (not_found_ok
+                       and max_http_status_code == AuditHttpCode.DATA_NOT_FOUND_ERROR.value))
         response_description = AuditResponseCode.get_human_text(response_code)
         return success, max_http_status_code, response_code, response_description
 
     def is_success(self):
-        """returns whether the response_code is success and a human text for response code"""
+        """returns whether the response_code is success"""
         success, _, _, _ = self._get_response_status()
+        return success
+
+    def is_success_or_not_found(self):
+        """returns whether the response_code is success or 404 - not found"""
+        success, _, _, _ = self._get_response_status(not_found_ok=True)
         return success
 
     def debug(self, log_line, **kwargs):
         """debug - the debug=lowest level of logging"""
         _Audit._logger_debug.debug(log_line, **self.merge_all_kwargs(**kwargs))
+        return log_line
 
     def info(self, log_line, **kwargs):
         """debug - the info level of logging"""
         _Audit._logger_debug.info(log_line, **self.merge_all_kwargs(**kwargs))
+        return log_line
 
     def info_requested(self, result=None, **kwargs):
         """info "requested ..." - the info level of logging"""
-        self.info("requested {0} {1}".format(self.req_message, result or ""), \
-            **self.merge_all_kwargs(**kwargs))
+        log_line = "requested {0} {1}".format(self.req_message, result or "")
+        self.info(log_line, **self.merge_all_kwargs(**kwargs))
+        return log_line
 
     def warn(self, log_line, error_code=None, **kwargs):
         """debug+error - the warn level of logging"""
@@ -280,6 +296,7 @@ class _Audit(object):
 
         _Audit._logger_debug.warn(log_line, **all_kwargs)
         _Audit._logger_error.warn(log_line, **all_kwargs)
+        return log_line
 
     def error(self, log_line, error_code=None, **kwargs):
         """debug+error - the error level of logging"""
@@ -291,6 +308,7 @@ class _Audit(object):
 
         _Audit._logger_debug.error(log_line, **all_kwargs)
         _Audit._logger_error.error(log_line, **all_kwargs)
+        return log_line
 
     def fatal(self, log_line, error_code=None, **kwargs):
         """debug+error - the fatal level of logging"""
@@ -302,6 +320,7 @@ class _Audit(object):
 
         _Audit._logger_debug.fatal(log_line, **all_kwargs)
         _Audit._logger_error.fatal(log_line, **all_kwargs)
+        return log_line
 
     @staticmethod
     def hide_secrets(obj):

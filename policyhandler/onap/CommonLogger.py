@@ -678,14 +678,19 @@ class CommonLogger:
                                        severity, serverIPAddress, server, IPAddress, className, timer, detailMessage))
                 elif style == CommonLogger.AuditFile:
                     if CommonLogger.verbose: print("using CommonLogger.AuditFile")
-                    endAuditTime, endAuditMsec = self._getTime()
+                    endAuditTime, endAuditMsec, endSeconds = self._getTime()
                     if type(nbegTime) is dict and 'begTime' in nbegTime and 'begMsec' in nbegTime:
-                        d = { 'begtime': self._noSep(nbegTime['begTime']), 'begmsecs': float(self._noSep(nbegTime['begMsec'])), 'endtime': endAuditTime, 'endmsecs': endAuditMsec }
+                        d = { 'begtime': self._noSep(nbegTime['begTime']), 'begmsecs': float(self._noSep(nbegTime['begMsec'])), 'begseconds': nbegTime['begSeconds'],
+                              'endtime': endAuditTime, 'endmsecs': endAuditMsec, 'endseconds': endSeconds }
                     elif self._begTime is not None:
-                        d = { 'begtime': self._begTime, 'begmsecs': self._begMsec, 'endtime': endAuditTime, 'endmsecs': endAuditMsec }
+                        d = { 'begtime': self._begTime, 'begmsecs': self._begMsec, 'begseconds': self._begSeconds,
+                              'endtime': endAuditTime, 'endmsecs': endAuditMsec, 'endseconds': endSeconds }
                     else:
-                        d = { 'begtime': endAuditTime, 'begmsecs': endAuditMsec, 'endtime': endAuditTime, 'endmsecs': endAuditMsec }
-                    self._begTime = None
+                        d = { 'begtime': endAuditTime, 'begmsecs': endAuditMsec, 'begseconds': endSeconds,
+                              'endtime': endAuditTime, 'endmsecs': endAuditMsec, 'endseconds': endSeconds }
+                    if not timer:
+                        timer = int(d["endseconds"] * 1000.0 + d["endmsecs"] - d["begseconds"] * 1000.0 - d["begmsecs"])
+                    self._begTime = self._begMsec = None
                     unused = ""
                     self._logger.log(50, '%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s' \
                                      %(requestID, serviceInstanceID, threadID, serverName, serviceName, partnerName,
@@ -694,14 +699,19 @@ class CommonLogger:
                                        processKey, customField1, customField2, customField3, customField4, detailMessage), extra=d)
                 elif style == CommonLogger.MetricsFile:
                     if CommonLogger.verbose: print("using CommonLogger.MetricsFile")
-                    endMetricsTime, endMetricsMsec = self._getTime()
+                    endMetricsTime, endMetricsMsec, endSeconds = self._getTime()
                     if type(nbegTime) is dict and 'begTime' in nbegTime and 'begMsec' in nbegTime:
-                        d = { 'begtime': self._noSep(nbegTime['begTime']), 'begmsecs': float(self._noSep(nbegTime['begMsec'])), 'endtime': endMetricsTime, 'endmsecs': endMetricsMsec }
+                        d = { 'begtime': self._noSep(nbegTime['begTime']), 'begmsecs': float(self._noSep(nbegTime['begMsec'])), 'begseconds': nbegTime['begSeconds'],
+                              'endtime': endMetricsTime, 'endmsecs': endMetricsMsec, 'endseconds': endSeconds }
                     elif self._begTime is not None:
-                        d = { 'begtime': self._begTime, 'begmsecs': self._begMsec, 'endtime': endMetricsTime, 'endmsecs': endMetricsMsec }
+                        d = { 'begtime': self._begTime, 'begmsecs': self._begMsec, 'begseconds': self._begSeconds,
+                              'endtime': endMetricsTime, 'endmsecs': endMetricsMsec, 'endseconds': endSeconds }
                     else:
-                        d = { 'begtime': endMetricsTime, 'begmsecs': endMetricsMsec, 'endtime': endMetricsTime, 'endmsecs': endMetricsMsec }
-                    self._begTime = None
+                        d = { 'begtime': endMetricsTime, 'begmsecs': endMetricsMsec, 'begseconds': endSeconds,
+                              'endtime': endMetricsTime, 'endmsecs': endMetricsMsec, 'endseconds': endSeconds }
+                    if not timer:
+                        timer = int(d["endseconds"] * 1000.0 + d["endmsecs"] - d["begseconds"] * 1000.0 - d["begmsecs"])
+                    self._begTime = self._begMsec = None
                     unused = ""
                     self._logger.log(50, '%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s' \
                                      %(requestID, serviceInstanceID, threadID, serverName, serviceName, partnerName,
@@ -715,20 +725,20 @@ class CommonLogger:
     def _getTime(self):
         ct = time.time()
         lt = time.localtime(ct)
-        return (time.strftime(CommonLogger.DateFmt, lt), (ct - int(ct)) * 1000)
+        return (time.strftime(CommonLogger.DateFmt, lt), (ct - int(ct)) * 1000, ct)
 
     def setStartRecordEvent(self):
         """
         Set the start time to be saved for both audit and metrics records
         """
-        self._begTime, self._begMsec = self._getTime()
+        self._begTime, self._begMsec, self._begSeconds = self._getTime()
 
     def getStartRecordEvent(self):
         """
         Retrieve the start time to be used for either audit and metrics records
         """
-        begTime, begMsec = self._getTime()
-        return {'begTime':begTime, 'begMsec':begMsec}
+        begTime, begMsec, begSeconds = self._getTime()
+        return {'begTime':begTime, 'begMsec':begMsec, 'begSeconds':begSeconds}
 
     def _getVal(self, key, default, **kwargs):
         val = self._fields.get(key)

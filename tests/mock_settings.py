@@ -45,7 +45,7 @@ class Settings(object):
 
         Config.load_from_file("etc_upload/config.json")
 
-        Config.settings["catch_up"] = {"interval": 10, "max_skips": 2}
+        Config.settings["catch_up"] = {"interval": 10}
 
         Settings.logger = logging.getLogger("policy_handler.unit_test")
         sys.stdout = LogWriter(Settings.logger.info)
