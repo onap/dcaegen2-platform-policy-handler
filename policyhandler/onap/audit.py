@@ -135,6 +135,8 @@ class _Audit(object):
     _logger_error = None
     _logger_metrics = None
     _logger_audit = None
+    _hostname = os.environ.get(HOSTNAME)
+
     _health = Health()
     _py_ver = sys.version.replace("\n", "")
     _packages = []
@@ -371,20 +373,16 @@ class Audit(_Audit):
         if headers:
             if not self.request_id:
                 self.request_id = headers.get(REQUEST_X_ECOMP_REQUESTID)
-            if AUDIT_IPADDRESS not in self.kwargs:
-                self.kwargs[AUDIT_IPADDRESS] = headers.get(REQUEST_REMOTE_ADDR)
-            if AUDIT_SERVER not in self.kwargs:
-                self.kwargs[AUDIT_SERVER] = headers.get(REQUEST_HOST)
+            self.kwargs.setdefault(AUDIT_IPADDRESS, headers.get(REQUEST_REMOTE_ADDR))
+            self.kwargs.setdefault(AUDIT_SERVER, headers.get(REQUEST_HOST))
 
         created_req = ""
         if not self.request_id:
             created_req = " with new"
             self.request_id = str(uuid.uuid4())
-
-        if AUDIT_SERVER not in self.kwargs:
-            self.kwargs[AUDIT_SERVER] = os.environ.get(HOSTNAME)
-
         self.kwargs[AUDIT_REQUESTID] = self.request_id
+
+        self.kwargs.setdefault(AUDIT_SERVER, _Audit._hostname)
 
         _Audit._health.start(self.job_name, self.request_id)
         _Audit._health.start(AUDIT_TOTAL_STATS, self.request_id)

@@ -302,20 +302,20 @@ class PolicyUpdater(Thread):
             else:
                 message = PolicyUpdateMessage(updated_policies, removed_policies,
                                               policy_filter_matches, False)
-                log_updates = ("policies-updated[{0}], removed[{1}]"
-                               .format(len(updated_policies), len(removed_policies)))
+                log_updates = ("policies-updated[{}], removed[{}], policy_filter_matches[{}]"
+                               .format(len(updated_policies),
+                                       len(removed_policies),
+                                       len(policy_filter_matches)))
 
                 audit.reset_http_status_not_found()
                 DeployHandler.policy_update(audit, message)
 
+                log_line = "request_id[{}]: {}".format(audit.request_id, str(message))
                 if not audit.is_success():
                     result = "- failed to send to deployment-handler {}".format(log_updates)
                     PolicyUpdater._logger.warning(result)
                 else:
                     result = "- sent to deployment-handler {}".format(log_updates)
-                    log_line = "request_id: {} updated_policies: {} removed_policies: {}".format(
-                        audit.request_id,
-                        json.dumps(updated_policies), json.dumps(removed_policies))
 
             audit.audit_done(result=result)
             PolicyUpdater._logger.info(log_line + " " + result)

@@ -73,7 +73,7 @@ class PolicyUpdateMessage(object):
         if latest_policy:
             self._latest_policies[policy_id] = deepcopy(latest_policy)
 
-        if policy_filter_ids:
+        if policy_filter_ids is not None:
             if policy_id not in self._policy_filter_matches:
                 self._policy_filter_matches[policy_id] = {}
             self._policy_filter_matches[policy_id].update(policy_filter_ids)

@@ -70,6 +70,13 @@ class PolicyMatcher(object):
         latest_policies = pdp_response.get(LATEST_POLICIES, {})
         errored_policies = pdp_response.get(ERRORED_POLICIES, {})
 
+        latest_policies, changed_policies, policy_filter_matches = PolicyMatcher._match_policies(
+            audit, latest_policies, deployed_policies, deployed_policy_filters)
+
+        errored_policies = dict((policy_id, policy)
+                                for (policy_id, policy) in errored_policies.items()
+                                if deployed_policies.get(policy_id, {}).get(POLICY_VERSIONS))
+
         removed_policies = dict(
             (policy_id, True)
             for (policy_id, deployed_policy) in deployed_policies.items()
@@ -77,11 +84,6 @@ class PolicyMatcher(object):
             and policy_id not in latest_policies
             and policy_id not in errored_policies
         )
-
-        latest_policies, changed_policies, policy_filter_matches = PolicyMatcher.match_policies(
-            audit, latest_policies, deployed_policies, deployed_policy_filters)
-        errored_policies, _, _ = PolicyMatcher.match_policies(
-            audit, errored_policies, deployed_policies, deployed_policy_filters)
 
         return ({LATEST_POLICIES: latest_policies, ERRORED_POLICIES: errored_policies},
                 PolicyUpdateMessage(changed_policies,
@@ -110,20 +112,21 @@ class PolicyMatcher(object):
     @staticmethod
     def match_to_deployed_policies(audit, policies_updated, policies_removed):
         """match the policies_updated, policies_removed versus deployed policies"""
-        deployed_policies, deployed_policy_filters = DeployHandler.get_deployed_policies(
-            audit)
+        deployed_policies, deployed_policy_filters = DeployHandler.get_deployed_policies(audit)
         if not audit.is_success():
             return {}, {}, {}
 
-        _, changed_policies, policy_filter_matches = PolicyMatcher.match_policies(
+        _, changed_policies, policy_filter_matches = PolicyMatcher._match_policies(
             audit, policies_updated, deployed_policies, deployed_policy_filters)
-        policies_removed, _, _ = PolicyMatcher.match_policies(
-            audit, policies_removed, deployed_policies, deployed_policy_filters)
+
+        policies_removed = dict((policy_id, policy)
+                                for (policy_id, policy) in policies_removed.items()
+                                if deployed_policies.get(policy_id, {}).get(POLICY_VERSIONS))
 
         return changed_policies, policies_removed, policy_filter_matches
 
     @staticmethod
-    def match_policies(audit, policies, deployed_policies, deployed_policy_filters):
+    def _match_policies(audit, policies, deployed_policies, deployed_policy_filters):
         """
         Match policies to deployed policies either by policy_id or the policy-filters.
 
@@ -150,10 +153,11 @@ class PolicyMatcher(object):
                                    deployed_policy.get(POLICY_VERSIONS, {}).keys()))
             if policy_changed:
                 changed_policies[policy_id] = policy
+                policy_filter_matches[policy_id] = {}
 
             in_filters = False
             for (policy_filter_id, policy_filter) in deployed_policy_filters.items():
-                if not PolicyMatcher.match_policy_to_filter(
+                if not PolicyMatcher._match_policy_to_filter(
                         audit, policy_id, policy,
                         policy_filter_id, policy_filter.get(POLICY_FILTER)):
                     continue
@@ -171,7 +175,7 @@ class PolicyMatcher(object):
         return matching_policies, changed_policies, policy_filter_matches
 
     @staticmethod
-    def match_policy_to_filter(audit, policy_id, policy, policy_filter_id, policy_filter):
+    def _match_policy_to_filter(audit, policy_id, policy, policy_filter_id, policy_filter):
         """Match the policy to the policy-filter"""
         if not policy_id or not policy or not policy_filter or not policy_filter_id:
             return False
@@ -188,7 +192,7 @@ class PolicyMatcher(object):
         if not policy_name:
             return False
 
-        log_line = "policy {} to filter id {}: {}".format(json.dumps(policy_body),
+        log_line = "policy {} to filter id {}: {}".format(json.dumps(policy),
                                                           policy_filter_id,
                                                           json.dumps(policy_filter))
         # PolicyMatcher._logger.debug(audit.debug("matching {}...".format(log_line)))
@@ -214,7 +218,7 @@ class PolicyMatcher(object):
 
         filter_config_name = policy_filter.get("configName")
         policy_config_name = matching_conditions.get("ConfigName")
-        if filter_onap_name and filter_onap_name != policy_onap_name:
+        if filter_onap_name and filter_config_name != policy_config_name:
             PolicyMatcher._logger.debug(
                 audit.debug("not match by configName: {} != {}: {}"
                             .format(policy_config_name, filter_config_name, log_line)))

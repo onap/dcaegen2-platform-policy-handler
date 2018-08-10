@@ -48,7 +48,7 @@ class PolicyRest(object):
     PDP_STATUS_CODE_ERROR = 400
     PDP_DATA_NOT_FOUND = "PE300 - Data Issue: Incorrect Params passed: Decision not a Permit."
 
-    MIN_VERSION_EXPECTED = "min_version_expected"
+    EXPECTED_VERSIONS = "expected_versions"
     IGNORE_POLICY_NAMES = "ignore_policy_names"
 
     _requests_session = None
@@ -203,13 +203,13 @@ class PolicyRest(object):
     @staticmethod
     def get_latest_policy(aud_policy_id):
         """safely try retrieving the latest policy for the policy_id from the policy-engine"""
-        audit, policy_id, min_version_expected, ignore_policy_names = aud_policy_id
-        str_metrics = "policy_id({0}), min_version_expected({1}) ignore_policy_names({2})".format(
-            policy_id, min_version_expected, json.dumps(ignore_policy_names))
+        audit, policy_id, expected_versions, ignore_policy_names = aud_policy_id
+        str_metrics = "policy_id({0}), expected_versions({1}) ignore_policy_names({2})".format(
+            policy_id, json.dumps(expected_versions), json.dumps(ignore_policy_names))
 
         try:
             return PolicyRest._get_latest_policy(
-                audit, policy_id, min_version_expected, ignore_policy_names, str_metrics)
+                audit, policy_id, expected_versions, ignore_policy_names, str_metrics)
 
         except Exception as ex:
             error_msg = ("{0}: crash {1} {2} at {3}: {4}"
@@ -224,19 +224,19 @@ class PolicyRest(object):
 
     @staticmethod
     def _get_latest_policy(audit, policy_id,
-                           min_version_expected, ignore_policy_names, str_metrics):
+                           expected_versions, ignore_policy_names, str_metrics):
         """retry several times getting the latest policy for the policy_id from the policy-engine"""
         PolicyRest._lazy_init()
         latest_policy = None
         status_code = 0
         retry_get_config = audit.kwargs.get("retry_get_config")
-        expect_policy_removed = (ignore_policy_names and not min_version_expected)
+        expect_policy_removed = (ignore_policy_names and not expected_versions)
 
         for retry in range(1, PolicyRest._policy_retry_count + 1):
             PolicyRest._logger.debug(str_metrics)
 
             done, latest_policy, status_code = PolicyRest._get_latest_policy_once(
-                audit, policy_id, min_version_expected, ignore_policy_names,
+                audit, policy_id, expected_versions, ignore_policy_names,
                 expect_policy_removed)
 
             if done or not retry_get_config or not PolicyRest._policy_retry_sleep:
@@ -271,7 +271,7 @@ class PolicyRest(object):
 
     @staticmethod
     def _get_latest_policy_once(audit, policy_id,
-                                min_version_expected, ignore_policy_names,
+                                expected_versions, ignore_policy_names,
                                 expect_policy_removed):
         """single attempt to get the latest policy for the policy_id from the policy-engine"""
 
@@ -281,7 +281,7 @@ class PolicyRest(object):
                                  status_code, policy_id, json.dumps(policy_bodies or []))
 
         latest_policy = PolicyUtils.select_latest_policy(
-            policy_bodies, min_version_expected, ignore_policy_names
+            policy_bodies, expected_versions, ignore_policy_names
         )
 
         if not latest_policy and not expect_policy_removed:
@@ -340,12 +340,11 @@ class PolicyRest(object):
             if not policy:
                 policies_to_find[policy_id] = {
                     POLICY_ID: policy_id,
-                    PolicyRest.MIN_VERSION_EXPECTED: int(policy_version),
+                    PolicyRest.EXPECTED_VERSIONS: {policy_version: True},
                     PolicyRest.IGNORE_POLICY_NAMES: {}
                 }
                 continue
-            if int(policy[PolicyRest.MIN_VERSION_EXPECTED]) < int(policy_version):
-                policy[PolicyRest.MIN_VERSION_EXPECTED] = int(policy_version)
+            policy[PolicyRest.EXPECTED_VERSIONS][policy_version] = True
 
         for (policy_id, policy_names) in policies_removed:
             if not policy_id:
@@ -360,7 +359,7 @@ class PolicyRest(object):
             policy[PolicyRest.IGNORE_POLICY_NAMES].update(policy_names)
 
         apns = [(audit, policy_id,
-                 policy_to_find.get(PolicyRest.MIN_VERSION_EXPECTED),
+                 policy_to_find.get(PolicyRest.EXPECTED_VERSIONS),
                  policy_to_find.get(PolicyRest.IGNORE_POLICY_NAMES))
                 for (policy_id, policy_to_find) in policies_to_find.items()]
 
@@ -383,7 +382,7 @@ class PolicyRest(object):
 
         removed_policies = dict((policy_id, True)
                                 for (policy_id, policy_to_find) in policies_to_find.items()
-                                if not policy_to_find.get(PolicyRest.MIN_VERSION_EXPECTED)
+                                if not policy_to_find.get(PolicyRest.EXPECTED_VERSIONS)
                                 and policy_to_find.get(PolicyRest.IGNORE_POLICY_NAMES)
                                 and policy_id not in updated_policies)
 

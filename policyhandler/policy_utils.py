@@ -76,7 +76,7 @@ class PolicyUtils(object):
         return {POLICY_ID:policy_id, POLICY_BODY:policy_body}
 
     @staticmethod
-    def select_latest_policy(policy_bodies, min_version_expected=None, ignore_policy_names=None):
+    def select_latest_policy(policy_bodies, expected_versions=None, ignore_policy_names=None):
         """For some reason, the policy-engine returns all version of the policy_bodies.
         DCAE-Controller is only interested in the latest version
         """
@@ -88,14 +88,13 @@ class PolicyUtils(object):
             policy_version = policy_body.get(POLICY_VERSION)
             if not policy_name or not policy_version or not policy_version.isdigit():
                 continue
-            policy_version = int(policy_version)
-            if min_version_expected and policy_version < min_version_expected:
+            if expected_versions and policy_version not in expected_versions:
                 continue
             if ignore_policy_names and policy_name in ignore_policy_names:
                 continue
 
             if (not latest_policy_body
-                    or int(latest_policy_body[POLICY_VERSION]) < policy_version):
+                    or int(latest_policy_body[POLICY_VERSION]) < int(policy_version)):
                 latest_policy_body = policy_body
 
         return PolicyUtils.parse_policy_config(PolicyUtils.convert_to_policy(latest_policy_body))
