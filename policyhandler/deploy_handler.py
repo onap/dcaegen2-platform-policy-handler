@@ -150,6 +150,7 @@ class DeployHandler(object):
     _url = None
     _url_policy = None
     _max_msg_length_mb = 10
+    _query = {}
     _target_entity = None
     _custom_kwargs = None
     _server_instance_uuid = None
@@ -186,12 +187,16 @@ class DeployHandler(object):
             # "deploy_handler" : {
             #     "target_entity" : "deployment_handler",
             #     "url" : "http://deployment_handler:8188",
-            #     "max_msg_length_mb" : 100
+            #     "max_msg_length_mb" : 10,
+            #     "query" : {
+            #         "cfy_tenant_name" : "default_tenant"
+            #     }
             # }
             DeployHandler._target_entity = config_dh.get("target_entity", "deployment_handler")
             DeployHandler._url = config_dh.get("url")
             DeployHandler._max_msg_length_mb = config_dh.get("max_msg_length_mb",
                                                              DeployHandler._max_msg_length_mb)
+            DeployHandler._query = deepcopy(config_dh.get("query", {}))
             DeployHandler._logger.info("dns based routing to %s: url(%s)",
                                        DeployHandler._target_entity, DeployHandler._url)
 
@@ -256,8 +261,8 @@ class DeployHandler(object):
 
         log_action = "put to {0} at {1}".format(
             DeployHandler._target_entity, DeployHandler._url_policy)
-        log_data = " msg={0} headers={1}".format(json.dumps(message),
-                                                 json.dumps(headers))
+        log_data = " msg={} headers={}, params={}".format(json.dumps(message), json.dumps(headers),
+                                                          json.dumps(DeployHandler._query))
         log_line = log_action + log_data
         DeployHandler._logger.info(log_line)
         metrics.metrics_start(log_line)
@@ -273,7 +278,8 @@ class DeployHandler(object):
         res = None
         try:
             res = DeployHandler._requests_session.put(
-                DeployHandler._url_policy, json=message, headers=headers,
+                DeployHandler._url_policy, json=message,
+                headers=headers, params=DeployHandler._query,
                 **DeployHandler._custom_kwargs
             )
         except Exception as ex:
@@ -316,7 +322,8 @@ class DeployHandler(object):
         headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
 
         log_action = "get {0}: {1}".format(DeployHandler._target_entity, DeployHandler._url_policy)
-        log_data = " headers={}".format(json.dumps(headers))
+        log_data = " headers={}, params={}".format(json.dumps(headers),
+                                                   json.dumps(DeployHandler._query))
         log_line = log_action + log_data
         DeployHandler._logger.info(log_line)
         metrics.metrics_start(log_line)
@@ -332,7 +339,7 @@ class DeployHandler(object):
         res = None
         try:
             res = DeployHandler._requests_session.get(
-                DeployHandler._url_policy, headers=headers,
+                DeployHandler._url_policy, headers=headers, params=DeployHandler._query,
                 **DeployHandler._custom_kwargs
             )
         except Exception as ex:

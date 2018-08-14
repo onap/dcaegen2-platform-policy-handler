@@ -24,7 +24,10 @@
         "deploy_handler" : {
             "target_entity" : "deployment_handler",
             "url" : "http://deployment_handler:8188",
-            "max_msg_length_mb" : 5
+            "max_msg_length_mb" : 5,
+            "query" : {
+                "cfy_tenant_name" : "default_tenant"
+            }
         }
     }
 }

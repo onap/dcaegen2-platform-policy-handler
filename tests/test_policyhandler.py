@@ -293,12 +293,12 @@ def fix_select_latest_policies_boom(monkeypatch):
 @pytest.fixture()
 def fix_deploy_handler(monkeypatch, fix_discovery):
     """monkeyed requests to deployment-handler"""
-    def monkeyed_deploy_handler_put(full_path, json=None, headers=None):
+    def monkeyed_deploy_handler_put(full_path, json=None, headers=None, params=None):
         """monkeypatch for policy-update request.put to deploy_handler"""
         return MonkeyedResponse(full_path, MockDeploymentHandler.default_response(),
                                 json, headers)
 
-    def monkeyed_deploy_handler_get(full_path, headers=None):
+    def monkeyed_deploy_handler_get(full_path, headers=None, params=None):
         """monkeypatch policy-update request.get to deploy_handler"""
         return MonkeyedResponse(full_path, MockDeploymentHandler.get_deployed_policies(),
                                 None, headers)
@@ -319,7 +319,7 @@ def fix_deploy_handler(monkeypatch, fix_discovery):
 @pytest.fixture()
 def fix_deploy_handler_fail(monkeypatch, fix_discovery):
     """monkeyed failed discovery request.get"""
-    def monkeyed_deploy_handler_put(full_path, json=None, headers=None):
+    def monkeyed_deploy_handler_put(full_path, json=None, headers=None, params=None):
         """monkeypatch for deploy_handler"""
         res = MonkeyedResponse(
             full_path,
@@ -329,7 +329,7 @@ def fix_deploy_handler_fail(monkeypatch, fix_discovery):
         res.status_code = 413
         return res
 
-    def monkeyed_deploy_handler_get(full_path, headers=None):
+    def monkeyed_deploy_handler_get(full_path, headers=None, params=None):
         """monkeypatch policy-update request.get to deploy_handler"""
         return MonkeyedResponse(full_path, MockDeploymentHandler.default_response(),
                                 None, headers)
