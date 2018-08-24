@@ -26,7 +26,7 @@ from datetime import datetime
 from policyhandler.config import Config
 from policyhandler.step_timer import StepTimer
 
-Config.load_from_file()
+Config.init_config()
 
 
 class MockTimerController(object):

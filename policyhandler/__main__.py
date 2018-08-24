@@ -35,20 +35,20 @@ from policyhandler.web_server import PolicyWeb
 
 def run_policy_handler():
     """main run function for policy-handler"""
-    Config.load_from_file()
-    Config.discover()
+    Config.init_config()
 
     logger = logging.getLogger("policy_handler")
     sys.stdout = LogWriter(logger.info)
     sys.stderr = LogWriter(logger.error)
 
     logger.info("========== run_policy_handler ========== %s", __package__)
-    Audit.init(Config.get_system_name(), Config.LOGGER_CONFIG_FILE_PATH)
-
-    logger.info("starting policy_handler with config:")
-    logger.info(Audit.log_json_dumps(Config.settings))
+    Audit.init(Config.system_name, Config.LOGGER_CONFIG_FILE_PATH)
 
     audit = Audit(req_message="start policy handler")
+
+    Config.discover(audit)
+    logger.info("starting policy_handler with config: %s", Config.discovered_config)
+
     PolicyReceiver.run(audit)
     PolicyWeb.run_forever(audit)
 

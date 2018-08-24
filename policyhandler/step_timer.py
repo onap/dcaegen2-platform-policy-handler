@@ -71,9 +71,11 @@ class StepTimer(Thread):
                 self._finished,
             )
 
-    def next(self):
+    def next(self, interval=None):
         """continue with the next timeout"""
         with self._lock:
+            if interval:
+                self._interval = interval
             self._paused = False
             if self._waiting_for_timeout:
                 self._next.set()

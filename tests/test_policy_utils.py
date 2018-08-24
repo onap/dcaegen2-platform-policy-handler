@@ -25,7 +25,7 @@ import re
 from policyhandler.config import Config
 from policyhandler.policy_utils import RegexCoarser
 
-Config.load_from_file()
+Config.init_config()
 LOGGER = logging.getLogger("policy_handler.unit_test_policy_utils")
 
 

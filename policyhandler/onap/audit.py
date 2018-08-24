@@ -339,7 +339,7 @@ class _Audit(object):
         return obj
 
     @staticmethod
-    def log_json_dumps(obj, **kwargs):
+    def json_dumps(obj, **kwargs):
         """hide the known secret field values of the dictionary and return json.dumps"""
         if not isinstance(obj, dict):
             return json.dumps(obj, **kwargs)
@@ -455,6 +455,7 @@ class Metrics(_Audit):
             self.info(log_line, **self.merge_all_kwargs(**kwargs))
         _Audit._health.start(self._metrics_name, self.request_id)
         _Audit._health.start(METRICS_TOTAL_STATS, self.request_id)
+        return log_line
 
 
     def metrics(self, log_line, **kwargs):

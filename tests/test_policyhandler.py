@@ -18,15 +18,17 @@
 
 """test of the package for policy-handler of DCAE-Controller"""
 
+import base64
 import copy
 import json
 import re
 import time
 import uuid
 
-import pytest
 import cherrypy
 from cherrypy.test.helper import CPWebCase
+
+import pytest
 
 from policyhandler.config import Config
 from policyhandler.deploy_handler import DeployHandler
@@ -42,56 +44,9 @@ from policyhandler.policy_rest import PolicyRest
 from policyhandler.policy_utils import PolicyUtils, Utils
 from policyhandler.web_server import _PolicyWeb
 
-from .mock_settings import Settings
+from .mock_settings import MonkeyedResponse, Settings
 
 Settings.init()
-
-class MonkeyHttpResponse(object):
-    """Monkey http reposne"""
-    def __init__(self, headers):
-        self.headers = headers or {}
-
-
-class MonkeyedResponse(object):
-    """Monkey response"""
-    def __init__(self, full_path, res_json, json_body=None, headers=None):
-        self.full_path = full_path
-        self.req_json = json_body or {}
-        self.status_code = 200
-        self.request = MonkeyHttpResponse(headers)
-        self.res = res_json
-        self.text = json.dumps(self.res)
-
-    def json(self):
-        """returns json of response"""
-        return self.res
-
-    def raise_for_status(self):
-        """ignoring"""
-        pass
-
-
-def monkeyed_discovery(full_path):
-    """monkeypatch for get from consul"""
-    res_json = {}
-    if full_path == DiscoveryClient.CONSUL_SERVICE_MASK.format(Config.settings["deploy_handler"]):
-        res_json = [{
-            "ServiceAddress": "1.1.1.1",
-            "ServicePort": "123"
-        }]
-    elif full_path == DiscoveryClient.CONSUL_KV_MASK.format(Config.get_system_name()):
-        res_json = copy.deepcopy(Settings.dicovered_config)
-    return MonkeyedResponse(full_path, res_json)
-
-
-@pytest.fixture()
-def fix_discovery(monkeypatch):
-    """monkeyed discovery request.get"""
-    Settings.logger.info("setup fix_discovery")
-    monkeypatch.setattr('policyhandler.discovery.requests.get', monkeyed_discovery)
-    yield fix_discovery  # provide the fixture value
-    Settings.logger.info("teardown fix_discovery")
-
 
 class MonkeyPolicyBody(object):
     """policy body that policy-engine returns"""
@@ -189,7 +144,6 @@ class MockPolicyEngine(object):
         return dict((k, v)
                     for k, v in MockPolicyEngine.gen_all_policies_latest().items()
                     if re.match(match_to_policy_name, k))
-
 
 MockPolicyEngine.init()
 
@@ -289,9 +243,30 @@ def fix_select_latest_policies_boom(monkeypatch):
     yield fix_select_latest_policies_boom
     Settings.logger.info("teardown fix_select_latest_policies_boom")
 
+@pytest.fixture()
+def fix_discovery(monkeypatch):
+    """monkeyed discovery request.get"""
+    def monkeyed_discovery(full_path):
+        """monkeypatch for get from consul"""
+        res_json = {}
+        if full_path == DiscoveryClient.CONSUL_SERVICE_MASK.format(
+                Config.discovered_config.get_by_key(Config.DEPLOY_HANDLER)):
+            res_json = [{
+                "ServiceAddress": "1.1.1.1",
+                "ServicePort": "123"
+            }]
+        elif full_path == DiscoveryClient.CONSUL_KV_MASK.format(Config.system_name):
+            res_json = [{"Value": base64.b64encode(
+                json.dumps(Settings.mock_config).encode()).decode("utf-8")}]
+        return MonkeyedResponse(full_path, res_json)
+
+    Settings.logger.info("setup fix_discovery")
+    monkeypatch.setattr('policyhandler.discovery.requests.get', monkeyed_discovery)
+    yield fix_discovery  # provide the fixture value
+    Settings.logger.info("teardown fix_discovery")
 
 @pytest.fixture()
-def fix_deploy_handler(monkeypatch, fix_discovery):
+def fix_deploy_handler(monkeypatch):
     """monkeyed requests to deployment-handler"""
     def monkeyed_deploy_handler_put(full_path, json=None, headers=None, params=None):
         """monkeypatch for policy-update request.put to deploy_handler"""
@@ -313,11 +288,12 @@ def fix_deploy_handler(monkeypatch, fix_discovery):
                         monkeyed_deploy_handler_get)
 
     yield fix_deploy_handler  # provide the fixture value
+    audit.audit_done("teardown")
     Settings.logger.info("teardown fix_deploy_handler")
 
 
 @pytest.fixture()
-def fix_deploy_handler_fail(monkeypatch, fix_discovery):
+def fix_deploy_handler_fail(monkeypatch):
     """monkeyed failed discovery request.get"""
     def monkeyed_deploy_handler_put(full_path, json=None, headers=None, params=None):
         """monkeypatch for deploy_handler"""
@@ -335,16 +311,16 @@ def fix_deploy_handler_fail(monkeypatch, fix_discovery):
                                 None, headers)
 
     @staticmethod
-    def monkeyed_deploy_handler_init(audit_ignore, rediscover=False):
+    def monkeyed_deploy_handler_init(audit_ignore):
         """monkeypatch for deploy_handler init"""
         DeployHandler._url = None
 
     Settings.logger.info("setup fix_deploy_handler_fail")
-    config_catch_up = Config.settings["catch_up"]
-    Config.settings["catch_up"] = {"interval": 1}
+    config_catch_up = Config.discovered_config.get_by_key("catch_up")
+    Config.discovered_config.update("catch_up", {"interval": 1})
 
     audit = Audit(req_message="fix_deploy_handler_fail")
-    DeployHandler._lazy_init(audit, rediscover=True)
+    DeployHandler._lazy_init(audit)
 
     monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._lazy_init',
                         monkeyed_deploy_handler_init)
@@ -354,8 +330,9 @@ def fix_deploy_handler_fail(monkeypatch, fix_discovery):
                         monkeyed_deploy_handler_get)
 
     yield fix_deploy_handler_fail
+    audit.audit_done("teardown")
     Settings.logger.info("teardown fix_deploy_handler_fail")
-    Config.settings["catch_up"] = config_catch_up
+    Config.discovered_config.update("catch_up", config_catch_up)
 
 
 @pytest.fixture()
@@ -438,7 +415,7 @@ def fix_policy_receiver_websocket(monkeypatch):
     Settings.logger.info("teardown fix_policy_receiver_websocket")
 
 
-def test_get_policy_latest(fix_pdp_post):
+def test_get_policy_latest(fix_pdp_post, fix_discovery):
     """test /policy_latest/<policy-id>"""
     policy_id, expected_policy = MockPolicyEngine.gen_policy_latest(3)
 
@@ -453,7 +430,7 @@ def test_get_policy_latest(fix_pdp_post):
 
 
 
-@pytest.mark.usefixtures("fix_pdp_post")
+@pytest.mark.usefixtures("fix_pdp_post", "fix_discovery")
 class WebServerTest(CPWebCase):
     """testing the web-server - runs tests in alphabetical order of method names"""
     def setup_server():
@@ -630,6 +607,7 @@ class WebServerTest(CPWebCase):
 
         WebServerTest.do_gc_test = False
         Settings.logger.info("shutdown...")
+        audit.audit_done("shutdown")
         result = self.getPage("/shutdown")
         Settings.logger.info("shutdown result: %s", result)
         self.assertStatus('200 OK')
@@ -637,7 +615,7 @@ class WebServerTest(CPWebCase):
         time.sleep(1)
 
 
-@pytest.mark.usefixtures("fix_pdp_post_boom")
+@pytest.mark.usefixtures("fix_pdp_post_boom", "fix_discovery")
 class WebServerPDPBoomTest(CPWebCase):
     """testing the web-server - runs tests in alphabetical order of method names"""
     def setup_server():
@@ -791,6 +769,7 @@ class WebServerPDPBoomTest(CPWebCase):
 
         WebServerPDPBoomTest.do_gc_test = False
         Settings.logger.info("shutdown...")
+        audit.audit_done("shutdown")
         result = self.getPage("/shutdown")
         Settings.logger.info("shutdown result: %s", result)
         self.assertStatus('200 OK')
@@ -798,7 +777,7 @@ class WebServerPDPBoomTest(CPWebCase):
         time.sleep(1)
 
 
-@pytest.mark.usefixtures("fix_pdp_post", "fix_select_latest_policies_boom")
+@pytest.mark.usefixtures("fix_pdp_post", "fix_select_latest_policies_boom", "fix_discovery")
 class WebServerInternalBoomTest(CPWebCase):
     """testing the web-server - runs tests in alphabetical order of method names"""
     def setup_server():
@@ -952,6 +931,7 @@ class WebServerInternalBoomTest(CPWebCase):
 
         WebServerInternalBoomTest.do_gc_test = False
         Settings.logger.info("shutdown...")
+        audit.audit_done("shutdown")
         result = self.getPage("/shutdown")
         Settings.logger.info("shutdown result: %s", result)
         self.assertStatus('200 OK')
@@ -962,7 +942,8 @@ class WebServerInternalBoomTest(CPWebCase):
 @pytest.mark.usefixtures(
     "fix_pdp_post_big",
     "fix_deploy_handler_fail",
-    "fix_policy_receiver_websocket"
+    "fix_policy_receiver_websocket",
+    "fix_discovery"
 )
 def test_catch_ups_failed_dh():
     """test run policy handler with catchups and failed deployment-handler"""

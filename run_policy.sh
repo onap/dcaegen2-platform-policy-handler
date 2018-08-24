@@ -25,6 +25,7 @@ echo "---------------------------------------------"
 STARTED=$(date +%Y-%m-%d_%T.%N)
 echo "${STARTED}: running ${BASH_SOURCE[0]}"
 echo "APP_VER =" $(python setup.py --version)
+echo "HOSTNAME =" ${HOSTNAME}
 (uname -a; echo "/etc/hosts"; cat /etc/hosts; pwd)
 
 python -m policyhandler &

@@ -6,17 +6,20 @@
         "policy_retry_count" : 5,
         "policy_retry_sleep" : 5,
         "catch_up" : {
-            "interval" : 1200
+            "interval" : 10
+        },
+        "reconfigure" : {
+            "interval" : 10
         },
         "policy_engine" : {
-            "url" : "https://policy_engine:8081",
+            "url" : "https://pdp-server:8081",
             "path_pdp" : "/pdp/",
             "path_api" : "/pdp/api/",
             "headers" : {
                 "Accept" : "application/json",
                 "Content-Type" : "application/json",
-                "ClientAuth" : "Basic blah",
-                "Authorization" : "Basic blah",
+                "ClientAuth" : "Basic user",
+                "Authorization" : "Basic auth",
                 "Environment" : "TEST"
             },
             "target_entity" : "policy_engine"

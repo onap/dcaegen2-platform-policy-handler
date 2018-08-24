@@ -141,8 +141,10 @@ class Utils(object):
         return json_str
 
     @staticmethod
-    def are_the_same(body_1, body_2):
+    def are_the_same(body_1, body_2, json_dumps=None):
         """check whether both objects are the same"""
+        if not json_dumps:
+            json_dumps = json.dumps
         if (body_1 and not body_2) or (not body_1 and body_2):
             Utils._logger.debug("only one is empty %s != %s", body_1, body_2)
             return False
@@ -152,21 +154,21 @@ class Utils(object):
 
         if isinstance(body_1, list) and isinstance(body_2, list):
             if len(body_1) != len(body_2):
-                Utils._logger.debug("len %s != %s", json.dumps(body_1), json.dumps(body_2))
+                Utils._logger.debug("len %s != %s", json_dumps(body_1), json_dumps(body_2))
                 return False
 
             for val_1, val_2 in zip(body_1, body_2):
-                if not Utils.are_the_same(val_1, val_2):
+                if not Utils.are_the_same(val_1, val_2, json_dumps):
                     return False
             return True
 
         if isinstance(body_1, dict) and isinstance(body_2, dict):
             if body_1.keys() ^ body_2.keys():
-                Utils._logger.debug("keys %s != %s", json.dumps(body_1), json.dumps(body_2))
+                Utils._logger.debug("keys %s != %s", json_dumps(body_1), json_dumps(body_2))
                 return False
 
             for key, val_1 in body_1.items():
-                if not Utils.are_the_same(val_1, body_2[key]):
+                if not Utils.are_the_same(val_1, body_2[key], json_dumps):
                     return False
             return True
 
