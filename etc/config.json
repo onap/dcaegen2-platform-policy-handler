@@ -1,7 +1,11 @@
 {
     "wservice_port" : 25577,
     "policy_handler" : {
-        "system" : "policy_handler"
+        "system" : "policy_handler",
+        "tls" : {
+            "cert_directory" : "etc/tls/certs/",
+            "cacert" : "cacert.pem"
+        }
     },
     "logging" : {
         "version": 1,

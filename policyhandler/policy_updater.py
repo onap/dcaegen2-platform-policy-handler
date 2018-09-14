@@ -420,7 +420,7 @@ class PolicyUpdater(Thread):
                 PolicyUpdater._logger.warning(result)
             elif not updated_policies and not removed_policies:
                 result = "- not sending empty policy-updates to deployment-handler"
-                PolicyUpdater._logger.warning(result)
+                PolicyUpdater._logger.info(result)
             else:
                 message = PolicyUpdateMessage(updated_policies, removed_policies,
                                               policy_filter_matches, False)

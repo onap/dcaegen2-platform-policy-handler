@@ -61,6 +61,7 @@ class PolicyRest(object):
     _url_get_config = None
     _headers = None
     _target_entity = None
+    _custom_kwargs = {}
     _thread_pool_size = 4
     _policy_retry_count = 1
     _policy_retry_sleep = 0
@@ -68,6 +69,8 @@ class PolicyRest(object):
     @staticmethod
     def _init():
         """init static config"""
+        PolicyRest._custom_kwargs = {}
+
         _, config = PolicyRest._settings.get_by_key(Config.FIELD_POLICY_ENGINE)
 
         if not PolicyRest._requests_session:
@@ -82,9 +85,9 @@ class PolicyRest(object):
                 'http://', requests.adapters.HTTPAdapter(pool_connections=pool_size,
                                                          pool_maxsize=pool_size))
 
-        PolicyRest._url_get_config = (config["url"] + config["path_api"]
+        PolicyRest._url_get_config = (config.get("url", "") + config.get("path_api", "")
                                       + PolicyRest.POLICY_GET_CONFIG)
-        PolicyRest._headers = config["headers"]
+        PolicyRest._headers = config.get("headers", {})
         PolicyRest._target_entity = config.get("target_entity", Config.FIELD_POLICY_ENGINE)
         _, PolicyRest._thread_pool_size = PolicyRest._settings.get_by_key(
             Config.THREAD_POOL_SIZE, 4)
@@ -96,9 +99,13 @@ class PolicyRest(object):
         _, PolicyRest._policy_retry_sleep = PolicyRest._settings.get_by_key(
             Config.POLICY_RETRY_SLEEP, 0)
 
-        PolicyRest._logger.info("PDP url(%s) headers(%s): %s",
-                                PolicyRest._url_get_config,
+        tls_ca_mode = config.get(Config.TLS_CA_MODE)
+        PolicyRest._custom_kwargs = Config.get_requests_kwargs(tls_ca_mode)
+
+        PolicyRest._logger.info("PDP(%s) url(%s) headers(%s) tls_ca_mode(%s) custom_kwargs(%s): %s",
+                                PolicyRest._target_entity, PolicyRest._url_get_config,
                                 Metrics.json_dumps(PolicyRest._headers),
+                                tls_ca_mode, json.dumps(PolicyRest._custom_kwargs),
                                 PolicyRest._settings)
 
         PolicyRest._settings.commit_change()
@@ -133,25 +140,27 @@ class PolicyRest(object):
     @staticmethod
     def _pdp_get_config(audit, json_body):
         """Communication with the policy-engine"""
-        metrics = Metrics(aud_parent=audit, targetEntity=PolicyRest._target_entity,
-                          targetServiceName=PolicyRest._url_get_config)
-
         with PolicyRest._lock:
             session = PolicyRest._requests_session
+            target_entity = PolicyRest._target_entity
             url = PolicyRest._url_get_config
             headers = copy.deepcopy(PolicyRest._headers)
+            custom_kwargs = copy.deepcopy(PolicyRest._custom_kwargs)
+
+        metrics = Metrics(aud_parent=audit, targetEntity=target_entity, targetServiceName=url)
 
         headers[REQUEST_X_ECOMP_REQUESTID] = metrics.request_id
-        headers_str = Metrics.json_dumps(headers)
 
-        msg = json.dumps(json_body)
-        log_line = "post to PDP {} msg={} headers={}".format(url, msg, headers_str)
+        log_action = "post to {} at {}".format(target_entity, url)
+        log_data = "msg={} headers={}, custom_kwargs({})".format(
+            json.dumps(json_body), Metrics.json_dumps(headers), json.dumps(custom_kwargs))
+        log_line = log_action + " " + log_data
 
         PolicyRest._logger.info(metrics.metrics_start(log_line))
 
         res = None
         try:
-            res = session.post(url, json=json_body, headers=headers)
+            res = session.post(url, json=json_body, headers=headers, **custom_kwargs)
         except Exception as ex:
             error_code = (AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
                           if isinstance(ex, requests.exceptions.RequestException)
@@ -164,8 +173,8 @@ class PolicyRest(object):
             metrics.metrics(error_msg)
             return (error_code, None)
 
-        log_line = "response {} from post to PDP {}: msg={} text={} headers={}".format(
-            res.status_code, url, msg, res.text,
+        log_line = "response {} from {}: text={} headers={}".format(
+            res.status_code, log_line, res.text,
             Metrics.json_dumps(dict(res.request.headers.items())))
 
         status_code, res_data = PolicyRest._extract_pdp_res_data(audit, metrics, log_line, res)
@@ -280,13 +289,13 @@ class PolicyRest(object):
                 break
 
             if retry == PolicyRest._policy_retry_count:
-                audit.warn("gave up retrying {0} from PDP after #{1} for policy_id={2}"
+                audit.warn("gave up retrying {} from PDP after #{} for policy_id={}"
                            .format(PolicyRest._url_get_config, retry, policy_id),
                            error_code=AuditResponseCode.DATA_ERROR)
                 break
 
             audit.warn(
-                "retry #{0} {1} from PDP in {2} secs for policy_id={3}".format(
+                "retry #{} {} from PDP in {} secs for policy_id={}".format(
                     retry, PolicyRest._url_get_config,
                     PolicyRest._policy_retry_sleep, policy_id),
                 error_code=AuditResponseCode.DATA_ERROR)
@@ -301,7 +310,7 @@ class PolicyRest(object):
         if not PolicyRest._validate_policy(latest_policy):
             audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
             audit.error(
-                "received invalid policy from PDP: {0}".format(json.dumps(latest_policy)),
+                "received invalid policy from PDP: {}".format(json.dumps(latest_policy)),
                 error_code=AuditResponseCode.DATA_ERROR)
 
         return latest_policy
@@ -322,7 +331,7 @@ class PolicyRest(object):
         )
 
         if not latest_policy and not expect_policy_removed:
-            audit.error("received unexpected policy data from PDP for policy_id={0}: {1}"
+            audit.error("received unexpected policy data from PDP for policy_id={}: {}"
                         .format(policy_id, json.dumps(policy_bodies or [])),
                         error_code=AuditResponseCode.DATA_ERROR)
 
@@ -436,7 +445,7 @@ class PolicyRest(object):
         if errored_policies:
             audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
             audit.error(
-                "errored_policies in PDP: {0}".format(json.dumps(errored_policies)),
+                "errored_policies in PDP: {}".format(json.dumps(errored_policies)),
                 error_code=AuditResponseCode.DATA_ERROR)
 
         return updated_policies, removed_policies
@@ -460,7 +469,7 @@ class PolicyRest(object):
             if not latest_policies:
                 audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
                 audit.warn(
-                    "received no policies from PDP for policy_filter {0}: {1}"
+                    "received no policies from PDP for policy_filter {}: {}"
                     .format(str_policy_filter, json.dumps(policy_bodies or [])),
                     error_code=AuditResponseCode.DATA_ERROR)
                 return None, latest_policies

@@ -175,7 +175,7 @@ class MockDeploymentHandler(object):
 @pytest.fixture()
 def fix_pdp_post(monkeypatch):
     """monkeyed request /getConfig to PDP"""
-    def monkeyed_policy_rest_post(full_path, json=None, headers=None):
+    def monkeyed_policy_rest_post(full_path, json=None, headers=None, **custom_kwargs):
         """monkeypatch for the POST to policy-engine"""
         res_json = MockPolicyEngine.get_config(json.get(POLICY_NAME))
         return MonkeyedResponse(full_path, res_json, json, headers)
@@ -191,7 +191,7 @@ def fix_pdp_post(monkeypatch):
 @pytest.fixture()
 def fix_pdp_post_big(monkeypatch):
     """monkeyed request /getConfig to PDP"""
-    def monkeyed_policy_rest_post(full_path, json=None, headers=None):
+    def monkeyed_policy_rest_post(full_path, json=None, headers=None, **custom_kwargs):
         """monkeypatch for the POST to policy-engine"""
         res_json = MockPolicyEngine.get_configs_all()
         return MonkeyedResponse(full_path, res_json, json, headers)
@@ -212,7 +212,7 @@ class MockException(Exception):
 @pytest.fixture()
 def fix_pdp_post_boom(monkeypatch):
     """monkeyed request /getConfig to PDP - exception"""
-    def monkeyed_policy_rest_post_boom(full_path, json=None, headers=None):
+    def monkeyed_policy_rest_post_boom(full_path, json=None, headers=None, **custom_kwargs):
         """monkeypatch for the POST to policy-engine"""
         raise MockException("fix_pdp_post_boom")
 
@@ -268,12 +268,13 @@ def fix_discovery(monkeypatch):
 @pytest.fixture()
 def fix_deploy_handler(monkeypatch):
     """monkeyed requests to deployment-handler"""
-    def monkeyed_deploy_handler_put(full_path, json=None, headers=None, params=None):
+    def monkeyed_deploy_handler_put(full_path, json=None, headers=None,
+                                    params=None, **custom_kwargs):
         """monkeypatch for policy-update request.put to deploy_handler"""
         return MonkeyedResponse(full_path, MockDeploymentHandler.default_response(),
                                 json, headers)
 
-    def monkeyed_deploy_handler_get(full_path, headers=None, params=None):
+    def monkeyed_deploy_handler_get(full_path, headers=None, params=None, **custom_kwargs):
         """monkeypatch policy-update request.get to deploy_handler"""
         return MonkeyedResponse(full_path, MockDeploymentHandler.get_deployed_policies(),
                                 None, headers)
@@ -295,7 +296,8 @@ def fix_deploy_handler(monkeypatch):
 @pytest.fixture()
 def fix_deploy_handler_fail(monkeypatch):
     """monkeyed failed discovery request.get"""
-    def monkeyed_deploy_handler_put(full_path, json=None, headers=None, params=None):
+    def monkeyed_deploy_handler_put(full_path, json=None, headers=None,
+                                    params=None, **custom_kwargs):
         """monkeypatch for deploy_handler"""
         res = MonkeyedResponse(
             full_path,
@@ -305,7 +307,7 @@ def fix_deploy_handler_fail(monkeypatch):
         res.status_code = 413
         return res
 
-    def monkeyed_deploy_handler_get(full_path, headers=None, params=None):
+    def monkeyed_deploy_handler_get(full_path, headers=None, params=None, **custom_kwargs):
         """monkeypatch policy-update request.get to deploy_handler"""
         return MonkeyedResponse(full_path, MockDeploymentHandler.default_response(),
                                 None, headers)

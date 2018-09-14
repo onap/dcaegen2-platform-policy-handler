@@ -25,8 +25,11 @@ on receiving the policy-notifications, the policy-receiver
 passes the notifications to policy-updater
 """
 
+import copy
 import json
 import logging
+import os
+import ssl
 import time
 from threading import Lock, Thread
 
@@ -35,6 +38,7 @@ import websocket
 from .config import Config, Settings
 from .policy_consts import MATCHING_CONDITIONS, POLICY_NAME, POLICY_VERSION
 from .policy_updater import PolicyUpdater
+from .policy_utils import Utils
 
 LOADED_POLICIES = 'loadedPolicies'
 REMOVED_POLICIES = 'removedPolicies'
@@ -54,6 +58,8 @@ class _PolicyReceiver(Thread):
         self._settings = Settings(Config.FIELD_POLICY_ENGINE)
 
         self._web_socket_url = None
+        self._web_socket_sslopt = None
+        self._tls_wss_ca_mode = None
         self._web_socket = None
         self.reconfigure()
 
@@ -71,21 +77,39 @@ class _PolicyReceiver(Thread):
                 return False
 
             prev_web_socket_url = self._web_socket_url
-            resturl = config.get("url", "") + config.get("path_pdp", "")
+            prev_web_socket_sslopt = self._web_socket_sslopt
+            self._web_socket_sslopt = None
+
+            resturl = (config.get("url", "").lower()
+                       + config.get("path_notifications", "/pdp/notifications"))
+
+            self._tls_wss_ca_mode = config.get(Config.TLS_WSS_CA_MODE)
 
             if resturl.startswith("https:"):
-                self._web_socket_url = resturl.replace("https:", "wss:") + "notifications"
-            else:
-                self._web_socket_url = resturl.replace("http:", "ws:") + "notifications"
+                self._web_socket_url = resturl.replace("https:", "wss:")
 
-            if self._web_socket_url == prev_web_socket_url:
-                _PolicyReceiver._logger.info("not changed web_socket_url(%s): %s",
-                                             self._web_socket_url, self._settings)
+                verify = Config.get_tls_verify(self._tls_wss_ca_mode)
+                if verify is False:
+                    self._web_socket_sslopt = {'cert_reqs': ssl.CERT_NONE}
+                elif verify is True:
+                    pass
+                else:
+                    self._web_socket_sslopt = {'ca_certs': verify}
+
+            else:
+                self._web_socket_url = resturl.replace("http:", "ws:")
+
+            if (self._web_socket_url == prev_web_socket_url
+                    and Utils.are_the_same(prev_web_socket_sslopt, self._web_socket_sslopt)):
+                _PolicyReceiver._logger.info(
+                    "not changed web_socket_url(%s) or tls_wss_ca_mode(%s): %s",
+                    self._web_socket_url, self._tls_wss_ca_mode, self._settings)
                 self._settings.commit_change()
                 return False
 
-            _PolicyReceiver._logger.info("changed web_socket_url(%s): %s",
-                                         self._web_socket_url, self._settings)
+            _PolicyReceiver._logger.info("changed web_socket_url(%s) or tls_wss_ca_mode(%s): %s",
+                                         self._web_socket_url, self._tls_wss_ca_mode,
+                                         self._settings)
             self._settings.commit_change()
 
         self._stop_notifications()
@@ -103,18 +127,27 @@ class _PolicyReceiver(Thread):
 
             if restarting:
                 time.sleep(5)
+                if not self._get_keep_running():
+                    break
+
+            with self._lock:
+                web_socket_url = self._web_socket_url
+                sslopt = copy.deepcopy(self._web_socket_sslopt)
+                tls_wss_ca_mode = self._tls_wss_ca_mode
 
             _PolicyReceiver._logger.info(
-                "connecting to policy-notifications at: %s", self._web_socket_url)
+                "connecting to policy-notifications at %s with sslopt(%s) tls_wss_ca_mode(%s)",
+                web_socket_url, json.dumps(sslopt), tls_wss_ca_mode)
+
             self._web_socket = websocket.WebSocketApp(
-                self._web_socket_url,
+                web_socket_url,
                 on_message=self._on_pdp_message,
                 on_close=self._on_ws_close,
                 on_error=self._on_ws_error
             )
 
             _PolicyReceiver._logger.info("waiting for policy-notifications...")
-            self._web_socket.run_forever()
+            self._web_socket.run_forever(sslopt=sslopt)
             restarting = True
 
         _PolicyReceiver._logger.info("exit policy-receiver")

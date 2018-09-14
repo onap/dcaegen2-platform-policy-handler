@@ -26,7 +26,6 @@ from threading import Lock
 import requests
 
 from .config import Config, Settings
-from .customize import CustomizerUser
 from .discovery import DiscoveryClient
 from .onap.audit import (REQUEST_X_ECOMP_REQUESTID, AuditHttpCode,
                          AuditResponseCode, Metrics)
@@ -157,18 +156,14 @@ class DeployHandler(object):
     _max_msg_length_mb = 10
     _query = {}
     _target_entity = None
-    _custom_kwargs = None
+    _custom_kwargs = {}
     _server_instance_uuid = None
     server_instance_changed = False
 
     @staticmethod
     def _init(audit):
         """set config"""
-        DeployHandler._custom_kwargs = (CustomizerUser.get_customizer()
-                                        .get_deploy_handler_kwargs(audit))
-        if (not DeployHandler._custom_kwargs
-                or not isinstance(DeployHandler._custom_kwargs, dict)):
-            DeployHandler._custom_kwargs = {}
+        DeployHandler._custom_kwargs = {}
 
         if not DeployHandler._requests_session:
             DeployHandler._requests_session = requests.Session()
@@ -188,11 +183,12 @@ class DeployHandler(object):
             # config for policy-handler >= 2.4.0
             # "deploy_handler" : {
             #     "target_entity" : "deployment_handler",
-            #     "url" : "http://deployment_handler:8188",
+            #     "url" : "https://deployment_handler:8188",
             #     "max_msg_length_mb" : 10,
             #     "query" : {
             #         "cfy_tenant_name" : "default_tenant"
-            #     }
+            #     },
+            #     "tls_ca_mode" : "cert_directory"
             # }
             DeployHandler._target_entity = config_dh.get(TARGET_ENTITY,
                                                          DeployHandler.DEFAULT_TARGET_ENTITY)
@@ -200,8 +196,13 @@ class DeployHandler(object):
             DeployHandler._max_msg_length_mb = config_dh.get("max_msg_length_mb",
                                                              DeployHandler._max_msg_length_mb)
             DeployHandler._query = deepcopy(config_dh.get("query", {}))
-            DeployHandler._logger.info("dns based routing to %s: url(%s)",
-                                       DeployHandler._target_entity, DeployHandler._url)
+            tls_ca_mode = config_dh.get(Config.TLS_CA_MODE)
+            DeployHandler._custom_kwargs = Config.get_requests_kwargs(tls_ca_mode)
+
+            DeployHandler._logger.info(
+                "dns based routing to %s: url(%s) tls_ca_mode(%s) custom_kwargs(%s)",
+                DeployHandler._target_entity, DeployHandler._url,
+                tls_ca_mode, json.dumps(DeployHandler._custom_kwargs))
 
         if not DeployHandler._url:
             # discover routing to deployment-handler at consul-services
@@ -258,11 +259,11 @@ class DeployHandler(object):
 
         DeployHandler._lazy_init(audit)
 
-        str_metrics = "policy_update {0}".format(str(policy_update_message))
+        str_metrics = "policy_update {}".format(str(policy_update_message))
 
         metrics_total = Metrics(
             aud_parent=audit,
-            targetEntity="{0} total policy_update".format(DeployHandler._target_entity),
+            targetEntity="{} total policy_update".format(DeployHandler._target_entity),
             targetServiceName=DeployHandler._url_policy)
 
         metrics_total.metrics_start("started {}".format(str_metrics))
@@ -284,15 +285,23 @@ class DeployHandler(object):
         if not message:
             return
 
-        metrics = Metrics(aud_parent=audit, targetEntity=DeployHandler._target_entity,
-                          targetServiceName=DeployHandler._url_policy)
+        with DeployHandler._lock:
+            session = DeployHandler._requests_session
+            target_entity = DeployHandler._target_entity
+            url = DeployHandler._url_policy
+            params = deepcopy(DeployHandler._query)
+            custom_kwargs = deepcopy(DeployHandler._custom_kwargs)
+
+        metrics = Metrics(aud_parent=audit, targetEntity="{} policy_update".format(target_entity),
+                          targetServiceName=url)
         headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
 
-        log_action = "put to {0} at {1}".format(
-            DeployHandler._target_entity, DeployHandler._url_policy)
-        log_data = " msg={} headers={}, params={}".format(json.dumps(message), json.dumps(headers),
-                                                          json.dumps(DeployHandler._query))
-        log_line = log_action + log_data
+        log_action = "put to {} at {}".format(target_entity, url)
+        log_data = "msg={} headers={}, params={} custom_kwargs({})".format(
+            json.dumps(message), json.dumps(headers),
+            json.dumps(params), json.dumps(custom_kwargs))
+        log_line = log_action + " " + log_data
+
         DeployHandler._logger.info(log_line)
         metrics.metrics_start(log_line)
 
@@ -306,20 +315,13 @@ class DeployHandler(object):
 
         res = None
         try:
-            with DeployHandler._lock:
-                session = DeployHandler._requests_session
-                url = DeployHandler._url_policy
-                params = deepcopy(DeployHandler._query)
-                custom_kwargs = deepcopy(DeployHandler._custom_kwargs)
-
-            res = session.put(url, json=message,
-                              headers=headers, params=params, **custom_kwargs)
+            res = session.put(url, json=message, headers=headers, params=params, **custom_kwargs)
         except Exception as ex:
             error_code = (AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
                           if isinstance(ex, requests.exceptions.RequestException)
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
-            error_msg = ("failed to {0} {1}: {2}{3}"
-                         .format(log_action, type(ex).__name__, str(ex), log_data))
+            error_msg = "failed to {} {}: {} {}".format(
+                log_action, type(ex).__name__, str(ex), log_data)
             DeployHandler._logger.exception(error_msg)
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
@@ -329,8 +331,8 @@ class DeployHandler(object):
         metrics.set_http_status_code(res.status_code)
         audit.set_http_status_code(res.status_code)
 
-        log_line = "response {0} from {1}: text={2}{3}".format(res.status_code, log_action,
-                                                               res.text, log_data)
+        log_line = "response {} from {}: text={} {}".format(
+            res.status_code, log_action, res.text, log_data)
         metrics.metrics(log_line)
 
         if res.status_code != requests.codes.ok:
@@ -349,19 +351,29 @@ class DeployHandler(object):
         that were deployed by deployment-handler
         """
         DeployHandler._lazy_init(audit)
-        metrics = Metrics(aud_parent=audit, targetEntity=DeployHandler._target_entity,
-                          targetServiceName=DeployHandler._url_policy)
+
+        with DeployHandler._lock:
+            session = DeployHandler._requests_session
+            target_entity = DeployHandler._target_entity
+            url = DeployHandler._url_policy
+            params = deepcopy(DeployHandler._query)
+            custom_kwargs = deepcopy(DeployHandler._custom_kwargs)
+
+        metrics = Metrics(aud_parent=audit,
+                          targetEntity="{} get_deployed_policies".format(target_entity),
+                          targetServiceName=url)
         headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
 
-        log_action = "get {0}: {1}".format(DeployHandler._target_entity, DeployHandler._url_policy)
-        log_data = " headers={}, params={}".format(json.dumps(headers),
-                                                   json.dumps(DeployHandler._query))
-        log_line = log_action + log_data
+        log_action = "get from {} at {}".format(target_entity, url)
+        log_data = "headers={}, params={} custom_kwargs({})".format(
+            json.dumps(headers), json.dumps(params), json.dumps(custom_kwargs))
+        log_line = log_action + " " + log_data
+
         DeployHandler._logger.info(log_line)
         metrics.metrics_start(log_line)
 
         if not DeployHandler._url:
-            error_msg = "no url found to {0}".format(log_line)
+            error_msg = "no url found to {}".format(log_line)
             DeployHandler._logger.error(error_msg)
             metrics.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             audit.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
@@ -370,19 +382,13 @@ class DeployHandler(object):
 
         res = None
         try:
-            with DeployHandler._lock:
-                session = DeployHandler._requests_session
-                url = DeployHandler._url_policy
-                params = deepcopy(DeployHandler._query)
-                custom_kwargs = deepcopy(DeployHandler._custom_kwargs)
-
             res = session.get(url, headers=headers, params=params, **custom_kwargs)
         except Exception as ex:
             error_code = (AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
                           if isinstance(ex, requests.exceptions.RequestException)
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
-            error_msg = ("failed to {0} {1}: {2}{3}"
-                         .format(log_action, type(ex).__name__, str(ex), log_data))
+            error_msg = "failed to {} {}: {} {}".format(
+                log_action, type(ex).__name__, str(ex), log_data)
             DeployHandler._logger.exception(error_msg)
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
@@ -392,8 +398,8 @@ class DeployHandler(object):
         metrics.set_http_status_code(res.status_code)
         audit.set_http_status_code(res.status_code)
 
-        log_line = ("response {0} from {1}: text={2}{3}"
-                    .format(res.status_code, log_action, res.text, log_data))
+        log_line = "response {} from {}: text={} {}".format(
+            res.status_code, log_action, res.text, log_data)
         metrics.metrics(log_line)
 
         if res.status_code != requests.codes.ok:

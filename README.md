@@ -119,17 +119,6 @@ class Customizer(CustomizerBase):
         service_url = super().get_service_url(audit, service_name, service)
         audit.info("TODO: customization for service_url on {0}".format(service_name))
         return service_url
-
-    def get_deploy_handler_kwargs(self, audit):
-        """
-        returns the optional dict-kwargs for requests.post to deploy-handler
-
-        this is just a sample code - replace it with the real customization
-        """
-        kwargs = {"verify": "/usr/local/share/ca-certificates/aafcacert.crt"}
-        audit.info("kwargs for requests.post to deploy-handler: {0}".format(json.dumps(kwargs)))
-        return kwargs
-
 ```
 
 ----------
