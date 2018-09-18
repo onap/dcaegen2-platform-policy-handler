@@ -57,6 +57,7 @@ class _PolicyReceiver(Thread):
         self._keep_running = True
         self._settings = Settings(Config.FIELD_POLICY_ENGINE)
 
+        self._sleep_before_restarting = 5
         self._web_socket_url = None
         self._web_socket_sslopt = None
         self._tls_wss_ca_mode = None
@@ -69,6 +70,7 @@ class _PolicyReceiver(Thread):
     def reconfigure(self):
         """configure and reconfigure the web-socket"""
         with self._lock:
+            self._sleep_before_restarting = 5
             self._settings.set_config(Config.discovered_config)
             changed, config = self._settings.get_by_key(Config.FIELD_POLICY_ENGINE)
 
@@ -126,7 +128,13 @@ class _PolicyReceiver(Thread):
             self._stop_notifications()
 
             if restarting:
-                time.sleep(5)
+                with self._lock:
+                    sleep_before_restarting = self._sleep_before_restarting
+                _PolicyReceiver._logger.info(
+                    "going to sleep for %s secs before restarting policy-notifications",
+                    sleep_before_restarting)
+
+                time.sleep(sleep_before_restarting)
                 if not self._get_keep_running():
                     break
 
@@ -205,7 +213,8 @@ class _PolicyReceiver(Thread):
 
     def _on_ws_error(self, error):
         """report an error"""
-        _PolicyReceiver._logger.exception("policy-notification error: %s", str(error))
+        _PolicyReceiver._logger.exception("policy-notification error %s", str(error))
+        self._sleep_before_restarting = 60 if isinstance(error, ssl.SSLError) else 5
 
     def _on_ws_close(self, code, reason):
         """restart web-socket on close"""

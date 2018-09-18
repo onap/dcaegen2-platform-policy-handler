@@ -23,7 +23,7 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="4.3.0",
+    version="4.3.1",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,
