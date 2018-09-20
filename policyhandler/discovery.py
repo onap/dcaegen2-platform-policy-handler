@@ -16,7 +16,7 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
-"""client to talk to consul at the standard port 8500"""
+"""client to talk to consul services and kv"""
 
 import base64
 import json
@@ -24,18 +24,24 @@ import logging
 
 import requests
 
+from .config import Config
 from .customize import CustomizerUser
 from .onap.audit import AuditHttpCode, Metrics
 
 
 class DiscoveryClient(object):
-    """talking to consul at http://consul:8500
+    """talking to consul at Config.consul_url
+
+    Config.consul_url is populated
+        from env var $CONSUL_URL
+        if not provided, then from consul_url in etc/config.json
+        if not provided, then from hardcoded value of http://consul:8500
 
     relies on proper --add-host "consul:<consul-agent ip>" in
     docker run command that runs along the consul-agent:
 
     docker run --name ${APPNAME} -d
-        -e HOSTNAME
+        -e HOSTNAME -e CONSUL_URL
         --add-host "consul:<consul-agent ip>"
         -v ${BASEDIR}/logs:${TARGETDIR}/logs
         -v ${BASEDIR}/etc:${TARGETDIR}/etc
@@ -43,8 +49,8 @@ class DiscoveryClient(object):
         ${APPNAME}:latest
     """
     CONSUL_ENTITY = "consul"
-    CONSUL_SERVICE_MASK = "http://consul:8500/v1/catalog/service/{0}"
-    CONSUL_KV_MASK = "http://consul:8500/v1/kv/{0}"
+    CONSUL_SERVICE_MASK = "{}/v1/catalog/service/{}"
+    CONSUL_KV_MASK = "{}/v1/kv/{}"
     _logger = logging.getLogger("policy_handler.discovery")
 
     @staticmethod
@@ -63,7 +69,7 @@ class DiscoveryClient(object):
     @staticmethod
     def get_service_url(audit, service_name):
         """find the service record in consul"""
-        service_path = DiscoveryClient.CONSUL_SERVICE_MASK.format(service_name)
+        service_path = DiscoveryClient.CONSUL_SERVICE_MASK.format(Config.consul_url, service_name)
         metrics = Metrics(aud_parent=audit, targetEntity=DiscoveryClient.CONSUL_ENTITY,
                           targetServiceName=service_path)
 
@@ -116,7 +122,7 @@ class DiscoveryClient(object):
     @staticmethod
     def get_value(audit, key):
         """get the value for the key from consul-kv"""
-        discovery_url = DiscoveryClient.CONSUL_KV_MASK.format(key)
+        discovery_url = DiscoveryClient.CONSUL_KV_MASK.format(Config.consul_url, key)
         metrics = Metrics(aud_parent=audit, targetEntity=DiscoveryClient.CONSUL_ENTITY,
                           targetServiceName=discovery_url)
 

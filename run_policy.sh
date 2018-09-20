@@ -25,8 +25,9 @@ echo "---------------------------------------------"
 STARTED=$(date +%Y-%m-%d_%T.%N)
 echo "${STARTED}: running ${BASH_SOURCE[0]}"
 echo "APP_VER =" $(python setup.py --version)
-echo "HOSTNAME =" ${HOSTNAME}
-(uname -a; echo "/etc/hosts"; cat /etc/hosts; pwd; openssl version -a)
+echo "HOSTNAME =${HOSTNAME}"
+echo "CONSUL_URL =${CONSUL_URL}"
+(pwd; uname -a; echo "/etc/hosts"; cat /etc/hosts; openssl version -a)
 
 python -m policyhandler &
 PID=$!

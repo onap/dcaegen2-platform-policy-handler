@@ -24,7 +24,6 @@ import logging
 import logging.config
 import os
 
-from .discovery import DiscoveryClient
 from .onap.audit import Audit
 from .policy_utils import Utils
 
@@ -134,6 +133,7 @@ class Config(object):
     SERVICE_NAME_POLICY_HANDLER = "policy_handler"
 
     FIELD_SYSTEM = "system"
+    FIELD_CONSUL_URL = "consul_url"
     FIELD_WSERVICE_PORT = "wservice_port"
     FIELD_TLS = "tls"
     FIELD_POLICY_ENGINE = "policy_engine"
@@ -151,6 +151,7 @@ class Config(object):
 
     system_name = SERVICE_NAME_POLICY_HANDLER
     wservice_port = 25577
+    consul_url = "http://consul:8500"
     tls_cacert_file = None
     tls_server_cert_file = None
     tls_private_key_file = None
@@ -236,6 +237,8 @@ class Config(object):
             logging.config.dictConfig(logging_config)
 
         Config.wservice_port = loaded_config.get(Config.FIELD_WSERVICE_PORT, Config.wservice_port)
+        Config.consul_url = os.environ.get(
+            "CONSUL_URL", loaded_config.get(Config.FIELD_CONSUL_URL, Config.consul_url)).rstrip("/")
 
         local_config = loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER, {})
         Config.system_name = local_config.get(Config.FIELD_SYSTEM, Config.system_name)
@@ -249,6 +252,7 @@ class Config(object):
     def discover(audit):
         """bring and merge the config settings from the discovery service"""
         discovery_key = Config.system_name
+        from .discovery import DiscoveryClient
         new_config = DiscoveryClient.get_value(audit, discovery_key)
 
         if not new_config or not isinstance(new_config, dict):
