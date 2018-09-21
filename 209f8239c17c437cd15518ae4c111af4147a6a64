@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1a76adc5_f3c5d03d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 2835
+      },
+      "writtenOn": "2018-09-21T13:24:17Z",
+      "side": 1,
+      "message": "Actually the need is network admins do not want to provide DNS resolution of hostname \"consul\".  We want the method of accessing Consul (protocol, address and port) to be configurable via environment variable.",
+      "revId": "209f8239c17c437cd15518ae4c111af4147a6a64",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
