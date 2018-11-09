@@ -1,4 +1,4 @@
-#!/bin/bash
+#/bin/bash
 
 # ================================================================================
 # Copyright (c) 2017 AT&T Intellectual Property. All rights reserved.
@@ -37,7 +37,7 @@ if [ -z "$SETTINGS_FILE" ]; then
 fi
 
 set +e
-RELEASE_TAG=${MVN_RELEASE_TAG:-R3}
+RELEASE_TAG=${MVN_RELEASE_TAG:-R4}
 if [ "$RELEASE_TAG" != "R1" ]; then
   RELEASE_TAGGED_DIR="${RELEASE_TAG}/"
 else
