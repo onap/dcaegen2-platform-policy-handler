@@ -23,6 +23,7 @@ import logging
 import re
 
 from .deploy_handler import DeployHandler, PolicyUpdateMessage
+from .onap.audit import AuditHttpCode, AuditResponseCode
 from .policy_consts import (ERRORED_POLICIES, LATEST_POLICIES,
                             MATCHING_CONDITIONS, POLICY_BODY, POLICY_FILTER,
                             POLICY_NAME, POLICY_VERSION, POLICY_VERSIONS)
@@ -36,15 +37,32 @@ class PolicyMatcher(object):
     PENDING_UPDATE = "pending_update"
 
     @staticmethod
-    def get_latest_policies(audit):
-        """
-        find the latest policies from policy-engine for the deployed policies and policy-filters
-        """
+    def get_deployed_policies(audit):
+        """get the deployed policies and policy-filters"""
         deployed_policies, deployed_policy_filters = DeployHandler.get_deployed_policies(audit)
+
+        if audit.is_not_found():
+            warning_txt = "got no deployed policies or policy-filters"
+            PolicyMatcher._logger.warning(warning_txt)
+            return {"warning": warning_txt}, None, None
 
         if not audit.is_success() or (not deployed_policies and not deployed_policy_filters):
             error_txt = "failed to retrieve policies from deployment-handler"
             PolicyMatcher._logger.error(error_txt)
+            return {"error": error_txt}, None, None
+
+        return None, deployed_policies, deployed_policy_filters
+
+
+    @staticmethod
+    def build_catch_up_message(audit, deployed_policies, deployed_policy_filters):
+        """
+        find the latest policies from policy-engine for the deployed policies and policy-filters
+        """
+
+        if not (deployed_policies or deployed_policy_filters):
+            error_txt = "no deployed policies or policy-filters"
+            PolicyMatcher._logger.warning(error_txt)
             return {"error": error_txt}, None
 
         coarse_regex_patterns = PolicyMatcher.calc_coarse_patterns(
@@ -54,7 +72,9 @@ class PolicyMatcher(object):
             error_txt = ("failed to construct the coarse_regex_patterns from " +
                          "deployed_policies: {} and deployed_policy_filters: {}"
                          .format(deployed_policies, deployed_policy_filters))
-            PolicyMatcher._logger.error(error_txt)
+            PolicyMatcher._logger.error(audit.error(
+                error_txt, error_code=AuditResponseCode.DATA_ERROR))
+            audit.set_http_status_code(AuditHttpCode.DATA_ERROR.value)
             return {"error": error_txt}, None
 
         pdp_response = PolicyRest.get_latest_policies(
@@ -62,9 +82,9 @@ class PolicyMatcher(object):
                                    for policy_name_pattern in coarse_regex_patterns]
         )
 
-        if not audit.is_success_or_not_found():
+        if not audit.is_success():
             error_txt = "failed to retrieve policies from policy-engine"
-            PolicyMatcher._logger.error(error_txt)
+            PolicyMatcher._logger.warning(error_txt)
             return {"error": error_txt}, None
 
         latest_policies = pdp_response.get(LATEST_POLICIES, {})
@@ -90,6 +110,7 @@ class PolicyMatcher(object):
                                     removed_policies,
                                     policy_filter_matches))
 
+
     @staticmethod
     def calc_coarse_patterns(audit, deployed_policies, deployed_policy_filters):
         """calculate the coarsed patterns on policy-names in policies and policy-filters"""
@@ -109,6 +130,7 @@ class PolicyMatcher(object):
                                 coarse_regex.patterns)))
         return coarse_regex_patterns
 
+
     @staticmethod
     def match_to_deployed_policies(audit, policies_updated, policies_removed):
         """match the policies_updated, policies_removed versus deployed policies"""
@@ -124,6 +146,7 @@ class PolicyMatcher(object):
                                 if deployed_policies.get(policy_id, {}).get(POLICY_VERSIONS))
 
         return changed_policies, policies_removed, policy_filter_matches
+
 
     @staticmethod
     def _match_policies(audit, policies, deployed_policies, deployed_policy_filters):
@@ -174,6 +197,7 @@ class PolicyMatcher(object):
 
         return matching_policies, changed_policies, policy_filter_matches
 
+
     @staticmethod
     def _match_policy_to_filter(audit, policy_id, policy, policy_filter_id, policy_filter):
         """Match the policy to the policy-filter"""
@@ -218,7 +242,7 @@ class PolicyMatcher(object):
 
         filter_config_name = policy_filter.get("configName")
         policy_config_name = matching_conditions.get("ConfigName")
-        if filter_onap_name and filter_config_name != policy_config_name:
+        if filter_config_name and filter_config_name != policy_config_name:
             PolicyMatcher._logger.debug(
                 audit.debug("not match by configName: {} != {}: {}"
                             .format(policy_config_name, filter_config_name, log_line)))

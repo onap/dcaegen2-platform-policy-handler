@@ -148,16 +148,34 @@ class Config(object):
     TLS_CA_MODE = "tls_ca_mode"
     TLS_WSS_CA_MODE = "tls_wss_ca_mode"
     TLS_CA_MODE_DO_NOT_VERIFY = "do_not_verify"
+    TIMEOUT_IN_SECS = "timeout_in_secs"
+    CONSUL_TIMEOUT_IN_SECS = "consul_timeout_in_secs"
+    WS_PING_INTERVAL_IN_SECS = "ws_ping_interval_in_secs"
+    DEFAULT_TIMEOUT_IN_SECS = 60
 
     system_name = SERVICE_NAME_POLICY_HANDLER
     wservice_port = 25577
     consul_url = "http://consul:8500"
+    consul_timeout_in_secs = DEFAULT_TIMEOUT_IN_SECS
     tls_cacert_file = None
     tls_server_cert_file = None
     tls_private_key_file = None
+    tls_server_ca_chain_file = None
 
     _local_config = Settings()
     discovered_config = Settings()
+
+    @staticmethod
+    def _get_tls_file_path(tls_config, cert_directory, tls_name):
+        """calc file path and verify its existance"""
+        file_name = tls_config.get(tls_name)
+        if not file_name:
+            return None
+        tls_file_path = os.path.join(cert_directory, file_name)
+        if not os.path.isfile(tls_file_path) or not os.access(tls_file_path, os.R_OK):
+            Config._logger.error("invalid %s: %s", tls_name, tls_file_path)
+            return None
+        return tls_file_path
 
     @staticmethod
     def _set_tls_config(tls_config):
@@ -166,6 +184,7 @@ class Config(object):
             Config.tls_cacert_file = None
             Config.tls_server_cert_file = None
             Config.tls_private_key_file = None
+            Config.tls_server_ca_chain_file = None
 
             if not (tls_config and isinstance(tls_config, dict)):
                 Config._logger.info("no tls in config: %s", json.dumps(tls_config))
@@ -174,43 +193,28 @@ class Config(object):
             cert_directory = tls_config.get("cert_directory")
 
             if not (cert_directory and isinstance(cert_directory, str)):
-                Config._logger.info("unexpected tls.cert_directory: %r", cert_directory)
+                Config._logger.warning("unexpected tls.cert_directory: %r", cert_directory)
                 return
 
             cert_directory = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.realpath(__file__))), cert_directory)
             if not (cert_directory and os.path.isdir(cert_directory)):
-                Config._logger.info("ignoring invalid cert_directory: %s", cert_directory)
+                Config._logger.warning("ignoring invalid cert_directory: %s", cert_directory)
                 return
 
-            cacert = tls_config.get("cacert")
-            if cacert:
-                tls_cacert_file = os.path.join(cert_directory, cacert)
-                if not os.path.isfile(tls_cacert_file):
-                    Config._logger.error("invalid tls_cacert_file: %s", tls_cacert_file)
-                else:
-                    Config.tls_cacert_file = tls_cacert_file
-
-            server_cert = tls_config.get("server_cert")
-            if server_cert:
-                tls_server_cert_file = os.path.join(cert_directory, server_cert)
-                if not os.path.isfile(tls_server_cert_file):
-                    Config._logger.error("invalid tls_server_cert_file: %s", tls_server_cert_file)
-                else:
-                    Config.tls_server_cert_file = tls_server_cert_file
-
-            private_key = tls_config.get("private_key")
-            if private_key:
-                tls_private_key_file = os.path.join(cert_directory, private_key)
-                if not os.path.isfile(tls_private_key_file):
-                    Config._logger.error("invalid tls_private_key_file: %s", tls_private_key_file)
-                else:
-                    Config.tls_private_key_file = tls_private_key_file
+            Config.tls_cacert_file = Config._get_tls_file_path(tls_config, cert_directory, "cacert")
+            Config.tls_server_cert_file = Config._get_tls_file_path(tls_config, cert_directory,
+                                                                    "server_cert")
+            Config.tls_private_key_file = Config._get_tls_file_path(tls_config, cert_directory,
+                                                                    "private_key")
+            Config.tls_server_ca_chain_file = Config._get_tls_file_path(tls_config, cert_directory,
+                                                                        "server_ca_chain")
 
         finally:
             Config._logger.info("tls_cacert_file = %s", Config.tls_cacert_file)
             Config._logger.info("tls_server_cert_file = %s", Config.tls_server_cert_file)
             Config._logger.info("tls_private_key_file = %s", Config.tls_private_key_file)
+            Config._logger.info("tls_server_ca_chain_file = %s", Config.tls_server_ca_chain_file)
 
     @staticmethod
     def init_config(file_path=None):
@@ -239,6 +243,9 @@ class Config(object):
         Config.wservice_port = loaded_config.get(Config.FIELD_WSERVICE_PORT, Config.wservice_port)
         Config.consul_url = os.environ.get(
             "CONSUL_URL", loaded_config.get(Config.FIELD_CONSUL_URL, Config.consul_url)).rstrip("/")
+        Config.consul_timeout_in_secs = loaded_config.get(Config.CONSUL_TIMEOUT_IN_SECS)
+        if not Config.consul_timeout_in_secs or Config.consul_timeout_in_secs < 1:
+            Config.consul_timeout_in_secs = Config.DEFAULT_TIMEOUT_IN_SECS
 
         local_config = loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER, {})
         Config.system_name = local_config.get(Config.FIELD_SYSTEM, Config.system_name)
@@ -250,7 +257,7 @@ class Config(object):
 
     @staticmethod
     def discover(audit):
-        """bring and merge the config settings from the discovery service"""
+        """bring the config settings from the discovery service"""
         discovery_key = Config.system_name
         from .discovery import DiscoveryClient
         new_config = DiscoveryClient.get_value(audit, discovery_key)

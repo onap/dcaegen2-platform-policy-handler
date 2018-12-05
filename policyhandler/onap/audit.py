@@ -64,10 +64,10 @@ ERROR_DESCRIPTION = "errorDescription"
 class AuditHttpCode(Enum):
     """audit http codes"""
     HTTP_OK = 200
+    DATA_NOT_FOUND_OK = 204
     PERMISSION_UNAUTHORIZED_ERROR = 401
     PERMISSION_FORBIDDEN_ERROR = 403
     RESPONSE_ERROR = 400
-    DATA_NOT_FOUND_ERROR = 404
     SERVER_INTERNAL_ERROR = 500
     SERVICE_UNAVAILABLE_ERROR = 503
     DATA_ERROR = 1030
@@ -88,7 +88,7 @@ class AuditResponseCode(Enum):
     def get_response_code(http_status_code):
         """calculates the response_code from max_http_status_code"""
         response_code = AuditResponseCode.UNKNOWN_ERROR
-        if http_status_code <= AuditHttpCode.HTTP_OK.value:
+        if http_status_code <= AuditHttpCode.DATA_NOT_FOUND_OK.value:
             response_code = AuditResponseCode.SUCCESS
 
         elif http_status_code in [AuditHttpCode.PERMISSION_UNAUTHORIZED_ERROR.value,
@@ -99,8 +99,7 @@ class AuditResponseCode(Enum):
         elif http_status_code == AuditHttpCode.SERVER_INTERNAL_ERROR.value:
             response_code = AuditResponseCode.BUSINESS_PROCESS_ERROR
         elif http_status_code in [AuditHttpCode.DATA_ERROR.value,
-                                  AuditHttpCode.RESPONSE_ERROR.value,
-                                  AuditHttpCode.DATA_NOT_FOUND_ERROR.value]:
+                                  AuditHttpCode.RESPONSE_ERROR.value]:
             response_code = AuditResponseCode.DATA_ERROR
         elif http_status_code == AuditHttpCode.SCHEMA_ERROR.value:
             response_code = AuditResponseCode.SCHEMA_ERROR
@@ -138,6 +137,7 @@ class _Audit(object):
     _hostname = os.environ.get(HOSTNAME)
 
     _health = Health()
+    _health_checkers = {}
     _py_ver = sys.version.replace("\n", "")
     _packages = []
 
@@ -167,6 +167,31 @@ class _Audit(object):
             pass
 
 
+    def __init__(self, job_name=None, request_id=None, req_message=None, **kwargs):
+        """create audit object per each request in the system
+
+        :job_name: is the name of the audit job for health stats
+        :request_id: is the X-ECOMP-RequestID for tracing
+        :req_message: is the request message string for logging
+        :kwargs: - put any request related params into kwargs
+        """
+        self.job_name = _Audit._key_format.sub('_', job_name or req_message or _Audit._service_name)
+        self.request_id = request_id
+        self.req_message = req_message or ""
+        self.kwargs = kwargs or {}
+
+        self.max_http_status_code = 0
+        self._lock = threading.Lock()
+
+
+    @staticmethod
+    def register_item_health(health_name, health_getter):
+        """
+        register the health-checker for the additional item
+        by its health_name and the function health_getter that returns its health status as json
+        """
+        _Audit._health_checkers[health_name] = health_getter
+
     def health(self, full=False):
         """returns json for health check"""
         utcnow = datetime.utcnow()
@@ -186,32 +211,20 @@ class _Audit(object):
                 "process_memory" : ProcessInfo.process_memory()
             },
             "stats" : _Audit._health.dump(),
+            "items" : dict((health_name, health_getter())
+                           for health_name, health_getter in _Audit._health_checkers.items()),
             "soft" : {"python" : _Audit._py_ver, "packages" : _Audit._packages}
         }
-        self.info("{} health: {}".format(_Audit._service_name, json.dumps(health)))
+        self.info("{} health: {}".format(_Audit._service_name,
+                                         json.dumps(health, sort_keys=True)))
         return health
+
 
     def process_info(self):
         """get the debug info on all the threads and memory"""
         process_info = ProcessInfo.get_all()
         self.info("{} process_info: {}".format(_Audit._service_name, json.dumps(process_info)))
         return process_info
-
-    def __init__(self, job_name=None, request_id=None, req_message=None, **kwargs):
-        """create audit object per each request in the system
-
-        :job_name: is the name of the audit job for health stats
-        :request_id: is the X-ECOMP-RequestID for tracing
-        :req_message: is the request message string for logging
-        :kwargs: - put any request related params into kwargs
-        """
-        self.job_name = _Audit._key_format.sub('_', job_name or req_message or _Audit._service_name)
-        self.request_id = request_id
-        self.req_message = req_message or ""
-        self.kwargs = kwargs or {}
-
-        self.max_http_status_code = 0
-        self._lock = threading.Lock()
 
 
     def merge_all_kwargs(self, **kwargs):
@@ -230,7 +243,7 @@ class _Audit(object):
     def reset_http_status_not_found(self):
         """resets the highest(worst) http status code if data not found"""
         with self._lock:
-            if self.max_http_status_code == AuditHttpCode.DATA_NOT_FOUND_ERROR.value:
+            if self.max_http_status_code == AuditHttpCode.DATA_NOT_FOUND_OK.value:
                 self.max_http_status_code = 0
 
     def get_max_http_status_code(self):
@@ -252,25 +265,23 @@ class _Audit(object):
                 == AuditResponseCode.get_response_code(status_code).value
                 or self.get_max_http_status_code() >= AuditHttpCode.SERVER_INTERNAL_ERROR.value)
 
-    def _get_response_status(self, not_found_ok=None):
+    def _get_response_status(self):
         """calculates the response status fields from max_http_status_code"""
         max_http_status_code = self.get_max_http_status_code()
         response_code = AuditResponseCode.get_response_code(max_http_status_code)
-        success = ((response_code.value == AuditResponseCode.SUCCESS.value)
-                   or (not_found_ok
-                       and max_http_status_code == AuditHttpCode.DATA_NOT_FOUND_ERROR.value))
+        success = (response_code.value == AuditResponseCode.SUCCESS.value)
         response_description = AuditResponseCode.get_human_text(response_code)
         return success, max_http_status_code, response_code, response_description
 
     def is_success(self):
-        """returns whether the response_code is success"""
+        """returns whether the response_code is success or 204 - not found"""
         success, _, _, _ = self._get_response_status()
         return success
 
-    def is_success_or_not_found(self):
-        """returns whether the response_code is success or 404 - not found"""
-        success, _, _, _ = self._get_response_status(not_found_ok=True)
-        return success
+    def is_not_found(self):
+        """returns whether the response_code is 204 - not found"""
+        max_http_status_code = self.get_max_http_status_code()
+        return max_http_status_code == AuditHttpCode.DATA_NOT_FOUND_OK.value
 
     def debug(self, log_line, **kwargs):
         """debug - the debug=lowest level of logging"""
@@ -397,8 +408,8 @@ class Audit(_Audit):
     def audit_done(self, result=None, **kwargs):
         """debug+audit - the audit=top level of logging"""
         all_kwargs = self.merge_all_kwargs(**kwargs)
-        success, max_http_status_code, response_code, response_description = \
-            self._get_response_status()
+        (success, max_http_status_code,
+         response_code, response_description) = self._get_response_status()
         log_line = "{0} {1}".format(self.req_message, result or "").strip()
         audit_func = None
         timer = _Audit.get_elapsed_time(self._started)
@@ -461,8 +472,8 @@ class Metrics(_Audit):
     def metrics(self, log_line, **kwargs):
         """debug+metrics - the metrics=sub-audit level of logging"""
         all_kwargs = self.merge_all_kwargs(**kwargs)
-        success, max_http_status_code, response_code, response_description = \
-            self._get_response_status()
+        (success, max_http_status_code,
+         response_code, response_description) = self._get_response_status()
         metrics_func = None
         timer = _Audit.get_elapsed_time(self._metrics_started)
         if success:

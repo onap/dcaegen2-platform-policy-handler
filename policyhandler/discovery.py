@@ -56,7 +56,7 @@ class DiscoveryClient(object):
     @staticmethod
     def _discover_service(audit, service_name, service_path):
         """find the service record in consul"""
-        response = requests.get(service_path)
+        response = requests.get(service_path, timeout=Config.consul_timeout_in_secs)
         DiscoveryClient._logger.info(audit.info("response {} from {}: {}".format(
             response.status_code, service_path, response.text)))
 
@@ -113,7 +113,7 @@ class DiscoveryClient(object):
     @staticmethod
     def _get_value_from_kv(url):
         """get the value from consul-kv at discovery url"""
-        response = requests.get(url)
+        response = requests.get(url, timeout=Config.consul_timeout_in_secs)
         response.raise_for_status()
         data = response.json()
         value = base64.b64decode(data[0]["Value"]).decode("utf-8")
@@ -129,6 +129,7 @@ class DiscoveryClient(object):
         log_line = "get from {} at {}".format(DiscoveryClient.CONSUL_ENTITY, discovery_url)
 
         DiscoveryClient._logger.info(metrics.metrics_start(log_line))
+        status_code = None
         try:
             status_code, value = DiscoveryClient._get_value_from_kv(discovery_url)
         except Exception as ex:

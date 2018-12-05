@@ -22,11 +22,12 @@ import gc
 import json
 import time
 
+import pytest
+
 from policyhandler.onap.audit import Audit, AuditHttpCode, Metrics
 
 from .mock_settings import Settings
 
-Settings.init()
 
 class Node(object):
     """making the cycled objects"""
@@ -66,7 +67,7 @@ def test_healthcheck_with_error():
     audit.warn("debug from test_healthcheck_with_error")
     audit.info_requested("debug from test_healthcheck_with_error")
     if audit.is_success():
-        audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
+        audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_OK.value)
     audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
     metrics.metrics("test /healthcheck")
 

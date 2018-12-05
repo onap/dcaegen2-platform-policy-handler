@@ -26,7 +26,7 @@ import cherrypy
 
 from .config import Config
 from .deploy_handler import PolicyUpdateMessage
-from .onap.audit import Audit
+from .onap.audit import Audit, AuditHttpCode
 from .policy_matcher import PolicyMatcher
 from .policy_receiver import PolicyReceiver
 from .policy_rest import PolicyRest
@@ -34,21 +34,35 @@ from .policy_rest import PolicyRest
 
 class PolicyWeb(object):
     """run http API of policy-handler on 0.0.0.0:wservice_port - any incoming address"""
+    DATA_NOT_FOUND_ERROR = 404
     HOST_INADDR_ANY = ".".join("0"*4)
     logger = logging.getLogger("policy_handler.policy_web")
 
     @staticmethod
     def run_forever(audit):
         """run the web-server of the policy-handler forever"""
-        PolicyWeb.logger.info("policy_handler web-server on port(%d)...", Config.wservice_port)
         cherrypy.config.update({"server.socket_host": PolicyWeb.HOST_INADDR_ANY,
                                 "server.socket_port": Config.wservice_port})
+
+        protocol = "http"
+        tls_info = ""
+        # if Config.tls_server_cert_file and Config.tls_private_key_file:
+        #     cherrypy.server.ssl_module = 'builtin'
+        #     cherrypy.server.ssl_certificate = Config.tls_server_cert_file
+        #     cherrypy.server.ssl_private_key = Config.tls_private_key_file
+        #     if Config.tls_server_ca_chain_file:
+        #         cherrypy.server.ssl_certificate_chain = Config.tls_server_ca_chain_file
+        #     protocol = "https"
+        #     tls_info = "cert: {} {} {}".format(Config.tls_server_cert_file,
+        #                                        Config.tls_private_key_file,
+        #                                        Config.tls_server_ca_chain_file)
+
         cherrypy.tree.mount(_PolicyWeb(), '/')
-        audit.info("running policy_handler web-server as {0}:{1}".format(
-            cherrypy.server.socket_host, cherrypy.server.socket_port))
-        PolicyWeb.logger.info("running policy_handler web-server as %s:%d with config: %s",
-                              cherrypy.server.socket_host, cherrypy.server.socket_port,
-                              json.dumps(cherrypy.config))
+
+        PolicyWeb.logger.info(
+            "%s with config: %s", audit.info("running policy_handler as {}://{}:{} {}".format(
+                protocol, cherrypy.server.socket_host, cherrypy.server.socket_port, tls_info)),
+            json.dumps(cherrypy.config))
         cherrypy.engine.start()
 
 class _PolicyWeb(object):
@@ -67,17 +81,18 @@ class _PolicyWeb(object):
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
         audit = Audit(job_name="get_latest_policy",
                       req_message=req_info, headers=cherrypy.request.headers)
-        PolicyWeb.logger.info("%s policy_id=%s headers=%s", \
-            req_info, policy_id, json.dumps(cherrypy.request.headers))
+        PolicyWeb.logger.info("%s policy_id=%s headers=%s",
+                              req_info, policy_id, json.dumps(cherrypy.request.headers))
 
         latest_policy = PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
 
         PolicyWeb.logger.info("res %s policy_id=%s latest_policy=%s",
                               req_info, policy_id, json.dumps(latest_policy))
 
-        success, http_status_code, _ = audit.audit_done(result=json.dumps(latest_policy))
-        if not success:
-            cherrypy.response.status = http_status_code
+        _, http_status_code, _ = audit.audit_done(result=json.dumps(latest_policy))
+        if http_status_code == AuditHttpCode.DATA_NOT_FOUND_OK.value:
+            http_status_code = PolicyWeb.DATA_NOT_FOUND_ERROR
+        cherrypy.response.status = http_status_code
 
         return latest_policy
 
@@ -89,15 +104,20 @@ class _PolicyWeb(object):
 
         PolicyWeb.logger.info("%s", req_info)
 
-        result, policy_update = PolicyMatcher.get_latest_policies(audit)
-        if policy_update and isinstance(policy_update, PolicyUpdateMessage):
-            result["policy_update"] = policy_update.get_message()
+        result, policies, policy_filters = PolicyMatcher.get_deployed_policies(audit)
+        if not result:
+            result, policy_update = PolicyMatcher.build_catch_up_message(
+                audit, policies, policy_filters)
+            if policy_update and isinstance(policy_update, PolicyUpdateMessage):
+                result["policy_update"] = policy_update.get_message()
 
-        PolicyWeb.logger.info("result %s: %s", req_info, json.dumps(result))
+        result_str = json.dumps(result, sort_keys=True)
+        PolicyWeb.logger.info("result %s: %s", req_info, result_str)
 
-        success, http_status_code, _ = audit.audit_done(result=json.dumps(result))
-        if not success:
-            cherrypy.response.status = http_status_code
+        _, http_status_code, _ = audit.audit_done(result=result_str)
+        if http_status_code == AuditHttpCode.DATA_NOT_FOUND_OK.value:
+            http_status_code = PolicyWeb.DATA_NOT_FOUND_ERROR
+        cherrypy.response.status = http_status_code
 
         return result
 
@@ -159,19 +179,21 @@ class _PolicyWeb(object):
 
         req_info = _PolicyWeb._get_request_info(cherrypy.request)
         audit = Audit(job_name="get_latest_policies",
-                      req_message="{0}: {1}".format(req_info, str_policy_filter), \
-            headers=cherrypy.request.headers)
-        PolicyWeb.logger.info("%s: policy_filter=%s headers=%s", \
-            req_info, str_policy_filter, json.dumps(cherrypy.request.headers))
+                      req_message="{0}: {1}".format(req_info, str_policy_filter),
+                      headers=cherrypy.request.headers)
+        PolicyWeb.logger.info("%s: policy_filter=%s headers=%s",
+                              req_info, str_policy_filter, json.dumps(cherrypy.request.headers))
 
         result = PolicyRest.get_latest_policies(audit, policy_filter=policy_filter) or {}
+        result_str = json.dumps(result, sort_keys=True)
 
-        PolicyWeb.logger.info("result %s: policy_filter=%s result=%s", \
-            req_info, str_policy_filter, json.dumps(result))
+        PolicyWeb.logger.info("result %s: policy_filter=%s result=%s",
+                              req_info, str_policy_filter, result_str)
 
-        success, http_status_code, _ = audit.audit_done(result=json.dumps(result))
-        if not success:
-            cherrypy.response.status = http_status_code
+        _, http_status_code, _ = audit.audit_done(result=result_str)
+        if http_status_code == AuditHttpCode.DATA_NOT_FOUND_OK.value:
+            http_status_code = PolicyWeb.DATA_NOT_FOUND_ERROR
+        cherrypy.response.status = http_status_code
 
         return result
 

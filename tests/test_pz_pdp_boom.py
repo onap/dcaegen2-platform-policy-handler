@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
-
-"""test of the package for policy-handler of DCAE-Controller"""
+"""test policyhandler web-server when pdp booms = fails"""
 
 import json
 import time
@@ -26,10 +25,10 @@ import pytest
 import cherrypy
 from cherrypy.test.helper import CPWebCase
 
-from policyhandler.onap.audit import REQUEST_X_ECOMP_REQUESTID, Audit
-from policyhandler.policy_consts import LATEST_POLICIES, POLICY_NAME
+from policyhandler.onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit,
+                                      AuditHttpCode)
+from policyhandler.policy_consts import POLICY_NAME
 from policyhandler.policy_receiver import PolicyReceiver
-from policyhandler.policy_utils import Utils
 from policyhandler.web_server import _PolicyWeb
 
 from .mock_policy_engine import MockPolicyEngine
@@ -38,8 +37,11 @@ from .mock_tracker import Tracker
 from .mock_websocket import MockWebSocket
 
 
-@pytest.mark.usefixtures("fix_pdp_post", "fix_discovery")
-class WebServerTest(CPWebCase):
+@pytest.mark.usefixtures(
+    "fix_discovery",
+    "fix_pdp_post_boom"
+)
+class WebServerPDPBoomTest(CPWebCase):
     """testing the web-server - runs tests in alphabetical order of method names"""
     def setup_server():
         """setup the web-server"""
@@ -58,16 +60,10 @@ class WebServerTest(CPWebCase):
 
     def test_web_policy_latest(self):
         """test /policy_latest/<policy-id>"""
-        policy_id, expected_policy = MockPolicyEngine.gen_policy_latest(3)
+        policy_id, _ = MockPolicyEngine.gen_policy_latest(3)
 
         self.getPage("/policy_latest/{0}".format(policy_id or ""))
-        self.assertStatus('200 OK')
-
-        policy_latest = json.loads(self.body)
-
-        Settings.logger.info("policy_latest: %s", self.body)
-        Settings.logger.info("expected_policy: %s", json.dumps(expected_policy))
-        assert Utils.are_the_same(policy_latest, expected_policy)
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
 
         result = self.getPage("/healthcheck")
         Settings.logger.info("healthcheck result: %s", result)
@@ -77,20 +73,10 @@ class WebServerTest(CPWebCase):
     @pytest.mark.usefixtures("fix_deploy_handler")
     def test_web_all_policies_latest(self):
         """test GET /policies_latest"""
-        expected_policies = MockPolicyEngine.gen_all_policies_latest()
-
         result = self.getPage("/policies_latest")
         Settings.logger.info("result: %s", result)
         Settings.logger.info("body: %s", self.body)
-        self.assertStatus('200 OK')
-
-        policies_latest = json.loads(self.body)
-        self.assertIn(LATEST_POLICIES, policies_latest)
-        policies_latest = policies_latest[LATEST_POLICIES]
-
-        Settings.logger.info("policies_latest: %s", json.dumps(policies_latest))
-        Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))
-        assert Utils.are_the_same(policies_latest, expected_policies)
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
 
         result = self.getPage("/healthcheck")
         Settings.logger.info("healthcheck result: %s", result)
@@ -100,7 +86,6 @@ class WebServerTest(CPWebCase):
     def test_web_policies_latest(self):
         """test POST /policies_latest with policyName"""
         match_to_policy_name = MockPolicyEngine.scope_prefix + "amet.*"
-        expected_policies = MockPolicyEngine.gen_policies_latest(match_to_policy_name)
 
         body = json.dumps({POLICY_NAME: match_to_policy_name})
         result = self.getPage("/policies_latest", method='POST',
@@ -112,13 +97,7 @@ class WebServerTest(CPWebCase):
                               ])
         Settings.logger.info("result: %s", result)
         Settings.logger.info("body: %s", self.body)
-        self.assertStatus('200 OK')
-
-        policies_latest = json.loads(self.body)[LATEST_POLICIES]
-
-        Settings.logger.info("policies_latest: %s", json.dumps(policies_latest))
-        Settings.logger.info("expected_policies: %s", json.dumps(expected_policies))
-        assert Utils.are_the_same(policies_latest, expected_policies)
+        self.assertStatus(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
 
         result = self.getPage("/healthcheck")
         Settings.logger.info("healthcheck result: %s", result)
@@ -130,7 +109,6 @@ class WebServerTest(CPWebCase):
         """test run policy handler with policy updates and catchups"""
         Settings.logger.info("start policy_updates_and_catch_ups")
         assert not PolicyReceiver.is_running()
-
         audit = Audit(job_name="test_zzz_policy_updates_and_catch_ups",
                       req_message="start policy_updates_and_catch_ups")
         PolicyReceiver.run(audit)
@@ -235,7 +213,7 @@ class WebServerTest(CPWebCase):
         result = self.getPage("/healthcheck")
         Settings.logger.info("healthcheck result: %s", result)
 
-        WebServerTest.do_gc_test = False
+        WebServerPDPBoomTest.do_gc_test = False
         Settings.logger.info("shutdown...")
         audit.audit_done("shutdown")
         result = self.getPage("/shutdown")

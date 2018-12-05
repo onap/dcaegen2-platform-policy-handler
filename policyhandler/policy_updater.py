@@ -106,9 +106,9 @@ class _PolicyUpdate(object):
             self._audit.req_message = req_message
 
         self._logger.info(
-            "pending request_id %s for %s policies_updated %s policies_removed %s",
+            "pending(%s) for %s policies_updated %s policies_removed %s",
             self._audit.request_id, req_message,
-            json.dumps(policies_updated), json.dumps(policies_removed))
+            json.dumps(self._policies_updated), json.dumps(self._policies_removed))
 
 
 class PolicyUpdater(Thread):
@@ -178,13 +178,14 @@ class PolicyUpdater(Thread):
             if not self._aud_reconfigure:
                 self._aud_reconfigure = Audit(req_message=Config.RECONFIGURE)
                 PolicyUpdater._logger.info(
-                    "reconfigure %s request_id %s",
+                    "%s request_id %s",
                     self._aud_reconfigure.req_message, self._aud_reconfigure.request_id
                 )
             self._run.set()
 
     def run(self):
         """wait and run the policy-update in thread"""
+        PolicyUpdater._logger.info("starting policy_updater...")
         self._run_reconfigure_timer()
         while True:
             PolicyUpdater._logger.info("waiting for policy-updates...")
@@ -307,7 +308,7 @@ class PolicyUpdater(Thread):
                 if DeployHandler.reconfigure(aud_reconfigure):
                     reconfigure_result += " " + Config.DEPLOY_HANDLER
 
-                if self._reconfigure_receiver():
+                if self._reconfigure_receiver(aud_reconfigure):
                     reconfigure_result += " web-socket"
 
                 reconfigure_result += " -- change: {}".format(Config.discovered_config)
@@ -348,12 +349,24 @@ class PolicyUpdater(Thread):
         )
         catch_up_result = ""
         try:
+            not_found_ok = None
             PolicyUpdater._logger.info(log_line)
             self._pause_catch_up_timer()
 
-            _, catch_up_message = PolicyMatcher.get_latest_policies(aud_catch_up)
+            _, policies, policy_filters = PolicyMatcher.get_deployed_policies(aud_catch_up)
 
-            if not catch_up_message or not aud_catch_up.is_success_or_not_found():
+            catch_up_message = None
+            if aud_catch_up.is_not_found():
+                not_found_ok = True
+            else:
+                _, catch_up_message = PolicyMatcher.build_catch_up_message(
+                    aud_catch_up, policies, policy_filters)
+
+            if not_found_ok:
+                catch_up_result = ("- not sending catch-up "
+                                   "- no deployed policies or policy-filters")
+                PolicyUpdater._logger.warning(catch_up_result)
+            elif not (catch_up_message and aud_catch_up.is_success()):
                 catch_up_result = "- not sending catch-up to deployment-handler due to errors"
                 PolicyUpdater._logger.warning(catch_up_result)
             elif catch_up_message.empty():
@@ -402,11 +415,14 @@ class PolicyUpdater(Thread):
         PolicyUpdater._logger.info(log_line)
 
         try:
+            not_found_ok = None
             (updated_policies, removed_policies,
              policy_filter_matches) = PolicyMatcher.match_to_deployed_policies(
                  audit, policies_updated, policies_removed)
 
-            if updated_policies or removed_policies:
+            if audit.is_not_found():
+                not_found_ok = True
+            elif updated_policies or removed_policies:
                 updated_policies, removed_policies = PolicyRest.get_latest_updated_policies(
                     (audit,
                      [(policy_id, policy.get(POLICY_BODY, {}).get(POLICY_VERSION))
@@ -415,7 +431,11 @@ class PolicyUpdater(Thread):
                       for policy_id, policy in removed_policies.items()]
                     ))
 
-            if not audit.is_success_or_not_found():
+            if not_found_ok:
+                result = ("- not sending policy-updates to deployment-handler "
+                          "- no deployed policies or policy-filters")
+                PolicyUpdater._logger.warning(result)
+            elif not audit.is_success():
                 result = "- not sending policy-updates to deployment-handler due to errors"
                 PolicyUpdater._logger.warning(result)
             elif not updated_policies and not removed_policies:

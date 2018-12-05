@@ -145,6 +145,7 @@ class DeployHandler(object):
     """calling the deployment-handler web apis"""
     _logger = logging.getLogger("policy_handler.deploy_handler")
     DEFAULT_TARGET_ENTITY = "deployment_handler"
+    DEFAULT_TIMEOUT_IN_SECS = 60
 
     _lazy_inited = False
     _lock = Lock()
@@ -158,6 +159,7 @@ class DeployHandler(object):
     _target_entity = None
     _custom_kwargs = {}
     _server_instance_uuid = None
+    _timeout_in_secs = DEFAULT_TIMEOUT_IN_SECS
     server_instance_changed = False
 
     @staticmethod
@@ -188,7 +190,8 @@ class DeployHandler(object):
             #     "query" : {
             #         "cfy_tenant_name" : "default_tenant"
             #     },
-            #     "tls_ca_mode" : "cert_directory"
+            #     "tls_ca_mode" : "cert_directory",
+            #     "timeout_in_secs": 60
             # }
             DeployHandler._target_entity = config_dh.get(TARGET_ENTITY,
                                                          DeployHandler.DEFAULT_TARGET_ENTITY)
@@ -203,6 +206,10 @@ class DeployHandler(object):
                 "dns based routing to %s: url(%s) tls_ca_mode(%s) custom_kwargs(%s)",
                 DeployHandler._target_entity, DeployHandler._url,
                 tls_ca_mode, json.dumps(DeployHandler._custom_kwargs))
+
+            DeployHandler._timeout_in_secs = config_dh.get(Config.TIMEOUT_IN_SECS)
+            if not DeployHandler._timeout_in_secs or DeployHandler._timeout_in_secs < 1:
+                DeployHandler._timeout_in_secs = DeployHandler.DEFAULT_TIMEOUT_IN_SECS
 
         if not DeployHandler._url:
             # discover routing to deployment-handler at consul-services
@@ -290,6 +297,7 @@ class DeployHandler(object):
             target_entity = DeployHandler._target_entity
             url = DeployHandler._url_policy
             params = deepcopy(DeployHandler._query)
+            timeout_in_secs = DeployHandler._timeout_in_secs
             custom_kwargs = deepcopy(DeployHandler._custom_kwargs)
 
         metrics = Metrics(aud_parent=audit, targetEntity="{} policy_update".format(target_entity),
@@ -297,9 +305,9 @@ class DeployHandler(object):
         headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
 
         log_action = "put to {} at {}".format(target_entity, url)
-        log_data = "msg={} headers={}, params={} custom_kwargs({})".format(
+        log_data = "msg={} headers={}, params={}, timeout_in_secs={}, custom_kwargs({})".format(
             json.dumps(message), json.dumps(headers),
-            json.dumps(params), json.dumps(custom_kwargs))
+            json.dumps(params), timeout_in_secs, json.dumps(custom_kwargs))
         log_line = log_action + " " + log_data
 
         DeployHandler._logger.info(log_line)
@@ -315,7 +323,8 @@ class DeployHandler(object):
 
         res = None
         try:
-            res = session.put(url, json=message, headers=headers, params=params, **custom_kwargs)
+            res = session.put(url, json=message, headers=headers, params=params,
+                              timeout=timeout_in_secs, **custom_kwargs)
         except Exception as ex:
             error_code = (AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
                           if isinstance(ex, requests.exceptions.RequestException)
@@ -357,6 +366,7 @@ class DeployHandler(object):
             target_entity = DeployHandler._target_entity
             url = DeployHandler._url_policy
             params = deepcopy(DeployHandler._query)
+            timeout_in_secs = DeployHandler._timeout_in_secs
             custom_kwargs = deepcopy(DeployHandler._custom_kwargs)
 
         metrics = Metrics(aud_parent=audit,
@@ -365,8 +375,8 @@ class DeployHandler(object):
         headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
 
         log_action = "get from {} at {}".format(target_entity, url)
-        log_data = "headers={}, params={} custom_kwargs({})".format(
-            json.dumps(headers), json.dumps(params), json.dumps(custom_kwargs))
+        log_data = "headers={}, params={}, timeout_in_secs={}, custom_kwargs({})".format(
+            json.dumps(headers), json.dumps(params), timeout_in_secs, json.dumps(custom_kwargs))
         log_line = log_action + " " + log_data
 
         DeployHandler._logger.info(log_line)
@@ -382,7 +392,8 @@ class DeployHandler(object):
 
         res = None
         try:
-            res = session.get(url, headers=headers, params=params, **custom_kwargs)
+            res = session.get(url, headers=headers, params=params, timeout=timeout_in_secs,
+                              **custom_kwargs)
         except Exception as ex:
             error_code = (AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value
                           if isinstance(ex, requests.exceptions.RequestException)
@@ -412,7 +423,7 @@ class DeployHandler(object):
         policies = result.get(POLICIES, {})
         policy_filters = result.get(POLICY_FILTERS, {})
         if not policies and not policy_filters:
-            audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_ERROR.value)
+            audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_OK.value)
             DeployHandler._logger.warning(audit.warn(
                 "found no deployed policies or policy-filters: {}".format(log_line),
                 error_code=AuditResponseCode.DATA_ERROR))

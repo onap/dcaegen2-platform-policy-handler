@@ -1,19 +1,40 @@
-# policy_handler
+# ONAP DCAE policy-handler
+
+See [wiki for DCAE gen2 architecture of policy-handling by DCAE-controller](https://wiki.onap.org/display/DW/DCAE+gen2+architecture+of+policy-handling+by+DCAE-controller)
 
 ## web-service for policies to be used by DCAE-Controller
 
-- GET **/policy\_latest/***\<policy-id>* -- get the latest policy from policy-engine
-- receives the **push notifications** from policy-engine through the web-socket, filters and gets the full policy-configs, and delivers that to deploy-handler
+- GET `/policy_latest/<policy_id>` -- get the latest policy from policy-engine that is identified by `policy_id`
+- POST `/policies_latest` -- gets the latest policies that match to the **policy-filter** provided in the body of the request.  The policy-filter mimics the body of the /getConfig on policy-engine.
+
+    sample request - policy-filter
+
+```json
+{
+  "configAttributes": { "key1":"value1" },
+  "configName": "alex_config_name",
+  "onapName": "DCAE",
+  "policyName": "DCAE_alex.Config_alex_.*",
+  "unique": false
+}
+```
+
+- GET `/healthcheck` - returns 200 OK and current run stats
+- **web-socket** to **policy-engine**
+  - receives the **push notifications** of the changed and removed policies from the policy-engine,
+  - matches the policy-updates to policies and policy-filters found in deployment-handler,
+  - retrieves the full policy-bodies of the matched policies,
+  - delivers the policy-updates to deployment-handler
 
 ## manual http API
 
-- GET **/catch_up** -- catch up with the latest state of the policy-engine
-- GET **/policies_latest** -- get all the latest policies in policy-engine through web-service API
-- GET **/shutdown** -- shutdown the server
+- GET `/policies_latest` -- get all the latest policies from policy-engine that either have the policy_id or match to the policy-filter found in deployment-handler deployments
+- GET `/catch_up` -- catch up with the latest state of the policy-engine
+- GET `/shutdown` -- shutdown the server
 
 ----------
 
-## installation
+## standalone installation
 
 `virtualenv policy_venv`
 
@@ -37,18 +58,41 @@
 
 ----------
 
-## configure
+## local configure
 
-in folder `policy_handler`:
+local config file `policy_handler/etc/config.json` contains:
 
-    - `config.json` contains
-        - `"policy_engine"` - the http connect info to ONAP **policy-engine**
-            - headers.ClientAuth : base64(<mech-id with namespace>:<password>)
-            - headers.Authorization : base64(<policy-engine server auth>)
-        - `"deploy_handler"` - the http connect info to _policy part_ of the **deploy-handler**
-    - `policy_engine.properties` contains config info for the client lib of ONAP **policy-engine** that receives push notifications from the ONAP **policy-engine** server
-        - CLIENT_ID is the mech-id with the namespace - need to register with policy-engine team thru email
-        - CLIENT_KEY is the base64 of the mech-id password - separate passwords for TEST versus PROD
+```json
+{
+  "wservice_port" : 25577,
+  "consul_url" : "http://consul:8500",
+  "policy_handler" : {
+    "system" : "policy_handler",
+    "tls" : {
+      "cert_directory" : "etc/tls/certs/",
+      "cacert" : "cacert.pem",
+      "private_key" : "key.pem",
+      "server_cert" : "cert.pem",
+      "server_ca_chain" : "ca_chain.pem"
+    }
+  },
+  "logging" : {...}
+}
+```
+
+Field descriptions
+
+- `wservice_port` - port of the policy-hanlder web-service
+- `consul_url` - optional url for the consul agent
+- `policy_handler` - local config for policy-handler application
+  - `system` - general system name of the policy-handler
+  - `tls` - tls settings for the https clients and server - required to enable tls
+    - `cert_directory` - relative path pointing to the folder with certificates
+    - `cacert` - file name for the ca-cert or ca-bundle file in pem format in cert_directory -- used by https clients
+    - `private_key` - file name for the private key in cert_directory -- used by https server
+    - `server_cert` - file name for the https server certificate file in pem format in cert_directory
+    - `server_ca_chain` - file name for the optional https server ca-chain certificates file in pem format in cert_directory -- used when the ca-chain is not included in the server_cert file
+- `logging` - logging config for general logging
 
 ----------
 
@@ -72,24 +116,24 @@ in folder `policy_handler`:
 
 ### ```policyhandler/customize/``` folder
 
-contains ```CustomizeBase``` and ```Customize``` classes
+contains ```CustomizerBase``` and ```Customizer``` classes
 
-- ```CustomizeBase``` defines the interface and the default=ONAP behavior
+- ```CustomizerBase``` defines the interface and the default=ONAP behavior
 
-- ```CustomizeBase``` is owned by ONAP and should not be changed by the company
+- ```CustomizerBase``` is owned by ONAP and should not be changed by the company
 
-- ```Customize``` inherits ```CustomizeBase```
+- ```Customizer``` inherits ```CustomizerBase```
 
-- policy-handler instantiates ```Customize``` to get the customized behavior
+- policy-handler instantiates ```Customizer``` to get the customized behavior
 
-- ```Customize``` is owned by the company and should be changed by the company
-- ONAP is not going to change ```Customize```
+- ```Customizer``` is owned by the company and should be changed by the company
+- ONAP is not going to change ```Customizer```
 
-- the methods of ```Customize``` are expected to be overridden by the company to change the behavior of the policy-handler
+- the methods of ```Customizer``` are expected to be overridden by the company to change the behavior of the policy-handler
 
-- samples are provided for methods in ```Customize``` class as the commented out lines
+- samples are provided for methods in ```Customizer``` class as the commented out lines
 
-- Company is allowed to add more files to customize/ folder if that is required for better structuring of their code as soon as it is invoked by the methods of ```Customize```
+- Company is allowed to add more files to customize/ folder if that is required for better structuring of their code as soon as it is invoked by the methods of ```Customizer```
 
 here is an example of ```customizer.py```
 

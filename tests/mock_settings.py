@@ -31,31 +31,6 @@ from policyhandler.discovery import DiscoveryClient
 from policyhandler.onap.audit import Audit
 
 
-class MonkeyHttpResponse(object):
-    """Monkey http reposne"""
-    def __init__(self, headers):
-        self.headers = headers or {}
-
-
-class MonkeyedResponse(object):
-    """Monkey response"""
-    def __init__(self, full_path, res_json, json_body=None, headers=None):
-        self.full_path = full_path
-        self.req_json = json_body or {}
-        self.status_code = 200
-        self.request = MonkeyHttpResponse(headers)
-        self.res = res_json
-        self.text = json.dumps(self.res)
-
-    def json(self):
-        """returns json of response"""
-        return self.res
-
-    def raise_for_status(self):
-        """ignoring"""
-        pass
-
-
 def _fix_discover_config(func):
     """the decorator"""
     if not func:
@@ -83,19 +58,20 @@ class Settings(object):
     """init all locals"""
     _loaded = False
     logger = None
-    RUN_TS = datetime.utcnow().isoformat()[:-3] + 'Z'
     mock_config = None
     deploy_handler_instance_uuid = str(uuid.uuid4())
 
     @staticmethod
-    @_fix_discover_config
     def init():
         """init configs"""
         if Settings._loaded:
+            Settings.logger.info("testing policy_handler with config: %s", Config.discovered_config)
             return
         Settings._loaded = True
 
         Config.init_config()
+
+        Config.consul_url = "http://unit-test-consul:850000"
 
         with open("tests/mock_config.json", 'r') as config_json:
             Settings.mock_config = json.load(config_json)
@@ -107,7 +83,16 @@ class Settings(object):
         print("print is expected to be in the log")
         Settings.logger.info("========== run_policy_handler ==========")
         Audit.init(Config.system_name, Config.LOGGER_CONFIG_FILE_PATH)
-        audit = Audit(req_message="start testing policy handler")
+        Settings.rediscover_config()
+
+    @staticmethod
+    @_fix_discover_config
+    def rediscover_config(updated_config=None):
+        """rediscover the config"""
+        if updated_config is not None:
+            Settings.mock_config = copy.deepcopy(updated_config)
+
+        audit = Audit(req_message="rediscover_config")
 
         Config.discover(audit)
 

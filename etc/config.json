@@ -1,6 +1,7 @@
 {
     "wservice_port" : 25577,
     "consul_url" : "http://consul:8500",
+    "consul_timeout_in_secs" : 60,
     "policy_handler" : {
         "system" : "policy_handler",
         "tls" : {
