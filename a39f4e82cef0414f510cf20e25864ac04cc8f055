@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_592f9388",
+        "filename": "policyhandler/policy_receiver.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1071
+      },
+      "writtenOn": "2018-12-12T15:46:21Z",
+      "side": 1,
+      "message": "I definitely don\u0027t know this code base but locking might cause a bottle neck.  Maybe instead of saving a single state, you could use a (limited sized) stack and simply push in the latest state snapshot onto the stack?  Pushing and popping off the stack is atomic so no lock needed.  Just a suggestion.",
+      "revId": "a39f4e82cef0414f510cf20e25864ac04cc8f055",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
