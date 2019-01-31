@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ from threading import Event, Lock, Thread
 from .config import Config, Settings
 from .deploy_handler import DeployHandler, PolicyUpdateMessage
 from .onap.audit import Audit, AuditHttpCode, AuditResponseCode
-from .policy_consts import (AUTO_CATCH_UP, CATCH_UP, POLICY_BODY, POLICY_ID,
-                            POLICY_NAME, POLICY_NAMES, POLICY_VERSION)
+from .policy_consts import (AUTO_CATCH_UP, AUTO_RECONFIGURE, CATCH_UP,
+                            POLICY_BODY, POLICY_ID, POLICY_NAME, POLICY_NAMES,
+                            POLICY_VERSION)
 from .policy_matcher import PolicyMatcher
 from .policy_rest import PolicyRest
 from .policy_utils import PolicyUtils
+from .service_activator import ServiceActivator
 from .step_timer import StepTimer
 
 
@@ -172,11 +174,11 @@ class PolicyUpdater(Thread):
                 )
             self._run.set()
 
-    def _reconfigure(self):
+    def reconfigure(self, audit=None):
         """job to check for and bring in the updated config for policy-handler"""
         with self._lock:
             if not self._aud_reconfigure:
-                self._aud_reconfigure = Audit(req_message=Config.RECONFIGURE)
+                self._aud_reconfigure = audit or Audit(req_message=AUTO_RECONFIGURE)
                 PolicyUpdater._logger.info(
                     "%s request_id %s",
                     self._aud_reconfigure.req_message, self._aud_reconfigure.request_id
@@ -251,7 +253,7 @@ class PolicyUpdater(Thread):
         self._reconfigure_timer = StepTimer(
             "reconfigure_timer",
             self._reconfigure_interval,
-            PolicyUpdater._reconfigure,
+            PolicyUpdater.reconfigure,
             PolicyUpdater._logger,
             self
         )
@@ -293,29 +295,51 @@ class PolicyUpdater(Thread):
         log_line = "{}({})".format(aud_reconfigure.req_message, aud_reconfigure.request_id)
         reconfigure_result = ""
         try:
+            need_to_catch_up = False
             PolicyUpdater._logger.info(log_line)
+
+            active_prev = ServiceActivator.is_active_mode_of_operation(aud_reconfigure)
             Config.discover(aud_reconfigure)
+
             if not Config.discovered_config.is_changed():
+                active = ServiceActivator.determine_mode_of_operation(aud_reconfigure)
                 reconfigure_result = " -- config not changed"
             else:
-                reconfigure_result = " -- config changed for:"
+                changed_configs = []
+
+                if ServiceActivator.reconfigure(aud_reconfigure):
+                    changed_configs.append(Config.SERVICE_ACTIVATOR)
+                active = ServiceActivator.determine_mode_of_operation(aud_reconfigure)
+
                 if self._set_timer_intervals():
-                    reconfigure_result += " timer_intervals"
+                    changed_configs.append("timer_intervals")
 
                 if PolicyRest.reconfigure():
-                    reconfigure_result += " " + Config.FIELD_POLICY_ENGINE
+                    need_to_catch_up = True
+                    changed_configs.append(Config.FIELD_POLICY_ENGINE)
 
                 if DeployHandler.reconfigure(aud_reconfigure):
-                    reconfigure_result += " " + Config.DEPLOY_HANDLER
+                    need_to_catch_up = True
+                    changed_configs.append(Config.DEPLOY_HANDLER)
 
                 if self._reconfigure_receiver(aud_reconfigure):
-                    reconfigure_result += " web-socket"
+                    need_to_catch_up = True
+                    changed_configs.append("web-socket")
 
-                reconfigure_result += " -- change: {}".format(Config.discovered_config)
+                reconfigure_result = " -- config changed on {} changes: {}".format(
+                    json.dumps(changed_configs), Config.discovered_config)
+
+            need_to_catch_up = need_to_catch_up or (active and not active_prev)
+            if need_to_catch_up:
+                reconfigure_result += " -- going to catch_up"
 
             Config.discovered_config.commit_change()
             aud_reconfigure.audit_done(result=reconfigure_result)
             PolicyUpdater._logger.info(log_line + reconfigure_result)
+
+            if need_to_catch_up:
+                self._pause_catch_up_timer()
+                self.catch_up()
 
         except Exception as ex:
             error_msg = "crash {} {}{}: {}: {}".format(
@@ -342,6 +366,20 @@ class PolicyUpdater(Thread):
                 self._policy_update.reset()
 
         if not aud_catch_up:
+            return False
+
+        if not ServiceActivator.is_active_mode_of_operation(aud_catch_up):
+            catch_up_result = "passive -- skip catch_up {0} request_id {1}".format(
+                aud_catch_up.req_message, aud_catch_up.request_id
+            )
+            self._pause_catch_up_timer()
+            aud_catch_up.audit_done(result=catch_up_result)
+            PolicyUpdater._logger.info(catch_up_result)
+            self._run_catch_up_timer()
+
+            PolicyUpdater._logger.info("policy_handler health: %s",
+                                       json.dumps(aud_catch_up.health(full=True)))
+            PolicyUpdater._logger.info("process_info: %s", json.dumps(aud_catch_up.process_info()))
             return False
 
         log_line = "catch_up {0} request_id {1}".format(

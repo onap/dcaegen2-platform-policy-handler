@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -185,12 +185,15 @@ class _Audit(object):
 
 
     @staticmethod
-    def register_item_health(health_name, health_getter):
+    def register_item_health(health_name, health_getter=None):
         """
         register the health-checker for the additional item
         by its health_name and the function health_getter that returns its health status as json
         """
-        _Audit._health_checkers[health_name] = health_getter
+        if health_getter:
+            _Audit._health_checkers[health_name] = health_getter
+        elif health_name in _Audit._health_checkers:
+            del _Audit._health_checkers[health_name]
 
     def health(self, full=False):
         """returns json for health check"""
@@ -401,8 +404,8 @@ class Audit(_Audit):
         self._started = time.time()
         self._start_event = Audit._logger_audit.getStartRecordEvent()
 
-        self.info("new audit{0} request_id {1}, msg({2}), kwargs({3})"\
-            .format(created_req, self.request_id, self.req_message, json.dumps(self.kwargs)))
+        self.info("new audit{0} request_id {1}, msg({2}), kwargs({3})"
+                  .format(created_req, self.request_id, self.req_message, json.dumps(self.kwargs)))
 
 
     def audit_done(self, result=None, **kwargs):

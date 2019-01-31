@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ from policyhandler import LogWriter
 from policyhandler.config import Config
 from policyhandler.onap.audit import Audit
 from policyhandler.policy_receiver import PolicyReceiver
+from policyhandler.service_activator import ServiceActivator
 from policyhandler.web_server import PolicyWeb
 
 
@@ -47,7 +48,9 @@ def run_policy_handler():
     audit = Audit(req_message="start policy handler")
 
     Config.discover(audit)
-    logger.info("starting policy_handler with config: %s", Config.discovered_config)
+    ServiceActivator.determine_mode_of_operation(audit)
+    logger.info(audit.info(
+        "starting policy_handler with config: {}".format(Config.discovered_config)))
 
     PolicyReceiver.run(audit)
     PolicyWeb.run_forever(audit)

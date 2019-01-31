@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -152,6 +152,8 @@ class Config(object):
     CONSUL_TIMEOUT_IN_SECS = "consul_timeout_in_secs"
     WS_PING_INTERVAL_IN_SECS = "ws_ping_interval_in_secs"
     DEFAULT_TIMEOUT_IN_SECS = 60
+    SERVICE_ACTIVATOR = "service_activator"
+    MODE_OF_OPERATION = "mode_of_operation"
 
     system_name = SERVICE_NAME_POLICY_HANDLER
     wservice_port = 25577

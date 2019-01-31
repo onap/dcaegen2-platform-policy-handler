@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import json
 import logging
 import sys
 import uuid
-from datetime import datetime
 from functools import wraps
 
 from policyhandler import LogWriter
 from policyhandler.config import Config
 from policyhandler.discovery import DiscoveryClient
 from policyhandler.onap.audit import Audit
+from policyhandler.service_activator import ServiceActivator
 
 
 def _fix_discover_config(func):
@@ -95,6 +95,7 @@ class Settings(object):
         audit = Audit(req_message="rediscover_config")
 
         Config.discover(audit)
+        ServiceActivator.determine_mode_of_operation(audit)
 
         Settings.logger.info("testing policy_handler with config: %s", Config.discovered_config)
 

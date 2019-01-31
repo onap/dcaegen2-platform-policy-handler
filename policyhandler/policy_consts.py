@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ POLICY_CONFIG = 'config'
 
 CATCH_UP = "catch_up"
 AUTO_CATCH_UP = "auto catch_up"
+AUTO_RECONFIGURE = "auto reconfigure"
 LATEST_POLICIES = "latest_policies"
 REMOVED_POLICIES = "removed_policies"
 ERRORED_POLICIES = "errored_policies"

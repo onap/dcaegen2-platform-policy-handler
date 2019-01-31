@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -208,7 +208,24 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("%s", req_info)
         PolicyReceiver.catch_up(audit)
 
-        res = {"catch-up requested": started}
+        res = {"catch-up requested": started, "request_id": audit.request_id}
+        PolicyWeb.logger.info("requested %s: %s", req_info, json.dumps(res))
+        audit.info_requested(started)
+        return res
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def reconfigure(self):
+        """schedule reconfigure"""
+        started = str(datetime.utcnow())
+        req_info = _PolicyWeb._get_request_info(cherrypy.request)
+        audit = Audit(job_name="reconfigure", req_message=req_info,
+                      headers=cherrypy.request.headers)
+
+        PolicyWeb.logger.info("%s", req_info)
+        PolicyReceiver.reconfigure(audit)
+
+        res = {"reconfigure requested": started, "request_id": audit.request_id}
         PolicyWeb.logger.info("requested %s: %s", req_info, json.dumps(res))
         audit.info_requested(started)
         return res
