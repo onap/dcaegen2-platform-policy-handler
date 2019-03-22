@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,22 +19,24 @@
 """policy-matcher matches the policies from deployment-handler to policies from policy-engine"""
 
 import json
-import logging
+import os
 import re
 
-from .deploy_handler import DeployHandler, PolicyUpdateMessage
-from .onap.audit import AuditHttpCode, AuditResponseCode
-from .policy_consts import (ERRORED_POLICIES, LATEST_POLICIES,
-                            MATCHING_CONDITIONS, POLICY_BODY, POLICY_FILTER,
-                            POLICY_NAME, POLICY_VERSION, POLICY_VERSIONS)
+from ..deploy_handler import DeployHandler, PolicyUpdateMessage
+from ..onap.audit import AuditHttpCode, AuditResponseCode
+from ..policy_consts import (ERRORED_POLICIES, LATEST_POLICIES, POLICY_BODY,
+                             POLICY_FILTER, POLICY_VERSIONS)
+from ..utils import RegexCoarser, Utils
+from .pdp_consts import MATCHING_CONDITIONS, POLICY_NAME, POLICY_VERSION
 from .policy_rest import PolicyRest
-from .policy_utils import RegexCoarser
 
+
+_LOGGER = Utils.get_logger(__file__)
 
 class PolicyMatcher(object):
     """policy-matcher - static class"""
-    _logger = logging.getLogger("policy_handler.policy_matcher")
     PENDING_UPDATE = "pending_update"
+    PDP_API_FOLDER = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
 
     @staticmethod
     def get_deployed_policies(audit):
@@ -43,12 +45,12 @@ class PolicyMatcher(object):
 
         if audit.is_not_found():
             warning_txt = "got no deployed policies or policy-filters"
-            PolicyMatcher._logger.warning(warning_txt)
+            _LOGGER.warning(warning_txt)
             return {"warning": warning_txt}, None, None
 
         if not audit.is_success() or (not deployed_policies and not deployed_policy_filters):
             error_txt = "failed to retrieve policies from deployment-handler"
-            PolicyMatcher._logger.error(error_txt)
+            _LOGGER.error(error_txt)
             return {"error": error_txt}, None, None
 
         return None, deployed_policies, deployed_policy_filters
@@ -62,7 +64,7 @@ class PolicyMatcher(object):
 
         if not (deployed_policies or deployed_policy_filters):
             error_txt = "no deployed policies or policy-filters"
-            PolicyMatcher._logger.warning(error_txt)
+            _LOGGER.warning(error_txt)
             return {"error": error_txt}, None
 
         coarse_regex_patterns = PolicyMatcher.calc_coarse_patterns(
@@ -72,7 +74,7 @@ class PolicyMatcher(object):
             error_txt = ("failed to construct the coarse_regex_patterns from " +
                          "deployed_policies: {} and deployed_policy_filters: {}"
                          .format(deployed_policies, deployed_policy_filters))
-            PolicyMatcher._logger.error(audit.error(
+            _LOGGER.error(audit.error(
                 error_txt, error_code=AuditResponseCode.DATA_ERROR))
             audit.set_http_status_code(AuditHttpCode.DATA_ERROR.value)
             return {"error": error_txt}, None
@@ -84,7 +86,7 @@ class PolicyMatcher(object):
 
         if not audit.is_success():
             error_txt = "failed to retrieve policies from policy-engine"
-            PolicyMatcher._logger.warning(error_txt)
+            _LOGGER.warning(error_txt)
             return {"error": error_txt}, None
 
         latest_policies = pdp_response.get(LATEST_POLICIES, {})
@@ -123,7 +125,7 @@ class PolicyMatcher(object):
             coarse_regex.add_regex_pattern(policy_name_pattern)
 
         coarse_regex_patterns = coarse_regex.get_coarse_regex_patterns()
-        PolicyMatcher._logger.debug(
+        _LOGGER.debug(
             audit.debug("coarse_regex_patterns({}) combined_regex_pattern({}) for patterns({})"
                         .format(coarse_regex_patterns,
                                 coarse_regex.get_combined_regex_pattern(),
@@ -219,11 +221,11 @@ class PolicyMatcher(object):
         log_line = "policy {} to filter id {}: {}".format(json.dumps(policy),
                                                           policy_filter_id,
                                                           json.dumps(policy_filter))
-        # PolicyMatcher._logger.debug(audit.debug("matching {}...".format(log_line)))
+        # _LOGGER.debug(audit.debug("matching {}...".format(log_line)))
 
         if (filter_policy_name != policy_id and filter_policy_name != policy_name
                 and not re.match(filter_policy_name, policy_name)):
-            PolicyMatcher._logger.debug(
+            _LOGGER.debug(
                 audit.debug("not match by policyName: {} != {}: {}"
                             .format(policy_name, filter_policy_name, log_line)))
             return False
@@ -235,7 +237,7 @@ class PolicyMatcher(object):
         filter_onap_name = policy_filter.get("onapName")
         policy_onap_name = matching_conditions.get("ONAPName")
         if filter_onap_name and filter_onap_name != policy_onap_name:
-            PolicyMatcher._logger.debug(
+            _LOGGER.debug(
                 audit.debug("not match by ONAPName: {} != {}: {}"
                             .format(policy_onap_name, filter_onap_name, log_line)))
             return False
@@ -243,7 +245,7 @@ class PolicyMatcher(object):
         filter_config_name = policy_filter.get("configName")
         policy_config_name = matching_conditions.get("ConfigName")
         if filter_config_name and filter_config_name != policy_config_name:
-            PolicyMatcher._logger.debug(
+            _LOGGER.debug(
                 audit.debug("not match by configName: {} != {}: {}"
                             .format(policy_config_name, filter_config_name, log_line)))
             return False
@@ -253,12 +255,12 @@ class PolicyMatcher(object):
             for filter_key, filter_config_attribute in filter_config_attributes.items():
                 if (filter_key not in matching_conditions
                         or filter_config_attribute != matching_conditions.get(filter_key)):
-                    PolicyMatcher._logger.debug(
+                    _LOGGER.debug(
                         audit.debug("not match by configAttributes: {} != {}: {}"
                                     .format(json.dumps(matching_conditions),
                                             json.dumps(filter_config_attributes),
                                             log_line)))
                     return False
 
-        PolicyMatcher._logger.debug(audit.debug("matched {}".format(log_line)))
+        _LOGGER.debug(audit.debug("matched {}".format(log_line)))
         return True

@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,12 +22,10 @@ import gc
 import json
 import time
 
-import pytest
-
 from policyhandler.onap.audit import Audit, AuditHttpCode, Metrics
+from policyhandler.utils import Utils
 
-from .mock_settings import Settings
-
+_LOGGER = Utils.get_logger(__file__)
 
 class Node(object):
     """making the cycled objects"""
@@ -50,7 +48,7 @@ def test_healthcheck():
     health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    _LOGGER.info("healthcheck: %s", json.dumps(health))
     assert bool(health)
 
 
@@ -74,7 +72,7 @@ def test_healthcheck_with_error():
     health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    _LOGGER.info("healthcheck: %s", json.dumps(health))
     assert bool(health)
 
 
@@ -97,22 +95,22 @@ def test_healthcheck_with_garbage():
     health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
-    Settings.logger.info("test_healthcheck_with_garbage[%s]: %s", gc_found, json.dumps(health))
+    _LOGGER.info("test_healthcheck_with_garbage[%s]: %s", gc_found, json.dumps(health))
     assert bool(health)
     assert bool(health.get("runtime", {}).get("gc", {}).get("gc_garbage"))
 
-    Settings.logger.info("clearing up garbage...")
+    _LOGGER.info("clearing up garbage...")
     for obj in gc.garbage:
         if isinstance(obj, Node):
-            Settings.logger.info("in garbage: %s 0x%x", obj, id(obj))
+            _LOGGER.info("in garbage: %s 0x%x", obj, id(obj))
             obj.next = None
 
     gc_found = gc.collect()
-    Settings.logger.info("after clear test_healthcheck_with_garbage[%s]: %s",
+    _LOGGER.info("after clear test_healthcheck_with_garbage[%s]: %s",
                          gc_found, json.dumps(audit.health(full=True)))
 
     gc.set_debug(False)
 
     gc_found = gc.collect()
-    Settings.logger.info("after turned off gc debug test_healthcheck_with_garbage[%s]: %s",
+    _LOGGER.info("after turned off gc debug test_healthcheck_with_garbage[%s]: %s",
                          gc_found, json.dumps(audit.health(full=True)))

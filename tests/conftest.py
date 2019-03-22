@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,61 +29,61 @@ from policyhandler.config import Config
 from policyhandler.deploy_handler import DeployHandler
 from policyhandler.discovery import DiscoveryClient
 from policyhandler.onap.audit import Audit
-from policyhandler.policy_consts import CATCH_UP, POLICY_NAME, TARGET_ENTITY
-from policyhandler.policy_receiver import PolicyReceiver
-from policyhandler.policy_rest import PolicyRest
+from policyhandler.policy_consts import CATCH_UP, TARGET_ENTITY
+from policyhandler.utils import Utils
 
 from .mock_deploy_handler import MockDeploymentHandler
-from .mock_policy_engine import MockPolicyEngine
-from .mock_settings import Settings
+from .mock_settings import MockSettings
 from .mock_tracker import MockHttpResponse, Tracker
-from .mock_websocket import MockWebSocket
+
+_LOGGER = Utils.get_logger(__file__)
+
+_LOGGER.info("init MockSettings")
+MockSettings.init()
+
+@pytest.fixture(scope="session", autouse=True)
+def _auto_setup__global():
+    """initialize the _auto_setup__global per the whole test session"""
+    _LOGGER.info("_auto_setup__global")
+
+    yield _auto_setup__global
+    Tracker.log_all_tests()
+    _LOGGER.info("teardown _auto_setup__global")
 
 
 @pytest.fixture(autouse=True)
 def _auto_test_cycle(request):
     """log all the test starts and ends"""
+    module_name = request.module.__name__.replace(".", "/")
     if request.cls:
-        test_name = "%s::%s::%s" % (request.module.__name__,
-                                    request.cls.__name__,
-                                    request.function.__name__)
+        test_name = "%s.py::%s::%s" % (module_name, request.cls.__name__,
+                                       request.function.__name__)
     else:
-        test_name = "%s::%s" % (request.module.__name__, request.function.__name__)
+        test_name = "%s.py::%s" % (module_name, request.function.__name__)
 
     Tracker.reset(test_name)
-    if Settings.logger:
-        Settings.logger.info(">>>>>>> start %s", test_name)
+    _LOGGER.info("-"*75)
+    _LOGGER.info(">>>>>>> start [%s]: %s", len(Tracker.test_names), test_name)
     yield _auto_test_cycle
-    if Settings.logger:
-        Settings.logger.info(">>>>>>> tracked messages: %s", Tracker.to_string())
-        Settings.logger.info(">>>>>>> ended %s", test_name)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _auto_setup_policy_engine():
-    """initialize the mock-policy-engine per the whole test session"""
-    Settings.init()
-
-    Settings.logger.info("create _auto_setup_policy_engine")
-    MockPolicyEngine.init()
-    yield _auto_setup_policy_engine
-    Settings.logger.info("teardown _auto_setup_policy_engine")
+    _LOGGER.info(">>>>>>> tracked messages: %s", Tracker.to_string())
+    _LOGGER.info(">>>>>>> %s[%s]: %s", Tracker.get_status(test_name),
+                 len(Tracker.test_names), test_name)
 
 
 @pytest.fixture()
-def fix_pdp_post(monkeypatch):
-    """monkeyed request /getConfig to PDP"""
-    def monkeyed_policy_rest_post(uri, json=None, **kwargs):
-        """monkeypatch for the POST to policy-engine"""
-        res_json = MockPolicyEngine.get_config(json.get(POLICY_NAME))
-        return MockHttpResponse("post", uri, res_json, json=json, **kwargs)
+def fix_cherrypy_engine_exit(monkeypatch):
+    """monkeyed cherrypy.engine.exit()"""
+    _LOGGER.info("setup fix_cherrypy_engine_exit")
 
-    Settings.logger.info("setup fix_pdp_post")
-    PolicyRest._lazy_init()
-    monkeypatch.setattr('policyhandler.policy_rest.PolicyRest._requests_session.post',
-                        monkeyed_policy_rest_post)
-    yield fix_pdp_post
-    Settings.logger.info("teardown fix_pdp_post")
+    def monkeyed_cherrypy_engine_exit():
+        """monkeypatch for deploy_handler"""
+        _LOGGER.info("cherrypy_engine_exit()")
+
+    monkeypatch.setattr('policyhandler.web_server.cherrypy.engine.exit',
+                        monkeyed_cherrypy_engine_exit)
+    yield fix_cherrypy_engine_exit
+    _LOGGER.info("teardown fix_cherrypy_engine_exit")
+
 
 @pytest.fixture()
 def fix_deploy_handler(monkeypatch):
@@ -98,7 +98,7 @@ def fix_deploy_handler(monkeypatch):
         return MockHttpResponse("get", uri, MockDeploymentHandler.get_deployed_policies(),
                                 **kwargs)
 
-    Settings.logger.info("setup fix_deploy_handler")
+    _LOGGER.info("setup fix_deploy_handler")
     audit = None
     if DeployHandler._lazy_inited is False:
         audit = Audit(req_message="fix_deploy_handler")
@@ -112,77 +112,8 @@ def fix_deploy_handler(monkeypatch):
     yield fix_deploy_handler
     if audit:
         audit.audit_done("teardown")
-    Settings.logger.info("teardown fix_deploy_handler")
+    _LOGGER.info("teardown fix_deploy_handler")
 
-
-@pytest.fixture()
-def fix_cherrypy_engine_exit(monkeypatch):
-    """monkeyed cherrypy.engine.exit()"""
-    Settings.logger.info("setup fix_cherrypy_engine_exit")
-
-    def monkeyed_cherrypy_engine_exit():
-        """monkeypatch for deploy_handler"""
-        Settings.logger.info("cherrypy_engine_exit()")
-
-    monkeypatch.setattr('policyhandler.web_server.cherrypy.engine.exit',
-                        monkeyed_cherrypy_engine_exit)
-    yield fix_cherrypy_engine_exit
-    Settings.logger.info("teardown fix_cherrypy_engine_exit")
-
-
-@pytest.fixture()
-def fix_pdp_post_big(monkeypatch):
-    """monkeyed request /getConfig to PDP"""
-    def monkeyed_policy_rest_post(uri, **kwargs):
-        """monkeypatch for the POST to policy-engine"""
-        res_json = MockPolicyEngine.get_configs_all()
-        return MockHttpResponse("post", uri, res_json, **kwargs)
-
-    Settings.logger.info("setup fix_pdp_post_big")
-    PolicyRest._lazy_init()
-    monkeypatch.setattr('policyhandler.policy_rest.PolicyRest._requests_session.post',
-                        monkeyed_policy_rest_post)
-    yield fix_pdp_post_big
-    Settings.logger.info("teardown fix_pdp_post_big")
-
-
-class MockException(Exception):
-    """mock exception"""
-    pass
-
-
-@pytest.fixture()
-def fix_pdp_post_boom(monkeypatch):
-    """monkeyed request /getConfig to PDP - exception"""
-    def monkeyed_policy_rest_post_boom(uri, **_):
-        """monkeypatch for the POST to policy-engine"""
-        raise MockException("fix_pdp_post_boom {}".format(uri))
-
-    Settings.logger.info("setup fix_pdp_post_boom")
-    PolicyRest._lazy_init()
-    monkeypatch.setattr('policyhandler.policy_rest.PolicyRest._requests_session.post',
-                        monkeyed_policy_rest_post_boom)
-    yield fix_pdp_post_boom
-    Settings.logger.info("teardown fix_pdp_post_boom")
-
-
-@pytest.fixture()
-def fix_select_latest_policies_boom(monkeypatch):
-    """monkeyed exception"""
-    def monkeyed_boom(*args, **kwargs):
-        """monkeypatch for the select_latest_policies"""
-        raise MockException("monkeyed_boom")
-
-    Settings.logger.info("setup fix_select_latest_policies_boom")
-    monkeypatch.setattr('policyhandler.policy_utils.PolicyUtils.select_latest_policies',
-                        monkeyed_boom)
-    monkeypatch.setattr('policyhandler.policy_utils.PolicyUtils.select_latest_policy',
-                        monkeyed_boom)
-    monkeypatch.setattr('policyhandler.policy_utils.PolicyUtils.extract_policy_id',
-                        monkeyed_boom)
-
-    yield fix_select_latest_policies_boom
-    Settings.logger.info("teardown fix_select_latest_policies_boom")
 
 @pytest.fixture()
 def fix_discovery(monkeypatch):
@@ -203,29 +134,28 @@ def fix_discovery(monkeypatch):
         elif uri == DiscoveryClient.CONSUL_KV_MASK.format(
                 Config.consul_url, Config.system_name):
             res_json = [{"Value": base64.b64encode(
-                json.dumps(Settings.mock_config).encode()).decode("utf-8")}]
+                json.dumps(MockSettings.mock_config).encode()).decode("utf-8")}]
         return MockHttpResponse("get", uri, res_json)
 
-    Settings.logger.info("setup fix_discovery")
+    _LOGGER.info("setup fix_discovery")
     monkeypatch.setattr('policyhandler.discovery.requests.get', monkeyed_discovery)
     yield fix_discovery
-    Settings.logger.info("teardown fix_discovery")
-
+    _LOGGER.info("teardown fix_discovery")
 
 @pytest.fixture(scope="module")
 def fix_auto_catch_up():
     """increase the frequency of auto catch_up"""
 
-    Settings.logger.info("setup fix_auto_catch_up %s", json.dumps(Settings.mock_config))
-    prev_config = copy.deepcopy(Settings.mock_config)
-    Settings.mock_config.get(Config.SERVICE_NAME_POLICY_HANDLER, {}) \
+    _LOGGER.info("setup fix_auto_catch_up %s", json.dumps(MockSettings.mock_config))
+    prev_config = copy.deepcopy(MockSettings.mock_config)
+    MockSettings.mock_config.get(Config.SERVICE_NAME_POLICY_HANDLER, {}) \
         .get(CATCH_UP, {})[Config.TIMER_INTERVAL] = 5
-    Settings.logger.info("fix_auto_catch_up %s", json.dumps(Settings.mock_config))
-    Settings.rediscover_config()
+    _LOGGER.info("fix_auto_catch_up %s", json.dumps(MockSettings.mock_config))
+    MockSettings.rediscover_config()
 
     yield fix_auto_catch_up
-    Settings.rediscover_config(prev_config)
-    Settings.logger.info("teardown fix_auto_catch_up")
+    MockSettings.rediscover_config(prev_config)
+    _LOGGER.info("teardown fix_auto_catch_up")
 
 
 @pytest.fixture()
@@ -235,7 +165,7 @@ def fix_deploy_handler_413(monkeypatch):
         """monkeypatch for deploy_handler"""
         return MockHttpResponse(
             "put", uri,
-            {"server_instance_uuid": Settings.deploy_handler_instance_uuid},
+            {"server_instance_uuid": MockSettings.deploy_handler_instance_uuid},
             status_code=413, **kwargs
         )
 
@@ -244,7 +174,7 @@ def fix_deploy_handler_413(monkeypatch):
         return MockHttpResponse("get", uri, MockDeploymentHandler.get_deployed_policies(),
                                 **kwargs)
 
-    Settings.logger.info("setup fix_deploy_handler_413")
+    _LOGGER.info("setup fix_deploy_handler_413")
     audit = None
     if DeployHandler._lazy_inited is False:
         audit = Audit(req_message="fix_deploy_handler_413")
@@ -258,7 +188,7 @@ def fix_deploy_handler_413(monkeypatch):
     yield fix_deploy_handler_413
     if audit:
         audit.audit_done("teardown")
-    Settings.logger.info("teardown fix_deploy_handler_413")
+    _LOGGER.info("teardown fix_deploy_handler_413")
 
 
 @pytest.fixture()
@@ -274,7 +204,7 @@ def fix_deploy_handler_404(monkeypatch):
         return MockHttpResponse("get", uri, MockDeploymentHandler.default_response(),
                                 **kwargs)
 
-    Settings.logger.info("setup fix_deploy_handler_404")
+    _LOGGER.info("setup fix_deploy_handler_404")
     audit = None
     if DeployHandler._lazy_inited is False:
         audit = Audit(req_message="fix_deploy_handler_404")
@@ -288,12 +218,4 @@ def fix_deploy_handler_404(monkeypatch):
     yield fix_deploy_handler_404
     if audit:
         audit.audit_done("teardown")
-    Settings.logger.info("teardown fix_deploy_handler_404")
-
-@pytest.fixture()
-def fix_policy_receiver_websocket(monkeypatch):
-    """monkeyed websocket for policy_receiver"""
-    Settings.logger.info("setup fix_policy_receiver_websocket")
-    monkeypatch.setattr('policyhandler.policy_receiver.websocket', MockWebSocket)
-    yield fix_policy_receiver_websocket
-    Settings.logger.info("teardown fix_policy_receiver_websocket")
+    _LOGGER.info("teardown fix_deploy_handler_404")

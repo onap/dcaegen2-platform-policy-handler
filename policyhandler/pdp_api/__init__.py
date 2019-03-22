@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,21 +16,16 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
-"""contants of policy-handler"""
+"""2019 http api to policy-engine https://<policy-engine>:<port>/decision/v1/ POST"""
 
-POLICY_ID = 'policy_id'
-POLICY_BODY = 'policy_body'
+from .policy_matcher import PolicyMatcher
+from .policy_rest import PolicyRest
+from .policy_listener import PolicyListener
+from .policy_updates import PolicyUpdates
 
-CATCH_UP = "catch_up"
-AUTO_CATCH_UP = "auto catch_up"
-AUTO_RECONFIGURE = "auto reconfigure"
-LATEST_POLICIES = "latest_policies"
-REMOVED_POLICIES = "removed_policies"
-ERRORED_POLICIES = "errored_policies"
-POLICY_FILTER = "policy_filter"
-POLICY_FILTERS = "policy_filters"
-POLICIES = "policies"
-POLICY_VERSIONS = "policy_versions"
-POLICY_NAMES = "policy_names"
-POLICY_FILTER_MATCHES = "policy_filter_matches"
-TARGET_ENTITY = "target_entity"
+def get_pdp_api_info():
+    """info on which version of pdp api is in effect"""
+    return ("folders: PolicyMatcher({}), PolicyRest({}), PolicyListener({}), PolicyUpdates({})"
+            .format(PolicyMatcher.PDP_API_FOLDER, PolicyRest.PDP_API_FOLDER,
+                    PolicyListener.PDP_API_FOLDER, PolicyUpdates.PDP_API_FOLDER
+                   ))

@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,21 +16,15 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
-"""contants of policy-handler"""
+"""policy-client communicates with policy-engine thru REST API"""
 
-POLICY_ID = 'policy_id'
-POLICY_BODY = 'policy_body'
+from .config import Config
+from .utils import Utils
 
-CATCH_UP = "catch_up"
-AUTO_CATCH_UP = "auto catch_up"
-AUTO_RECONFIGURE = "auto reconfigure"
-LATEST_POLICIES = "latest_policies"
-REMOVED_POLICIES = "removed_policies"
-ERRORED_POLICIES = "errored_policies"
-POLICY_FILTER = "policy_filter"
-POLICY_FILTERS = "policy_filters"
-POLICIES = "policies"
-POLICY_VERSIONS = "policy_versions"
-POLICY_NAMES = "policy_names"
-POLICY_FILTER_MATCHES = "policy_filter_matches"
-TARGET_ENTITY = "target_entity"
+if Config.is_pdp_api_default():
+    from .pdp_api import *
+else:
+    from .pdp_api_2018 import *
+
+_LOGGER = Utils.get_logger(__file__)
+_LOGGER.info(get_pdp_api_info())

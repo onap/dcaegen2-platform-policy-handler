@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+"""contants of PDP"""
 
-"""contants of policy-handler"""
+# fields from pdp API 2018
+POLICY_NAME = "policyName"
+POLICY_VERSION = "policyVersion"
+POLICY_CONFIG = 'config'
 
-POLICY_ID = 'policy_id'
-POLICY_BODY = 'policy_body'
+# fields from pdp API 2019
+PDP_POLICIES = 'policies'
+PDP_PROPERTIES = 'properties'
+PDP_METADATA = 'metadata'
+PDP_POLICY_ID = 'policy-id'
+PDP_POLICY_VERSION = 'policy-version'
 
-CATCH_UP = "catch_up"
-AUTO_CATCH_UP = "auto catch_up"
-AUTO_RECONFIGURE = "auto reconfigure"
-LATEST_POLICIES = "latest_policies"
-REMOVED_POLICIES = "removed_policies"
-ERRORED_POLICIES = "errored_policies"
-POLICY_FILTER = "policy_filter"
-POLICY_FILTERS = "policy_filters"
-POLICIES = "policies"
-POLICY_VERSIONS = "policy_versions"
-POLICY_NAMES = "policy_names"
-POLICY_FILTER_MATCHES = "policy_filter_matches"
-TARGET_ENTITY = "target_entity"
+# req to PDP
+PDP_REQ_ONAP_NAME = "ONAPName"   # always "DCAE"
+PDP_REQ_ONAP_COMPONENT = "ONAPComponent"
+PDP_REQ_ONAP_INSTANCE = "ONAPInstance"
+PDP_REQ_RESOURCE = "resource"

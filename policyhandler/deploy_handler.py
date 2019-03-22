@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 """send policy-update notification to deployment-handler"""
 
 import json
-import logging
 from copy import copy, deepcopy
 from threading import Lock
 
@@ -32,7 +31,9 @@ from .onap.audit import (REQUEST_X_ECOMP_REQUESTID, AuditHttpCode,
 from .policy_consts import (CATCH_UP, LATEST_POLICIES, POLICIES,
                             POLICY_FILTER_MATCHES, POLICY_FILTERS,
                             REMOVED_POLICIES, TARGET_ENTITY)
+from .utils import Utils
 
+_LOGGER = Utils.get_logger(__file__)
 
 class PolicyUpdateMessage(object):
     """class for messages to deployment-handler on policy-update"""
@@ -143,7 +144,6 @@ class PolicyUpdateMessage(object):
 
 class DeployHandler(object):
     """calling the deployment-handler web apis"""
-    _logger = logging.getLogger("policy_handler.deploy_handler")
     DEFAULT_TARGET_ENTITY = "deployment_handler"
     DEFAULT_TIMEOUT_IN_SECS = 60
 
@@ -202,7 +202,7 @@ class DeployHandler(object):
             tls_ca_mode = config_dh.get(Config.TLS_CA_MODE)
             DeployHandler._custom_kwargs = Config.get_requests_kwargs(tls_ca_mode)
 
-            DeployHandler._logger.info(
+            _LOGGER.info(
                 "dns based routing to %s: url(%s) tls_ca_mode(%s) custom_kwargs(%s)",
                 DeployHandler._target_entity, DeployHandler._url,
                 tls_ca_mode, json.dumps(DeployHandler._custom_kwargs))
@@ -221,8 +221,8 @@ class DeployHandler(object):
                                                                  DeployHandler._target_entity)
 
         DeployHandler._url_policy = str(DeployHandler._url or "") + '/policy'
-        DeployHandler._logger.info("got %s policy url(%s): %s", DeployHandler._target_entity,
-                                   DeployHandler._url_policy, DeployHandler._settings)
+        _LOGGER.info("got %s policy url(%s): %s", DeployHandler._target_entity,
+                     DeployHandler._url_policy, DeployHandler._settings)
 
         DeployHandler._settings.commit_change()
         DeployHandler._lazy_inited = bool(DeployHandler._url)
@@ -310,12 +310,12 @@ class DeployHandler(object):
             json.dumps(params), timeout_in_secs, json.dumps(custom_kwargs))
         log_line = log_action + " " + log_data
 
-        DeployHandler._logger.info(log_line)
+        _LOGGER.info(log_line)
         metrics.metrics_start(log_line)
 
         if not DeployHandler._url:
             error_msg = "no url found to {0}".format(log_line)
-            DeployHandler._logger.error(error_msg)
+            _LOGGER.error(error_msg)
             metrics.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             audit.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             metrics.metrics(error_msg)
@@ -331,7 +331,7 @@ class DeployHandler(object):
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
             error_msg = "failed to {} {}: {} {}".format(
                 log_action, type(ex).__name__, str(ex), log_data)
-            DeployHandler._logger.exception(error_msg)
+            _LOGGER.exception(error_msg)
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)
@@ -345,10 +345,10 @@ class DeployHandler(object):
         metrics.metrics(log_line)
 
         if res.status_code != requests.codes.ok:
-            DeployHandler._logger.error(log_line)
+            _LOGGER.error(log_line)
             return
 
-        DeployHandler._logger.info(log_line)
+        _LOGGER.info(log_line)
         result = res.json() or {}
         DeployHandler._server_instance_changed(result, metrics)
 
@@ -379,12 +379,12 @@ class DeployHandler(object):
             json.dumps(headers), json.dumps(params), timeout_in_secs, json.dumps(custom_kwargs))
         log_line = log_action + " " + log_data
 
-        DeployHandler._logger.info(log_line)
+        _LOGGER.info(log_line)
         metrics.metrics_start(log_line)
 
         if not DeployHandler._url:
             error_msg = "no url found to {}".format(log_line)
-            DeployHandler._logger.error(error_msg)
+            _LOGGER.error(error_msg)
             metrics.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             audit.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             metrics.metrics(error_msg)
@@ -400,7 +400,7 @@ class DeployHandler(object):
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
             error_msg = "failed to {} {}: {} {}".format(
                 log_action, type(ex).__name__, str(ex), log_data)
-            DeployHandler._logger.exception(error_msg)
+            _LOGGER.exception(error_msg)
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)
@@ -414,7 +414,7 @@ class DeployHandler(object):
         metrics.metrics(log_line)
 
         if res.status_code != requests.codes.ok:
-            DeployHandler._logger.error(log_line)
+            _LOGGER.error(log_line)
             return None, None
 
         result = res.json() or {}
@@ -424,12 +424,12 @@ class DeployHandler(object):
         policy_filters = result.get(POLICY_FILTERS, {})
         if not policies and not policy_filters:
             audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_OK.value)
-            DeployHandler._logger.warning(audit.warn(
+            _LOGGER.warning(audit.warn(
                 "found no deployed policies or policy-filters: {}".format(log_line),
                 error_code=AuditResponseCode.DATA_ERROR))
             return policies, policy_filters
 
-        DeployHandler._logger.info(log_line)
+        _LOGGER.info(log_line)
         return policies, policy_filters
 
     @staticmethod
@@ -442,6 +442,6 @@ class DeployHandler(object):
                 and prev_server_instance_uuid != DeployHandler._server_instance_uuid):
             DeployHandler.server_instance_changed = True
 
-            DeployHandler._logger.info(metrics.info(
+            _LOGGER.info(metrics.info(
                 "deployment_handler_changed: {1} != {0}"
                 .format(prev_server_instance_uuid, DeployHandler._server_instance_uuid)))

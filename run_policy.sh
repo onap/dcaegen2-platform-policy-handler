@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============LICENSE_START=======================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ exec &>> >(tee -a ${LOG_FILE})
 echo "---------------------------------------------"
 STARTED=$(date +%Y-%m-%d_%T.%N)
 echo "${STARTED}: running ${BASH_SOURCE[0]}"
-echo "APP_VER =" $(python setup.py --version)
-echo "HOSTNAME =${HOSTNAME}"
-echo "CONSUL_URL =${CONSUL_URL}"
+echo "APP_VER="$(python setup.py --version)
+echo "HOSTNAME=${HOSTNAME}"
+echo "CONSUL_URL=${CONSUL_URL}"
+echo "PDP_API_VERSION=${PDP_API_VERSION}"
 (pwd; uname -a; echo "/etc/hosts"; cat /etc/hosts; openssl version -a)
 
 python -m policyhandler &

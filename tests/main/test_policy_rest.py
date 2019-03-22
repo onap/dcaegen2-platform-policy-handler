@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import json
 
 import pytest
 
+from policyhandler import pdp_client
 from policyhandler.onap.audit import Audit
-from policyhandler.policy_rest import PolicyRest
-from policyhandler.policy_utils import Utils
+from policyhandler.utils import Utils
 
+from ..mock_tracker import Tracker
 from .mock_policy_engine import MockPolicyEngine
-from .mock_settings import Settings
-from .mock_tracker import Tracker
 
+_LOGGER = Utils.get_logger(__file__)
 
 @pytest.mark.usefixtures("fix_pdp_post")
 def test_get_policy_latest():
@@ -37,11 +37,12 @@ def test_get_policy_latest():
 
     audit = Audit(job_name="test_get_policy_latest",
                   req_message="get /policy_latest/{}".format(policy_id or ""))
-    policy_latest = PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
+
+    policy_latest = pdp_client.PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
     audit.audit_done(result=json.dumps(policy_latest))
 
-    Settings.logger.info("expected_policy: %s", json.dumps(expected_policy))
-    Settings.logger.info("policy_latest: %s", json.dumps(policy_latest))
+    _LOGGER.info("expected_policy: %s", json.dumps(expected_policy))
+    _LOGGER.info("policy_latest: %s", json.dumps(policy_latest))
     assert Utils.are_the_same(policy_latest, expected_policy)
 
     Tracker.validate()

@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
 # ============LICENSE_END=========================================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
-"""expected message history per test"""
+"""expected message history per test for pdp API 2018 and before"""
 
 
 HISTORY_EXPECTED = {
-    "tests.test_policy_rest::test_get_policy_latest" : [
+    "tests/pdp_api_2018/test_policy_rest.py::test_get_policy_latest" : [
         {
             "request": {
                 "headers": {
@@ -41,7 +41,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_policyhandler::WebServerTest::test_web_all_policies_latest": [
+    "tests/pdp_api_2018/test_policyhandler.py::WebServer2018Test::test_web_all_policies_latest": [
         {
             "request": {
                 "headers": {
@@ -78,7 +78,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_policyhandler::WebServerTest::test_web_policies_latest": [
+    "tests/pdp_api_2018/test_policyhandler.py::WebServer2018Test::test_web_policies_latest": [
         {
             "request": {
                 "headers": {
@@ -100,7 +100,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_policyhandler::WebServerTest::test_web_policy_latest": [
+    "tests/pdp_api_2018/test_policyhandler.py::WebServer2018Test::test_web_policy_latest": [
         {
             "request": {
                 "headers": {
@@ -122,7 +122,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_policyhandler::WebServerTest::test_zzz_get_catch_up": [
+    "tests/pdp_api_2018/test_policyhandler.py::WebServer2018Test::test_zzz_get_catch_up": [
         {
             "request": {
                 "headers": {
@@ -560,7 +560,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_policyhandler::WebServerTest::test_zzz_policy_updates_and_catch_ups": [
+    "tests/pdp_api_2018/test_policyhandler.py::WebServer2018Test::test_zzz_policy_updates_and_catch_ups": [
         {
             "request": {
                 "headers": {
@@ -946,7 +946,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_policyhandler::WebServerTest::test_zzzzz_shutdown": [
+    "tests/pdp_api_2018/test_policyhandler.py::WebServer2018Test::test_zzzzz_shutdown": [
         {
             "request": {
                 "headers": {
@@ -1332,7 +1332,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_policyhandler::WebServerTest::test_zzz_catch_up_on_deploy_handler_changed": [
+    "tests/pdp_api_2018/test_policyhandler.py::WebServer2018Test::test_zzz_catch_up_on_deploy_handler_changed": [
         {
             "request": {
                 "headers": {
@@ -1973,7 +1973,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_catch_up::test_catch_up_failed_dh": [
+    "tests/pdp_api_2018/test_pz_catch_up.py::test_catch_up_failed_dh": [
         {
             "request": {
                 "headers": {
@@ -2524,7 +2524,7 @@ HISTORY_EXPECTED = {
             "status_code": 413
         }
     ],
-    "tests.test_pz_catch_up::test_catch_up_dh_404": [
+    "tests/pdp_api_2018/test_pz_catch_up.py::test_catch_up_dh_404": [
         {
             "request": {
                 "headers": {
@@ -2571,7 +2571,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_pdp_boom::WebServerPDPBoomTest::test_web_all_policies_latest": [
+    "tests/pdp_api_2018/test_pz_pdp_boom.py::WebServerPDPBoom2018Test::test_web_all_policies_latest": [
         {
             "request": {
                 "headers": {
@@ -2588,7 +2588,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_pdp_boom::WebServerPDPBoomTest::test_zzz_catch_up_on_deploy_handler_changed": [
+    "tests/pdp_api_2018/test_pz_pdp_boom.py::WebServerPDPBoom2018Test::test_zzz_catch_up_on_deploy_handler_changed": [
         {
             "request": {
                 "headers": {
@@ -2619,38 +2619,6 @@ HISTORY_EXPECTED = {
             "res": "*",
             "status_code": 200
         },
-        {
-            "request": {
-                "headers": {
-                    "X-ECOMP-RequestID": "*"
-                },
-                "json": None,
-                "method": "get",
-                "params": {
-                    "cfy_tenant_name": "default_tenant"
-                },
-                "uri": "http://unit-test-deployment_handler:8188000/policy"
-            },
-            "res": "*",
-            "status_code": 200
-        },
-        {
-            "request": {
-                "headers": {
-                    "X-ECOMP-RequestID": "*"
-                },
-                "json": None,
-                "method": "get",
-                "params": {
-                    "cfy_tenant_name": "default_tenant"
-                },
-                "uri": "http://unit-test-deployment_handler:8188000/policy"
-            },
-            "res": "*",
-            "status_code": 200
-        }
-    ],
-    "tests.test_pz_pdp_boom::WebServerPDPBoomTest::test_zzz_get_catch_up": [
         {
             "request": {
                 "headers": {
@@ -2682,7 +2650,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_pdp_boom::WebServerPDPBoomTest::test_zzz_policy_updates_and_catch_ups": [
+    "tests/pdp_api_2018/test_pz_pdp_boom.py::WebServerPDPBoom2018Test::test_zzz_get_catch_up": [
         {
             "request": {
                 "headers": {
@@ -2714,7 +2682,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_pdp_boom::WebServerPDPBoomTest::test_zzzzz_shutdown": [
+    "tests/pdp_api_2018/test_pz_pdp_boom.py::WebServerPDPBoom2018Test::test_zzz_policy_updates_and_catch_ups": [
         {
             "request": {
                 "headers": {
@@ -2746,7 +2714,39 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_ph_boom::WebServerInternalBoomTest::test_web_all_policies_latest": [
+    "tests/pdp_api_2018/test_pz_pdp_boom.py::WebServerPDPBoom2018Test::test_zzzzz_shutdown": [
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": None,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": "*",
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": None,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": "*",
+            "status_code": 200
+        }
+    ],
+    "tests/pdp_api_2018/test_pz_ph_boom.py::WebServerInternalBoom2018Test::test_web_all_policies_latest": [
         {
             "request": {
                 "headers": {
@@ -2783,7 +2783,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_ph_boom::WebServerInternalBoomTest::test_web_policies_latest": [
+    "tests/pdp_api_2018/test_pz_ph_boom.py::WebServerInternalBoom2018Test::test_web_policies_latest": [
         {
             "request": {
                 "headers": {
@@ -2805,7 +2805,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_ph_boom::WebServerInternalBoomTest::test_web_policy_latest": [
+    "tests/pdp_api_2018/test_pz_ph_boom.py::WebServerInternalBoom2018Test::test_web_policy_latest": [
         {
             "request": {
                 "headers": {
@@ -2827,7 +2827,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_ph_boom::WebServerInternalBoomTest::test_zzz_catch_up_on_deploy_handler_changed": [
+    "tests/pdp_api_2018/test_pz_ph_boom.py::WebServerInternalBoom2018Test::test_zzz_catch_up_on_deploy_handler_changed": [
         {
             "request": {
                 "headers": {
@@ -2864,7 +2864,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_ph_boom::WebServerInternalBoomTest::test_zzz_get_catch_up": [
+    "tests/pdp_api_2018/test_pz_ph_boom.py::WebServerInternalBoom2018Test::test_zzz_get_catch_up": [
         {
             "request": {
                 "headers": {
@@ -2936,7 +2936,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_ph_boom::WebServerInternalBoomTest::test_zzz_policy_updates_and_catch_ups": [
+    "tests/pdp_api_2018/test_pz_ph_boom.py::WebServerInternalBoom2018Test::test_zzz_policy_updates_and_catch_ups": [
         {
             "request": {
                 "headers": {
@@ -2973,7 +2973,7 @@ HISTORY_EXPECTED = {
             "status_code": 200
         }
     ],
-    "tests.test_pz_ph_boom::WebServerInternalBoomTest::test_zzzzz_shutdown": [
+    "tests/pdp_api_2018/test_pz_ph_boom.py::WebServerInternalBoom2018Test::test_zzzzz_shutdown": [
         {
             "request": {
                 "headers": {

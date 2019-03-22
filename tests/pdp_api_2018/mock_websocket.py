@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,13 +20,15 @@
 import json
 import time
 
-from policyhandler.policy_consts import POLICY_NAME
-from policyhandler.policy_receiver import (LOADED_POLICIES, POLICY_VER,
-                                           REMOVED_POLICIES)
+from policyhandler.pdp_api_2018.pdp_consts import POLICY_NAME
+from policyhandler.pdp_api_2018.policy_listener import (LOADED_POLICIES,
+                                                        POLICY_VER,
+                                                        REMOVED_POLICIES)
+from policyhandler.utils import Utils
 
-from .mock_policy_engine import MockPolicyEngine
-from .mock_settings import Settings
+from .mock_policy_engine import MockPolicyEngine2018
 
+_LOGGER = Utils.get_logger(__file__)
 
 class MockWebSocket(object):
     """Mock websocket"""
@@ -40,14 +42,14 @@ class MockWebSocket(object):
         message = {
             LOADED_POLICIES: [
                 {POLICY_NAME: "{0}.{1}.xml".format(
-                    MockPolicyEngine.get_policy_id(policy_index), policy_index + 1),
+                    MockPolicyEngine2018.get_policy_id(policy_index), policy_index + 1),
                  POLICY_VER: str(policy_index + 1)}
                 for policy_index in updated_indexes or []
             ],
             REMOVED_POLICIES : []
         }
         message = json.dumps(message)
-        Settings.logger.info("send_notification: %s", message)
+        _LOGGER.info("send_notification: %s", message)
         MockWebSocket.on_message(None, message)
 
     @staticmethod
@@ -71,18 +73,18 @@ class MockWebSocket(object):
             self.on_error = on_error
             self.on_pong = on_pong
             self.sock = MockWebSocket.MockSocket()
-            Settings.logger.info("MockWebSocket for: %s", self.web_socket_url)
+            _LOGGER.info("MockWebSocket for: %s", self.web_socket_url)
 
-        def run_forever(self, sslopt=None):
+        def run_forever(self, sslopt=None, ping_interval=None):
             """forever in the loop"""
-            Settings.logger.info("MockWebSocket run_forever with sslopt=%s...",
-                                 json.dumps(sslopt))
+            _LOGGER.info("MockWebSocket run_forever with sslopt=%s, ping_interval=%s...",
+                         json.dumps(sslopt), ping_interval)
             counter = 0
             while self.sock.connected:
                 counter += 1
-                Settings.logger.info("MockWebSocket sleep %s...", counter)
+                _LOGGER.info("MockWebSocket sleep %s...", counter)
                 time.sleep(5)
-            Settings.logger.info("MockWebSocket exit %s", counter)
+            _LOGGER.info("MockWebSocket exit %s", counter)
 
         def close(self):
             """close socket"""

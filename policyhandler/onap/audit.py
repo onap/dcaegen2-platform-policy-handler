@@ -68,6 +68,7 @@ class AuditHttpCode(Enum):
     PERMISSION_UNAUTHORIZED_ERROR = 401
     PERMISSION_FORBIDDEN_ERROR = 403
     RESPONSE_ERROR = 400
+    PAGE_NOT_FOUND_ERROR = 404
     SERVER_INTERNAL_ERROR = 500
     SERVICE_UNAVAILABLE_ERROR = 503
     DATA_ERROR = 1030
@@ -94,7 +95,8 @@ class AuditResponseCode(Enum):
         elif http_status_code in [AuditHttpCode.PERMISSION_UNAUTHORIZED_ERROR.value,
                                   AuditHttpCode.PERMISSION_FORBIDDEN_ERROR.value]:
             response_code = AuditResponseCode.PERMISSION_ERROR
-        elif http_status_code == AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value:
+        elif http_status_code in [AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value,
+                                  AuditHttpCode.PAGE_NOT_FOUND_ERROR.value]:
             response_code = AuditResponseCode.AVAILABILITY_ERROR
         elif http_status_code == AuditHttpCode.SERVER_INTERNAL_ERROR.value:
             response_code = AuditResponseCode.BUSINESS_PROCESS_ERROR
@@ -125,9 +127,9 @@ class _Audit(object):
 
     :kwargs: - put any request related params into kwargs
     """
-    _service_name = ""
+    SERVICE_INSTANCE_UUID = str(uuid.uuid4())
+    service_name = ""
     _service_version = ""
-    _service_instance_uuid = str(uuid.uuid4())
     _started = datetime.utcnow()
     _key_format = re.compile(r"\W")
     _logger_debug = None
@@ -144,15 +146,15 @@ class _Audit(object):
     @staticmethod
     def init(service_name, config_file_path):
         """init static invariants and loggers"""
-        _Audit._service_name = service_name
+        _Audit.service_name = service_name
         _Audit._logger_debug = CommonLogger(config_file_path, "debug", \
-            instanceUUID=_Audit._service_instance_uuid, serviceName=_Audit._service_name)
+            instanceUUID=_Audit.SERVICE_INSTANCE_UUID, serviceName=_Audit.service_name)
         _Audit._logger_error = CommonLogger(config_file_path, "error", \
-            instanceUUID=_Audit._service_instance_uuid, serviceName=_Audit._service_name)
+            instanceUUID=_Audit.SERVICE_INSTANCE_UUID, serviceName=_Audit.service_name)
         _Audit._logger_metrics = CommonLogger(config_file_path, "metrics", \
-            instanceUUID=_Audit._service_instance_uuid, serviceName=_Audit._service_name)
+            instanceUUID=_Audit.SERVICE_INSTANCE_UUID, serviceName=_Audit.service_name)
         _Audit._logger_audit = CommonLogger(config_file_path, "audit", \
-            instanceUUID=_Audit._service_instance_uuid, serviceName=_Audit._service_name)
+            instanceUUID=_Audit.SERVICE_INSTANCE_UUID, serviceName=_Audit.service_name)
         ProcessInfo.init()
         try:
             _Audit._service_version = subprocess.check_output(
@@ -175,7 +177,7 @@ class _Audit(object):
         :req_message: is the request message string for logging
         :kwargs: - put any request related params into kwargs
         """
-        self.job_name = _Audit._key_format.sub('_', job_name or req_message or _Audit._service_name)
+        self.job_name = _Audit._key_format.sub('_', job_name or req_message or _Audit.service_name)
         self.request_id = request_id
         self.req_message = req_message or ""
         self.kwargs = kwargs or {}
@@ -200,9 +202,9 @@ class _Audit(object):
         utcnow = datetime.utcnow()
         health = {
             "server" : {
-                "service_name" : _Audit._service_name,
+                "service_name" : _Audit.service_name,
                 "service_version" : _Audit._service_version,
-                "service_instance_uuid" : _Audit._service_instance_uuid
+                "service_instance_uuid" : _Audit.SERVICE_INSTANCE_UUID
             },
             "runtime" : {
                 "started" : str(_Audit._started),
@@ -214,11 +216,12 @@ class _Audit(object):
                 "process_memory" : ProcessInfo.process_memory()
             },
             "stats" : _Audit._health.dump(),
-            "items" : dict((health_name, health_getter())
-                           for health_name, health_getter in _Audit._health_checkers.items()),
             "soft" : {"python" : _Audit._py_ver, "packages" : _Audit._packages}
         }
-        self.info("{} health: {}".format(_Audit._service_name,
+        health.update(dict((health_name, health_getter())
+                           for health_name, health_getter in _Audit._health_checkers.items())
+                     )
+        self.info("{} health: {}".format(_Audit.service_name,
                                          json.dumps(health, sort_keys=True)))
         return health
 
@@ -226,7 +229,7 @@ class _Audit(object):
     def process_info(self):
         """get the debug info on all the threads and memory"""
         process_info = ProcessInfo.get_all()
-        self.info("{} process_info: {}".format(_Audit._service_name, json.dumps(process_info)))
+        self.info("{} process_info: {}".format(_Audit.service_name, json.dumps(process_info)))
         return process_info
 
 

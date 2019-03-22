@@ -23,22 +23,23 @@
     that will invoke this module __main__.py in folder of policyhandler
 """
 
-import logging
 import sys
 
-from policyhandler import LogWriter
 from policyhandler.config import Config
 from policyhandler.onap.audit import Audit
-from policyhandler.policy_receiver import PolicyReceiver
-from policyhandler.service_activator import ServiceActivator
-from policyhandler.web_server import PolicyWeb
+from policyhandler.utils import Utils
 
 
 def run_policy_handler():
     """main run function for policy-handler"""
     Config.init_config()
 
-    logger = logging.getLogger("policy_handler")
+    from policyhandler import LogWriter
+    from policyhandler.policy_receiver import PolicyReceiver
+    from policyhandler.service_activator import ServiceActivator
+    from policyhandler.web_server import PolicyWeb
+
+    logger = Utils.get_logger(__file__)
     sys.stdout = LogWriter(logger.info)
     sys.stderr = LogWriter(logger.error)
 

@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,21 +16,11 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
-"""contants of policy-handler"""
+"""policy-matcher matches the policies from deployment-handler to policies from policy-engine"""
 
-POLICY_ID = 'policy_id'
-POLICY_BODY = 'policy_body'
+import os
 
-CATCH_UP = "catch_up"
-AUTO_CATCH_UP = "auto catch_up"
-AUTO_RECONFIGURE = "auto reconfigure"
-LATEST_POLICIES = "latest_policies"
-REMOVED_POLICIES = "removed_policies"
-ERRORED_POLICIES = "errored_policies"
-POLICY_FILTER = "policy_filter"
-POLICY_FILTERS = "policy_filters"
-POLICIES = "policies"
-POLICY_VERSIONS = "policy_versions"
-POLICY_NAMES = "policy_names"
-POLICY_FILTER_MATCHES = "policy_filter_matches"
-TARGET_ENTITY = "target_entity"
+
+class PolicyMatcher(object):
+    """policy-matcher - static class"""
+    PDP_API_FOLDER = os.path.basename(os.path.dirname(os.path.realpath(__file__)))

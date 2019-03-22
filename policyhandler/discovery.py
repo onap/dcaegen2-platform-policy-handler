@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,14 +20,15 @@
 
 import base64
 import json
-import logging
 
 import requests
 
 from .config import Config
 from .customize import CustomizerUser
 from .onap.audit import AuditHttpCode, Metrics
+from .utils import Utils
 
+_LOGGER = Utils.get_logger(__file__)
 
 class DiscoveryClient(object):
     """talking to consul at Config.consul_url
@@ -51,13 +52,12 @@ class DiscoveryClient(object):
     CONSUL_ENTITY = "consul"
     CONSUL_SERVICE_MASK = "{}/v1/catalog/service/{}"
     CONSUL_KV_MASK = "{}/v1/kv/{}"
-    _logger = logging.getLogger("policy_handler.discovery")
 
     @staticmethod
     def _discover_service(audit, service_name, service_path):
         """find the service record in consul"""
         response = requests.get(service_path, timeout=Config.consul_timeout_in_secs)
-        DiscoveryClient._logger.info(audit.info("response {} from {}: {}".format(
+        _LOGGER.info(audit.info("response {} from {}: {}".format(
             response.status_code, service_path, response.text)))
 
         response.raise_for_status()
@@ -75,7 +75,7 @@ class DiscoveryClient(object):
 
         log_line = "get from {} at {}".format(DiscoveryClient.CONSUL_ENTITY, service_path)
 
-        DiscoveryClient._logger.info(metrics.metrics_start(log_line))
+        _LOGGER.info(metrics.metrics_start(log_line))
         status_code = None
         try:
             (status_code,
@@ -86,7 +86,7 @@ class DiscoveryClient(object):
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
             error_msg = ("failed {}/{} to {} {}: {}".format(status_code, error_code, log_line,
                                                             type(ex).__name__, str(ex)))
-            DiscoveryClient._logger.exception(error_msg)
+            _LOGGER.exception(error_msg)
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)
@@ -95,15 +95,14 @@ class DiscoveryClient(object):
         if not service_url:
             error_code = AuditHttpCode.DATA_ERROR.value
             error_msg = "failed {}/{} to {}".format(status_code, error_code, log_line)
-            DiscoveryClient._logger.error(audit.error(error_msg))
+            _LOGGER.error(audit.error(error_msg))
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)
             return None
 
         log_line = "response {} {}".format(status_code, log_line)
-        DiscoveryClient._logger.info(audit.info("got service_url: {} after {}"
-                                                .format(service_url, log_line)))
+        _LOGGER.info(audit.info("got service_url: {} after {}".format(service_url, log_line)))
 
         metrics.set_http_status_code(status_code)
         audit.set_http_status_code(status_code)
@@ -128,7 +127,7 @@ class DiscoveryClient(object):
 
         log_line = "get from {} at {}".format(DiscoveryClient.CONSUL_ENTITY, discovery_url)
 
-        DiscoveryClient._logger.info(metrics.metrics_start(log_line))
+        _LOGGER.info(metrics.metrics_start(log_line))
         status_code = None
         try:
             status_code, value = DiscoveryClient._get_value_from_kv(discovery_url)
@@ -138,7 +137,7 @@ class DiscoveryClient(object):
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
             error_msg = ("failed {}/{} to {} {}: {}".format(status_code, error_code, log_line,
                                                             type(ex).__name__, str(ex)))
-            DiscoveryClient._logger.exception(error_msg)
+            _LOGGER.exception(error_msg)
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)

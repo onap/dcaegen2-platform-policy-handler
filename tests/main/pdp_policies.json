@@ -1,0 +1,23 @@
+{
+    "policies": {
+        "onap.scaleout.tca": {
+            "type": "onap.policies.monitoring.cdap.tca.hi.lo.app",
+            "version": "1.0.0",
+            "metadata": {
+                "policy-id": "onap.scaleout.tca",
+                "policy-version": 1,
+                "description": "The scaleout policy for vDNS"
+            },
+            "properties": {
+                "domain": "measurementsForVfScaling",
+                "metricsPerEventName": [
+                    {
+                        "eventName": "vLoadBalancer",
+                        "controlLoopSchemaType": "VNF",
+                        "policyScope": "type=configuration"
+                    }
+                ]
+            }
+        }
+    }
+}

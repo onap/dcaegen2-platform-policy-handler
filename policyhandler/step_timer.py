@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import json
 from datetime import datetime
 from threading import Event, RLock, Thread
 
+from .utils import Utils
+
+_LOGGER = Utils.get_logger(__file__)
 
 class StepTimer(Thread):
     """call on_time after interval number of seconds, then wait to continue"""
@@ -32,12 +35,11 @@ class StepTimer(Thread):
     STATE_STOPPING = "stopping"
     STATE_STOPPED = "stopped"
 
-    def __init__(self, name, interval, on_time, logger, *args, **kwargs):
+    def __init__(self, name, interval, on_time, *args, **kwargs):
         """create step timer with controlled start. next step and pause"""
         Thread.__init__(self, name=name)
         self._interval = interval
         self._on_time = on_time
-        self._logger = logger
         self._args = args
         self._kwargs = kwargs
 
@@ -110,8 +112,8 @@ class StepTimer(Thread):
             utcnow = datetime.utcnow()
             self._req_time = (utcnow - self._req_ts).total_seconds()
             self._req_ts = utcnow
-            self._logger.info("{0}[{1}] {2}->{3}".format(
-                self.name, self._req_time, prev_req, self.get_timer_status()))
+            _LOGGER.info("{}[{}] {}->{}".format(self.name, self._req_time, prev_req,
+                                                self.get_timer_status()))
 
     def _log_substep(self, substep):
         """log timer substep"""
@@ -120,7 +122,8 @@ class StepTimer(Thread):
             utcnow = datetime.utcnow()
             self._substep_time = (utcnow - self._substep_ts).total_seconds()
             self._substep_ts = utcnow
-            self._logger.info("[{0}] {1}".format(self._substep_time, self.get_timer_status()))
+            _LOGGER.info("{}[{}] {}".format(self.name, self._substep_time,
+                                            self.get_timer_status()))
 
     def _on_time_event(self):
         """execute the _on_time event"""
@@ -135,7 +138,7 @@ class StepTimer(Thread):
             error_msg = ("{0}: crash {1} {2} at {3}: args({4}), kwargs({5})"
                          .format(self.name, type(ex).__name__, str(ex), "_on_time",
                                  json.dumps(self._args), json.dumps(self._kwargs)))
-            self._logger.exception(error_msg)
+            _LOGGER.exception(error_msg)
 
     def run(self):
         """loop one step a time until stopped=finished"""
