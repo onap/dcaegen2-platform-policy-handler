@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "99e3a1bd_26018bf6",
+        "filename": "tests/main/pdp_policies.json",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-03-31T05:37:47Z",
+      "side": 1,
+      "message": "should be contained under \"tca_policy\" to match the policy model.",
+      "range": {
+        "startLine": 12,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 13
+      },
+      "revId": "0a0b369efaf16bc543b5f5f4d62d5e0fa8ab508d",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
