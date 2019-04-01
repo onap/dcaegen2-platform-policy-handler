@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,21 +15,9 @@
 # ============LICENSE_END=========================================================
 #
 
-"""contants of policy-handler"""
+"""contants of PDP"""
 
-POLICY_ID = 'policy_id'
-POLICY_BODY = 'policy_body'
-
-CATCH_UP = "catch_up"
-AUTO_CATCH_UP = "auto catch_up"
-AUTO_RECONFIGURE = "auto reconfigure"
-LATEST_POLICIES = "latest_policies"
-REMOVED_POLICIES = "removed_policies"
-ERRORED_POLICIES = "errored_policies"
-POLICY_FILTER = "policy_filter"
-POLICY_FILTERS = "policy_filters"
-POLICIES = "policies"
-POLICY_VERSIONS = "policy_versions"
-POLICY_NAMES = "policy_names"
-POLICY_FILTER_MATCHES = "policy_filter_matches"
-TARGET_ENTITY = "target_entity"
+POLICY_VERSION = "policyVersion"
+POLICY_NAME = "policyName"
+POLICY_CONFIG = 'config'
+MATCHING_CONDITIONS = "matchingConditions"

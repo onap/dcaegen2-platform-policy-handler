@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,25 +14,20 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 """test of the step_timer"""
 
 import json
-import logging
 import time
 from datetime import datetime
 
-from policyhandler.config import Config
 from policyhandler.step_timer import StepTimer
+from policyhandler.utils import Utils
 
-Config.init_config()
-
+_LOGGER = Utils.get_logger(__file__)
 
 class MockTimerController(object):
     """testing step_timer"""
-    logger = logging.getLogger("policy_handler.unit_test.step_timer")
-
     INIT = "init"
     NEXT = "next"
     STARTED = "started"
@@ -64,25 +59,24 @@ class MockTimerController(object):
         """timer event"""
         self.exe_ts = datetime.utcnow()
         self.exe_interval = (self.exe_ts - self.status_ts).total_seconds()
-        MockTimerController.logger.info("run on_time[%s] (%s, %s) in %s for %s",
-                                        self.run_counter, json.dumps(args), json.dumps(kwargs),
-                                        self.exe_interval, self.get_status())
+        _LOGGER.info("run on_time[%s] (%s, %s) in %s for %s",
+                     self.run_counter, json.dumps(args), json.dumps(kwargs),
+                     self.exe_interval, self.get_status())
         time.sleep(3)
-        MockTimerController.logger.info("done on_time[%s] (%s, %s) in %s for %s",
-                                        self.run_counter, json.dumps(args), json.dumps(kwargs),
-                                        self.exe_interval, self.get_status())
+        _LOGGER.info("done on_time[%s] (%s, %s) in %s for %s",
+                     self.run_counter, json.dumps(args), json.dumps(kwargs),
+                     self.exe_interval, self.get_status())
 
     def verify_last_event(self):
         """assertions needs to be in the main thread"""
         if self.exe_interval is None:
-            MockTimerController.logger.info("not executed: %s", self.get_status())
+            _LOGGER.info("not executed: %s", self.get_status())
             return
 
-        MockTimerController.logger.info("verify exe %s for %s",
-                                        self.exe_interval, self.get_status())
+        _LOGGER.info("verify exe %s for %s", self.exe_interval, self.get_status())
         assert self.exe_interval >= (self.interval - 0.01)
         assert self.exe_interval < 2 * self.interval
-        MockTimerController.logger.info("success %s", self.get_status())
+        _LOGGER.info("success %s", self.get_status())
 
     def run_timer(self):
         """create and start the step_timer"""
@@ -91,11 +85,7 @@ class MockTimerController(object):
             self.set_status(MockTimerController.NEXT)
             return
 
-        self.step_timer = StepTimer(
-            self.name, self.interval, MockTimerController.on_time,
-            MockTimerController.logger,
-            self
-        )
+        self.step_timer = StepTimer(self.name, self.interval, MockTimerController.on_time, self)
         self.step_timer.start()
         self.set_status(MockTimerController.STARTED)
 
@@ -123,7 +113,7 @@ class MockTimerController(object):
         utcnow = datetime.utcnow()
         time_step = (utcnow - self.status_ts).total_seconds()
         self.status_ts = utcnow
-        MockTimerController.logger.info("[%s]: %s", time_step, self.get_status())
+        _LOGGER.info("[%s]: %s", time_step, self.get_status())
 
     def get_status(self):
         """string representation"""
@@ -138,7 +128,7 @@ class MockTimerController(object):
 
 def test_step_timer():
     """test step_timer"""
-    MockTimerController.logger.info("============ test_step_timer =========")
+    _LOGGER.info("============ test_step_timer =========")
     with MockTimerController("step_timer", 5) as step_timer:
         step_timer.run_timer()
         time.sleep(1)
@@ -166,7 +156,7 @@ def test_step_timer():
 
 def test_interrupt_step_timer():
     """test step_timer"""
-    MockTimerController.logger.info("============ test_interrupt_step_timer =========")
+    _LOGGER.info("============ test_interrupt_step_timer =========")
     with MockTimerController("step_timer", 5) as step_timer:
         step_timer.run_timer()
         time.sleep(1)

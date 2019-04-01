@@ -14,7 +14,6 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 """package for policy-handler of DCAE-Controller"""
 
@@ -23,7 +22,7 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="4.6.0",
+    version="5.0.0",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,

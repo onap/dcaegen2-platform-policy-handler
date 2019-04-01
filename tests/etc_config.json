@@ -1,13 +1,16 @@
 {
     "wservice_port" : 25577,
-    "consul_url" : "http://consul:8500",
+    "consul_url" : "http://unit-test-consul:850000",
     "consul_timeout_in_secs" : 60,
     "pdp_api_version" : null,
     "policy_handler" : {
         "system" : "policy_handler",
         "tls" : {
             "cert_directory" : "etc/tls/certs/",
-            "cacert" : "cacert.pem"
+            "cacert" : "att_internal_root.crt",
+            "private_key" : "key.pem",
+            "server_cert" : "cert.pem",
+            "server_ca_chain" : "ca_chain.pem"
         }
     },
     "logging" : {
