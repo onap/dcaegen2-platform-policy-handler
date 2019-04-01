@@ -14,7 +14,6 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 """read and use the config"""
 
@@ -25,7 +24,7 @@ import logging.config
 import os
 
 from .onap.audit import Audit
-from .policy_utils import Utils
+from .utils import Utils
 
 LOGS_DIR = 'logs'
 
@@ -39,6 +38,8 @@ logging.basicConfig(
     format=('%(asctime)s.%(msecs)03d %(levelname)+8s ' +
             '%(threadName)s %(name)s.%(funcName)s: %(message)s'),
     datefmt='%Y%m%d_%H%M%S', level=logging.DEBUG)
+
+_LOGGER = Utils.get_logger(__file__)
 
 class Settings(object):
     """settings of module or an application
@@ -127,7 +128,6 @@ class Settings(object):
 
 class Config(object):
     """main config of the application"""
-    _logger = logging.getLogger("policy_handler.config")
     CONFIG_FILE_PATH = "etc/config.json"
     LOGGER_CONFIG_FILE_PATH = "etc/common_logger.config"
     SERVICE_NAME_POLICY_HANDLER = "policy_handler"
@@ -154,9 +154,11 @@ class Config(object):
     DEFAULT_TIMEOUT_IN_SECS = 60
     SERVICE_ACTIVATOR = "service_activator"
     MODE_OF_OPERATION = "mode_of_operation"
+    PDP_API_VERSION = "PDP_API_VERSION"
 
     system_name = SERVICE_NAME_POLICY_HANDLER
     wservice_port = 25577
+    _pdp_api_version = os.environ.get(PDP_API_VERSION)
     consul_url = "http://consul:8500"
     consul_timeout_in_secs = DEFAULT_TIMEOUT_IN_SECS
     tls_cacert_file = None
@@ -175,7 +177,7 @@ class Config(object):
             return None
         tls_file_path = os.path.join(cert_directory, file_name)
         if not os.path.isfile(tls_file_path) or not os.access(tls_file_path, os.R_OK):
-            Config._logger.error("invalid %s: %s", tls_name, tls_file_path)
+            _LOGGER.error("invalid %s: %s", tls_name, tls_file_path)
             return None
         return tls_file_path
 
@@ -189,19 +191,19 @@ class Config(object):
             Config.tls_server_ca_chain_file = None
 
             if not (tls_config and isinstance(tls_config, dict)):
-                Config._logger.info("no tls in config: %s", json.dumps(tls_config))
+                _LOGGER.info("no tls in config: %s", json.dumps(tls_config))
                 return
 
             cert_directory = tls_config.get("cert_directory")
 
             if not (cert_directory and isinstance(cert_directory, str)):
-                Config._logger.warning("unexpected tls.cert_directory: %r", cert_directory)
+                _LOGGER.warning("unexpected tls.cert_directory: %r", cert_directory)
                 return
 
             cert_directory = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.realpath(__file__))), cert_directory)
             if not (cert_directory and os.path.isdir(cert_directory)):
-                Config._logger.warning("ignoring invalid cert_directory: %s", cert_directory)
+                _LOGGER.warning("ignoring invalid cert_directory: %s", cert_directory)
                 return
 
             Config.tls_cacert_file = Config._get_tls_file_path(tls_config, cert_directory, "cacert")
@@ -213,16 +215,16 @@ class Config(object):
                                                                         "server_ca_chain")
 
         finally:
-            Config._logger.info("tls_cacert_file = %s", Config.tls_cacert_file)
-            Config._logger.info("tls_server_cert_file = %s", Config.tls_server_cert_file)
-            Config._logger.info("tls_private_key_file = %s", Config.tls_private_key_file)
-            Config._logger.info("tls_server_ca_chain_file = %s", Config.tls_server_ca_chain_file)
+            _LOGGER.info("tls_cacert_file = %s", Config.tls_cacert_file)
+            _LOGGER.info("tls_server_cert_file = %s", Config.tls_server_cert_file)
+            _LOGGER.info("tls_private_key_file = %s", Config.tls_private_key_file)
+            _LOGGER.info("tls_server_ca_chain_file = %s", Config.tls_server_ca_chain_file)
 
     @staticmethod
     def init_config(file_path=None):
         """read and store the config from config file"""
         if Config._local_config.is_loaded():
-            Config._logger.info("config already inited: %s", Config._local_config)
+            _LOGGER.info("config already inited: %s", Config._local_config)
             return
 
         if not file_path:
@@ -234,10 +236,10 @@ class Config(object):
                 loaded_config = json.load(config_json)
 
         if not loaded_config:
-            Config._logger.warning("config not loaded from file: %s", file_path)
+            _LOGGER.warning("config not loaded from file: %s", file_path)
             return
 
-        Config._logger.info("config loaded from file: %s", file_path)
+        _LOGGER.info("config loaded from file(%s): %s", file_path, Audit.json_dumps(loaded_config))
         logging_config = loaded_config.get("logging")
         if logging_config:
             logging.config.dictConfig(logging_config)
@@ -249,13 +251,15 @@ class Config(object):
         if not Config.consul_timeout_in_secs or Config.consul_timeout_in_secs < 1:
             Config.consul_timeout_in_secs = Config.DEFAULT_TIMEOUT_IN_SECS
 
+        Config._pdp_api_version = os.environ.get(
+            Config.PDP_API_VERSION, loaded_config.get(Config.PDP_API_VERSION.lower()))
+
         local_config = loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER, {})
         Config.system_name = local_config.get(Config.FIELD_SYSTEM, Config.system_name)
 
         Config._set_tls_config(local_config.get(Config.FIELD_TLS))
 
         Config._local_config.set_config(local_config, auto_commit=True)
-        Config._logger.info("config loaded from file(%s): %s", file_path, Config._local_config)
 
     @staticmethod
     def discover(audit):
@@ -265,14 +269,14 @@ class Config(object):
         new_config = DiscoveryClient.get_value(audit, discovery_key)
 
         if not new_config or not isinstance(new_config, dict):
-            Config._logger.warning("unexpected config from discovery: %s", new_config)
+            _LOGGER.warning("unexpected config from discovery: %s", new_config)
             return
 
-        Config._logger.debug("loaded config from discovery(%s): %s",
-                             discovery_key, Audit.json_dumps(new_config))
+        _LOGGER.debug("loaded config from discovery(%s): %s",
+                      discovery_key, Audit.json_dumps(new_config))
 
         Config.discovered_config.set_config(new_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
-        Config._logger.info("config from discovery: %s", Config.discovered_config)
+        _LOGGER.info("config from discovery: %s", Config.discovered_config)
 
 
     @staticmethod
@@ -302,3 +306,11 @@ class Config(object):
     def get_requests_kwargs(tls_ca_mode=None):
         """generate kwargs with verify for requests based on the tls_ca_mode"""
         return {Config.REQUESTS_VERIFY: Config.get_tls_verify(tls_ca_mode)}
+
+    @staticmethod
+    def is_pdp_api_default(log_status=True):
+        """whether to use the old (2018) or the default pdp API (started in 2019)"""
+        is_default = (Config._pdp_api_version is None)
+        if log_status:
+            _LOGGER.info("_pdp_api_version(%s) default(%s)", Config._pdp_api_version, is_default)
+        return is_default

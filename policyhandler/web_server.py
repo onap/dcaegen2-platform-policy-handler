@@ -14,29 +14,27 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 """web-server for policy_handler"""
 
 import json
-import logging
 from datetime import datetime
 
 import cherrypy
 
+from . import pdp_client
 from .config import Config
 from .deploy_handler import PolicyUpdateMessage
 from .onap.audit import Audit, AuditHttpCode
-from .policy_matcher import PolicyMatcher
 from .policy_receiver import PolicyReceiver
-from .policy_rest import PolicyRest
+from .utils import Utils
 
 
 class PolicyWeb(object):
     """run http API of policy-handler on 0.0.0.0:wservice_port - any incoming address"""
     DATA_NOT_FOUND_ERROR = 404
     HOST_INADDR_ANY = ".".join("0"*4)
-    logger = logging.getLogger("policy_handler.policy_web")
+    logger = Utils.get_logger(__file__)
 
     @staticmethod
     def run_forever(audit):
@@ -84,7 +82,8 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("%s policy_id=%s headers=%s",
                               req_info, policy_id, json.dumps(cherrypy.request.headers))
 
-        latest_policy = PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
+        latest_policy = pdp_client.PolicyRest.get_latest_policy(
+            (audit, policy_id, None, None)) or {}
 
         PolicyWeb.logger.info("res %s policy_id=%s latest_policy=%s",
                               req_info, policy_id, json.dumps(latest_policy))
@@ -104,9 +103,9 @@ class _PolicyWeb(object):
 
         PolicyWeb.logger.info("%s", req_info)
 
-        result, policies, policy_filters = PolicyMatcher.get_deployed_policies(audit)
+        result, policies, policy_filters = pdp_client.PolicyMatcher.get_deployed_policies(audit)
         if not result:
-            result, policy_update = PolicyMatcher.build_catch_up_message(
+            result, policy_update = pdp_client.PolicyMatcher.build_catch_up_message(
                 audit, policies, policy_filters)
             if policy_update and isinstance(policy_update, PolicyUpdateMessage):
                 result["policy_update"] = policy_update.get_message()
@@ -168,6 +167,9 @@ class _PolicyWeb(object):
             }
         }
         """
+        if Config.is_pdp_api_default():
+            raise cherrypy.HTTPError(404, "temporarily unsupported due to the new pdp API")
+
         if cherrypy.request.method == "GET":
             return self._get_all_policies_latest()
 
@@ -184,7 +186,7 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("%s: policy_filter=%s headers=%s",
                               req_info, str_policy_filter, json.dumps(cherrypy.request.headers))
 
-        result = PolicyRest.get_latest_policies(audit, policy_filter=policy_filter) or {}
+        result = pdp_client.PolicyRest.get_latest_policies(audit, policy_filter=policy_filter) or {}
         result_str = json.dumps(result, sort_keys=True)
 
         PolicyWeb.logger.info("result %s: policy_filter=%s result=%s",

@@ -13,6 +13,7 @@
         },
         "policy_engine" : {
             "url" : "https://unit-test-pdp-server:8081000",
+            "path_decision" : "/decision/v1/",
             "path_notifications" : "/pdp/notifications",
             "path_api" : "/pdp/api/",
             "headers" : {

@@ -14,7 +14,6 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 """
     ask service_activator for the mode_of_operation
@@ -30,23 +29,25 @@
 """
 
 import json
-import logging
 from copy import deepcopy
 from urllib.parse import urljoin
 
 import requests
 
 from .config import Config, Settings
-from .onap.audit import REQUEST_X_ECOMP_REQUESTID, AuditHttpCode, Metrics
+from .onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode,
+                         Metrics)
 from .policy_consts import TARGET_ENTITY
+from .utils import Utils
 
+_LOGGER = Utils.get_logger(__file__)
 
 class ServiceActivator(object):
     """calling the service_activator web api to determine the mode_of_operation"""
-    _logger = logging.getLogger("policy_handler.service_activator")
     DEFAULT_TARGET_ENTITY = "service_activator"
     DEFAULT_TIMEOUT_IN_SECS = 10
     MODE_OF_OPERATION_ACTIVE = "active"
+    SERVICE_MODE = "service_mode"
 
     _lazy_inited = False
     _settings = Settings(Config.MODE_OF_OPERATION, Config.SERVICE_ACTIVATOR)
@@ -81,6 +82,7 @@ class ServiceActivator(object):
         """
         ServiceActivator._custom_kwargs = {}
         ServiceActivator._url = ServiceActivator._url_register = ""
+        Audit.register_item_health(ServiceActivator.SERVICE_MODE, ServiceActivator._get_service_mode)
 
         try:
             _, ServiceActivator._mode_of_operation = ServiceActivator._settings.get_by_key(
@@ -98,7 +100,7 @@ class ServiceActivator(object):
                 tls_ca_mode = config_sa.get(Config.TLS_CA_MODE)
                 ServiceActivator._custom_kwargs = Config.get_requests_kwargs(tls_ca_mode)
 
-                ServiceActivator._logger.info(audit.info(
+                _LOGGER.info(audit.info(
                     "dns based routing to %s: url(%s) tls_ca_mode(%s) custom_kwargs(%s)",
                     ServiceActivator._target_entity, ServiceActivator._url_register,
                     tls_ca_mode, json.dumps(ServiceActivator._custom_kwargs)))
@@ -134,17 +136,31 @@ class ServiceActivator(object):
         ServiceActivator._init(audit)
 
     @staticmethod
-    def is_active_mode_of_operation(audit):
+    def _get_service_mode():
+        """returns the service_mode as json to be reported by the healthcheck"""
+        return {
+            "is_active_mode_of_operation": ServiceActivator.is_active_mode_of_operation(),
+            "is_pdp_api_default": Config.is_pdp_api_default(log_status=False)
+        }
+
+    @staticmethod
+    def is_active_mode_of_operation(audit=None):
         """
         mode_of_operation - whether the service is
             active == True or passive == False
             based on the current value of the mode_of_operation
+
+        temporary for R4 Dublin - passive for new PDP API
         """
         active = (ServiceActivator._mode_of_operation is None
                   or ServiceActivator._mode_of_operation
                   == ServiceActivator.MODE_OF_OPERATION_ACTIVE)
-        ServiceActivator._logger.info(audit.info(
-            "mode_of_operation = {} active = {}".format(
+
+        if active and Config.is_pdp_api_default():
+            active = False
+
+        if audit:
+            _LOGGER.info(audit.info("mode_of_operation = {} active = {}".format(
                 ServiceActivator._mode_of_operation, active)))
         return active
 
@@ -157,8 +173,7 @@ class ServiceActivator(object):
             target_entity = ServiceActivator._target_entity
 
             if not ServiceActivator._url:
-                ServiceActivator._logger.info(audit.info(
-                    "no url found for {}".format(target_entity)))
+                _LOGGER.info(audit.info("no url found for {}".format(target_entity)))
                 return ServiceActivator.is_active_mode_of_operation(audit)
 
             url = ServiceActivator._url_register
@@ -177,7 +192,7 @@ class ServiceActivator(object):
                 json.dumps(custom_kwargs))
             log_line = log_action + " " + log_data
 
-            ServiceActivator._logger.info(log_line)
+            _LOGGER.info(log_line)
             metrics.metrics_start(log_line)
 
             res = None
@@ -190,7 +205,7 @@ class ServiceActivator(object):
                               else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
                 error_msg = "failed to {} {}: {} {}".format(
                     log_action, type(ex).__name__, str(ex), log_data)
-                ServiceActivator._logger.exception(error_msg)
+                _LOGGER.exception(error_msg)
                 metrics.set_http_status_code(error_code)
                 audit.set_http_status_code(error_code)
                 metrics.metrics(error_msg)
@@ -204,7 +219,7 @@ class ServiceActivator(object):
             metrics.metrics(log_line)
 
             if res.status_code != requests.codes.ok:
-                ServiceActivator._logger.error(log_line)
+                _LOGGER.error(log_line)
                 return ServiceActivator.is_active_mode_of_operation(audit)
 
             result = res.json() or {}
