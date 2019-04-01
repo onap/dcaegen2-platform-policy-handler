@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 """test policy catch_up methods directly"""
 
 import json
@@ -22,14 +21,17 @@ import time
 
 import pytest
 
+from policyhandler.config import Config
 from policyhandler.onap.audit import Audit
 from policyhandler.policy_receiver import PolicyReceiver
+from policyhandler.utils import Utils
 
-from .mock_settings import Settings
-from .mock_tracker import Tracker
+from ..mock_tracker import Tracker
 
+_LOGGER = Utils.get_logger(__file__)
 
 @pytest.mark.usefixtures(
+    "fix_pdp_api_v0",
     "fix_auto_catch_up",
     "fix_discovery",
     "fix_pdp_post_big",
@@ -38,19 +40,23 @@ from .mock_tracker import Tracker
 )
 def test_catch_up_failed_dh():
     """test run policy handler with catchups and failed deployment-handler"""
-    Settings.logger.info("start test_catch_up_failed_dh")
+    if Config.is_pdp_api_default():
+        _LOGGER.info("passive for new PDP API")
+        return
+
+    _LOGGER.info("start test_catch_up_failed_dh")
     assert not PolicyReceiver.is_running()
     audit = Audit(job_name="test_catch_up_failed_dh",
                   req_message="start test_catch_up_failed_dh")
     PolicyReceiver.run(audit)
 
-    Settings.logger.info("sleep 12 before shutdown...")
+    _LOGGER.info("sleep 12 before shutdown...")
     time.sleep(12)
 
     health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    _LOGGER.info("healthcheck: %s", json.dumps(health))
     assert bool(health)
 
     PolicyReceiver.shutdown(audit)
@@ -58,11 +64,12 @@ def test_catch_up_failed_dh():
     assert not PolicyReceiver.is_running()
 
     health = audit.health(full=True)
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    _LOGGER.info("healthcheck: %s", json.dumps(health))
 
     Tracker.validate()
 
 @pytest.mark.usefixtures(
+    "fix_pdp_api_v0",
     "fix_auto_catch_up",
     "fix_discovery",
     "fix_pdp_post",
@@ -71,19 +78,23 @@ def test_catch_up_failed_dh():
 )
 def test_catch_up_dh_404():
     """test run policy handler with catchups and failed deployment-handler"""
-    Settings.logger.info("start test_catch_up_dh_404")
+    if Config.is_pdp_api_default():
+        _LOGGER.info("passive for new PDP API")
+        return
+
+    _LOGGER.info("start test_catch_up_dh_404")
     assert not PolicyReceiver.is_running()
     audit = Audit(job_name="test_catch_up_dh_404",
                   req_message="start test_catch_up_dh_404")
     PolicyReceiver.run(audit)
 
-    Settings.logger.info("sleep 12 before shutdown...")
+    _LOGGER.info("sleep 12 before shutdown...")
     time.sleep(12)
 
     health = audit.health(full=True)
     audit.audit_done(result=json.dumps(health))
 
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    _LOGGER.info("healthcheck: %s", json.dumps(health))
     assert bool(health)
 
     PolicyReceiver.shutdown(audit)
@@ -91,6 +102,6 @@ def test_catch_up_dh_404():
     assert not PolicyReceiver.is_running()
 
     health = audit.health(full=True)
-    Settings.logger.info("healthcheck: %s", json.dumps(health))
+    _LOGGER.info("healthcheck: %s", json.dumps(health))
 
     Tracker.validate()

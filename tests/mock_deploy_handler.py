@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 """mocking for the deployment-handler - shared by many tests"""
 
-from policyhandler.policy_consts import (POLICY_BODY, POLICY_ID,
-                                         POLICY_VERSION, POLICY_VERSIONS)
+from policyhandler.pdp_api_v0.pdp_consts import POLICY_VERSION
+from policyhandler.policy_consts import POLICY_BODY, POLICY_ID, POLICY_VERSIONS
 
-from .mock_policy_engine import MockPolicyEngine
-from .mock_settings import Settings
+from .mock_settings import MockSettings
+from .pdp_api_v0.mock_policy_engine import MockPolicyEngine2018
 
 
 class MockDeploymentHandler(object):
@@ -30,7 +29,7 @@ class MockDeploymentHandler(object):
     @staticmethod
     def default_response():
         """generate the deployed policies message"""
-        return {"server_instance_uuid": Settings.deploy_handler_instance_uuid}
+        return {"server_instance_uuid": MockSettings.deploy_handler_instance_uuid}
 
     @staticmethod
     def get_deployed_policies():
@@ -42,7 +41,7 @@ class MockDeploymentHandler(object):
                 POLICY_VERSIONS: {policy.get(POLICY_BODY, {}).get(POLICY_VERSION, "999"): True},
                 "pending_update": False})
             for policy_id, policy in (
-                MockPolicyEngine.gen_all_policies_latest(version_offset=1).items()))
+                MockPolicyEngine2018.gen_all_policies_latest(version_offset=1).items()))
         response["policies"] = policies
 
         return response

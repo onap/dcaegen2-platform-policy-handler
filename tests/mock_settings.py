@@ -14,12 +14,12 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 """settings that are general to all tests"""
 
 import copy
+import importlib
 import json
-import logging
+import os
 import sys
 import uuid
 from functools import wraps
@@ -29,7 +29,9 @@ from policyhandler.config import Config
 from policyhandler.discovery import DiscoveryClient
 from policyhandler.onap.audit import Audit
 from policyhandler.service_activator import ServiceActivator
+from policyhandler.utils import Utils
 
+_LOGGER = Utils.get_logger(__file__)
 
 def _fix_discover_config(func):
     """the decorator"""
@@ -38,7 +40,7 @@ def _fix_discover_config(func):
 
     def mocked_discover_get_value(*_):
         """monkeypatch for get from consul"""
-        return copy.deepcopy(Settings.mock_config)
+        return copy.deepcopy(MockSettings.mock_config)
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -54,49 +56,65 @@ def _fix_discover_config(func):
         return func_result
     return wrapper
 
-class Settings(object):
+class MockSettings(object):
     """init all locals"""
+    PDP_API_VERSION = "PDP_API_VERSION"
+    OLD_PDP_API_VERSION = "pdp_api_v0"
     _loaded = False
-    logger = None
     mock_config = None
     deploy_handler_instance_uuid = str(uuid.uuid4())
 
     @staticmethod
     def init():
         """init configs"""
-        if Settings._loaded:
-            Settings.logger.info("testing policy_handler with config: %s", Config.discovered_config)
+        if MockSettings._loaded:
+            _LOGGER.info("testing policy_handler with config: %s", Config.discovered_config)
             return
-        Settings._loaded = True
+        MockSettings._loaded = True
 
-        Config.init_config()
-
-        Config.consul_url = "http://unit-test-consul:850000"
+        Config.init_config("tests/etc_config.json")
 
         with open("tests/mock_config.json", 'r') as config_json:
-            Settings.mock_config = json.load(config_json)
+            MockSettings.mock_config = json.load(config_json)
 
-        Settings.logger = logging.getLogger("policy_handler.unit_test")
-        sys.stdout = LogWriter(Settings.logger.info)
-        sys.stderr = LogWriter(Settings.logger.error)
+        sys.stdout = LogWriter(_LOGGER.info)
+        sys.stderr = LogWriter(_LOGGER.error)
 
         print("print is expected to be in the log")
-        Settings.logger.info("========== run_policy_handler ==========")
+        _LOGGER.info("========== run_policy_handler ==========")
         Audit.init(Config.system_name, Config.LOGGER_CONFIG_FILE_PATH)
-        Settings.rediscover_config()
+        MockSettings.rediscover_config()
 
     @staticmethod
     @_fix_discover_config
     def rediscover_config(updated_config=None):
         """rediscover the config"""
         if updated_config is not None:
-            Settings.mock_config = copy.deepcopy(updated_config)
+            MockSettings.mock_config = copy.deepcopy(updated_config)
 
         audit = Audit(req_message="rediscover_config")
 
         Config.discover(audit)
         ServiceActivator.determine_mode_of_operation(audit)
 
-        Settings.logger.info("testing policy_handler with config: %s", Config.discovered_config)
+        _LOGGER.info("testing policy_handler with config: %s", Config.discovered_config)
 
         audit.audit_done(" -- started")
+
+    @staticmethod
+    def setup_pdp_api(pdp_api_version=None):
+        """set the environment var for pdp_api"""
+        if Config._pdp_api_version == pdp_api_version:
+            _LOGGER.info("unchanged setup_pdp_api %s", pdp_api_version)
+            return
+
+        _LOGGER.info("setup_pdp_api %s -> %s", Config._pdp_api_version, pdp_api_version)
+
+        if pdp_api_version:
+            os.environ[MockSettings.PDP_API_VERSION] = pdp_api_version
+        elif MockSettings.PDP_API_VERSION in os.environ:
+            del os.environ[MockSettings.PDP_API_VERSION]
+        Config._pdp_api_version = pdp_api_version
+
+        importlib.reload(importlib.import_module("policyhandler.pdp_client"))
+        _LOGGER.info("done setup_pdp_api %s", Config._pdp_api_version)

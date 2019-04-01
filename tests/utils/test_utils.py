@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,56 +14,51 @@
 # limitations under the License.
 # ============LICENSE_END=========================================================
 #
-# ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 """test of the policy_utils"""
 
 import json
-import logging
 import re
 
-from policyhandler.config import Config
-from policyhandler.policy_utils import RegexCoarser
+from policyhandler.utils import RegexCoarser, Utils
 
-Config.init_config()
-LOGGER = logging.getLogger("policy_handler.unit_test_policy_utils")
-
+_LOGGER = Utils.get_logger(__file__)
 
 def check_coarse_regex(test_name, patterns, matching_strings=None, expected_subpatterns=None):
     """generic test"""
     regex_coarser = RegexCoarser(patterns)
     coarse_patterns = regex_coarser.get_coarse_regex_patterns(max_length=20)
-    LOGGER.info("check_coarse_regex %s (%s) for [%s]",
-                test_name, coarse_patterns, json.dumps(regex_coarser.patterns))
+    _LOGGER.info("check_coarse_regex %s (%s) for [%s]",
+                 test_name, coarse_patterns, json.dumps(regex_coarser.patterns))
     coarse_regexes = [re.compile(coarse_pattern) for coarse_pattern in coarse_patterns]
     coarse_patterns_str = json.dumps(coarse_patterns)
     if matching_strings:
         for test_str in matching_strings:
-            LOGGER.info("  match '%s' to %s (%s)", test_str, test_name, coarse_patterns_str)
+            _LOGGER.info("  match '%s' to %s (%s)", test_str, test_name, coarse_patterns_str)
             assert bool(list(filter(None, [
                 coarse_regex.match(test_str) for coarse_regex in coarse_regexes
             ])))
 
     if expected_subpatterns:
         for subpattern in expected_subpatterns:
-            LOGGER.info("  subpattern '%s' in %s", subpattern, coarse_patterns_str)
+            _LOGGER.info("  subpattern '%s' in %s", subpattern, coarse_patterns_str)
             assert subpattern in coarse_patterns_str
 
 def check_combined_regex(test_name, patterns, matching_strings=None, unmatching_strings=None):
     """generic test"""
     regex_coarser = RegexCoarser(patterns)
     combined_pattern = regex_coarser.get_combined_regex_pattern()
-    LOGGER.info("check_combined_regex %s (%s) for [%s]",
-                test_name, combined_pattern, json.dumps(regex_coarser.patterns))
+    _LOGGER.info("check_combined_regex %s (%s) for [%s]",
+                 test_name, combined_pattern, json.dumps(regex_coarser.patterns))
     coarse_regex = re.compile(combined_pattern)
     if matching_strings:
         for test_str in matching_strings:
-            LOGGER.info("  match '%s' to %s (%s)", test_str, test_name, combined_pattern)
+            _LOGGER.info("  match '%s' to %s (%s)", test_str, test_name, combined_pattern)
             assert coarse_regex.match(test_str)
 
     if unmatching_strings:
         for test_str in unmatching_strings:
-            LOGGER.info("  not match '%s' to %s (%s)", test_str, test_name, combined_pattern)
+            _LOGGER.info("  not match '%s' to %s (%s)", test_str, test_name, combined_pattern)
             assert not coarse_regex.match(test_str)
 
 def test_regex_coarser():
