@@ -21,13 +21,12 @@
         },
         "handlers": {
             "file": {
-                "class": "logging.handlers.TimedRotatingFileHandler",
+                "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "local",
                 "filename" : "logs/policy_handler.log",
                 "level": "DEBUG",
-                "when": "midnight",
-                "interval": 1,
-                "backupCount": 10,
+                "maxBytes": 200000000,
+                "backupCount": 5,
                 "delay": true
             }
         },

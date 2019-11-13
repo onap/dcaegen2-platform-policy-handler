@@ -22,6 +22,8 @@ FROM python:3.6
 ENV INSROOT /opt/app
 ENV APPUSER policy_handler
 ENV APPDIR ${INSROOT}/${APPUSER}
+ENV REQUESTS_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
+ENV WEBSOCKET_CLIENT_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
 
 RUN useradd -d ${APPDIR} ${APPUSER}
 

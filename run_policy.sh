@@ -47,4 +47,5 @@ exec &>> >(tee -a ${LOG_FILE})
 echo "---------------------------------------------"
 echo "$(date +%Y-%m-%d_%T.%N): exit ${BASH_SOURCE[0]} that was started on ${STARTED}"
 
+rm -f ${LOG_FILE}.2[0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]
 mv ${LOG_FILE} ${LOG_FILE}.$(date +%Y-%m-%d_%H%M%S)

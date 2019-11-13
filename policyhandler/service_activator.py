@@ -35,6 +35,7 @@ from urllib.parse import urljoin
 import requests
 
 from .config import Config, Settings
+from .discovery import DiscoveryClient
 from .onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode,
                          Metrics)
 from .policy_consts import TARGET_ENTITY
@@ -93,6 +94,9 @@ class ServiceActivator(object):
                 ServiceActivator._target_entity = config_sa.get(
                     TARGET_ENTITY, ServiceActivator.DEFAULT_TARGET_ENTITY)
                 ServiceActivator._url = config_sa.get("url", "")
+                if not ServiceActivator._url:
+                    ServiceActivator._url = DiscoveryClient.get_service_url(audit,
+                                                             ServiceActivator._target_entity)
                 if ServiceActivator._url:
                     ServiceActivator._url_register = urljoin(ServiceActivator._url,
                                                              config_sa.get("path_register", ""))
