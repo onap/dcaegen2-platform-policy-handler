@@ -19,6 +19,8 @@
 
 import json
 from datetime import datetime
+import os
+import time
 
 import cherrypy
 
@@ -44,16 +46,18 @@ class PolicyWeb(object):
 
         protocol = "http"
         tls_info = ""
-        # if Config.tls_server_cert_file and Config.tls_private_key_file:
-        #     cherrypy.server.ssl_module = 'builtin'
-        #     cherrypy.server.ssl_certificate = Config.tls_server_cert_file
-        #     cherrypy.server.ssl_private_key = Config.tls_private_key_file
-        #     if Config.tls_server_ca_chain_file:
-        #         cherrypy.server.ssl_certificate_chain = Config.tls_server_ca_chain_file
-        #     protocol = "https"
-        #     tls_info = "cert: {} {} {}".format(Config.tls_server_cert_file,
-        #                                        Config.tls_private_key_file,
-        #                                        Config.tls_server_ca_chain_file)
+        if Config.tls_server_cert_file and Config.tls_private_key_file:
+            tm_cert = os.path.getmtime(Config.tls_server_cert_file)
+            tm_key  = os.path.getmtime(Config.tls_private_key_file)
+            cherrypy.server.ssl_module = 'builtin'
+            cherrypy.server.ssl_certificate = Config.tls_server_cert_file
+            cherrypy.server.ssl_private_key = Config.tls_private_key_file
+            if Config.tls_server_ca_chain_file:
+                cherrypy.server.ssl_certificate_chain = Config.tls_server_ca_chain_file
+            protocol = "https"
+            tls_info = "cert: {} {} {}".format(Config.tls_server_cert_file,
+                                               Config.tls_private_key_file,
+                                               Config.tls_server_ca_chain_file)
 
         cherrypy.tree.mount(_PolicyWeb(), '/')
 
@@ -62,6 +66,19 @@ class PolicyWeb(object):
                 protocol, cherrypy.server.socket_host, cherrypy.server.socket_port, tls_info)),
             json.dumps(cherrypy.config))
         cherrypy.engine.start()
+
+        # If HTTPS server certificate changes, exit to let kubernetes restart us
+        if Config.tls_server_cert_file and Config.tls_private_key_file:
+            while True:
+                time.sleep(600)
+                c_tm_cert = os.path.getmtime(Config.tls_server_cert_file)
+                c_tm_key  = os.path.getmtime(Config.tls_private_key_file)
+                if c_tm_cert > tm_cert or c_tm_key > tm_key:
+                    PolicyWeb.logger.info("cert or key file updated")
+                    cherrypy.engine.stop()
+                    cherrypy.engine.exit()
+                    break
+
 
 class _PolicyWeb(object):
     """REST API of policy-handler"""
