@@ -19,6 +19,29 @@
     },
     {
       "key": {
+        "uuid": "59c52408_b2389738",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-11-14T20:10:43Z",
+      "side": 1,
+      "message": "Cert path will not be valid in ONAP; should be removed for docker file. Instead could be exposed as env on the blueprint or helm configuration (depending on type of deployment)",
+      "range": {
+        "startLine": 25,
+        "startChar": 0,
+        "endLine": 26,
+        "endChar": 65
+      },
+      "revId": "c78eecab2a9a907fb0855b53e9d3c7f9704bac38",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1279e87c_c37d5ff8",
         "filename": "etc/common_logger.config",
         "patchSetId": 1
