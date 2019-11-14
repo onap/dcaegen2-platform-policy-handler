@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8702e009_a5bc10c2",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2019-11-14T19:53:34Z",
+      "side": 1,
+      "message": "change to 2017-2019",
+      "revId": "c78eecab2a9a907fb0855b53e9d3c7f9704bac38",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1279e87c_c37d5ff8",
+        "filename": "etc/common_logger.config",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2019-11-14T19:53:34Z",
+      "side": 1,
+      "message": "change to include 2019",
+      "revId": "c78eecab2a9a907fb0855b53e9d3c7f9704bac38",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
