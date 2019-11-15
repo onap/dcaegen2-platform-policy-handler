@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "c9a0dc96_2ae37bfd",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 2835
+      },
+      "writtenOn": "2019-11-15T15:41:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8702e009_a5bc10c2",
+      "revId": "c78eecab2a9a907fb0855b53e9d3c7f9704bac38",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "59c52408_b2389738",
         "filename": "Dockerfile",
         "patchSetId": 1
@@ -42,6 +60,30 @@
     },
     {
       "key": {
+        "uuid": "ec15157f_7c41ee4f",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 2835
+      },
+      "writtenOn": "2019-11-15T15:41:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "59c52408_b2389738",
+      "range": {
+        "startLine": 25,
+        "startChar": 0,
+        "endLine": 26,
+        "endChar": 65
+      },
+      "revId": "c78eecab2a9a907fb0855b53e9d3c7f9704bac38",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1279e87c_c37d5ff8",
         "filename": "etc/common_logger.config",
         "patchSetId": 1
@@ -53,6 +95,24 @@
       "writtenOn": "2019-11-14T19:53:34Z",
       "side": 1,
       "message": "change to include 2019",
+      "revId": "c78eecab2a9a907fb0855b53e9d3c7f9704bac38",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "87451a22_cd56611f",
+        "filename": "etc/common_logger.config",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 2835
+      },
+      "writtenOn": "2019-11-15T15:41:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1279e87c_c37d5ff8",
       "revId": "c78eecab2a9a907fb0855b53e9d3c7f9704bac38",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
