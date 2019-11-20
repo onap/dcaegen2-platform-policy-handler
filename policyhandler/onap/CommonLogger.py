@@ -209,13 +209,13 @@ class CommonLogger:
                                                                        mode=self._sizeRotateMode, \
                                                                        encoding=None, delay=False)
         elif self._typeLogger == 'stderrlogger':
-            self._logHandler = logging.handlers.StreamHandler(sys.stderr)
+            self._logHandler = logging.StreamHandler(sys.stderr)
         elif self._typeLogger == 'stdoutlogger':
-            self._logHandler = logging.handlers.StreamHandler(sys.stdout)
+            self._logHandler = logging.StreamHandler(sys.stdout)
         elif self._typeLogger == 'socketlogger':
             self._logHandler = logging.handlers.SocketHandler(self._socketHost, self._socketPort)
         elif self._typeLogger == 'nulllogger':
-            self._logHandler = logging.handlers.NullHandler()
+            self._logHandler = logging.NullHandler()
 
         if self._fields["style"] == CommonLogger.AuditFile or self._fields["style"] == CommonLogger.MetricsFile:
             self._logFormatter = logging.Formatter(fmt='%(begtime)s,%(begmsecs)03d+00:00|%(endtime)s,%(endmsecs)03d+00:00|%(message)s', datefmt=CommonLogger.DateFmt)
