@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4f4c993c_77e9177d",
+        "filename": "policyhandler/onap/CommonLogger.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 105
+      },
+      "writtenOn": "2019-11-21T14:45:44Z",
+      "side": 1,
+      "message": "add a new copyright line for this year and your company",
+      "revId": "00a143e35f8d17a11f97fafb944d1fa1d95fd4da",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
