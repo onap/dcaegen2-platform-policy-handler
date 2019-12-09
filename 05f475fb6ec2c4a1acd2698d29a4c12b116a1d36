@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ae56d722_0312239f",
+        "filename": "policyhandler/web_server.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2019-12-09T16:54:56Z",
+      "side": 1,
+      "message": "This will not shutdown the policy-handler but will only stop its web-server side.\nSee def shutdown(self) below for the working shutdown logic.  \n\nAlternatively, it might be better to restart the web-server itself with the new cert file and not shutting down the whole policy-handler by relying on k8s to restart as k8s is outside of PH control.",
+      "range": {
+        "startLine": 77,
+        "startChar": 20,
+        "endLine": 80,
+        "endChar": 25
+      },
+      "revId": "05f475fb6ec2c4a1acd2698d29a4c12b116a1d36",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
