@@ -33,3 +33,7 @@ _ReSharper*/
 .vs/
 #Nuget packages folder
 packages/
+target/
+__pycache__/
+.coverage
+coverage-reports/
