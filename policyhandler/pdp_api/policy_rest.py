@@ -181,6 +181,111 @@ class PolicyRest(object):
         return policy_bodies
 
     @staticmethod
+    def get_latest_updated_policies(audit, updated_policies, removed_policies):
+        """safely try retrieving the latest policies for the list of policy_names"""
+        if not updated_policies and not removed_policies:
+            return None, None
+
+        for policy_id, policy in updated_policies.items():
+            if type(policy) is str:
+                continue
+            else:
+                policy_updated.append((policy.get(POLICY_ID), policy.get(POLICY_VERSION)))
+
+        policy_removed=[]
+        for policy_id, policy in removed_policies.items():
+            if type(policy) is str:
+                continue
+            else:
+                policy_removed.append((policy.get(POLICY_ID))
+
+        if not policies_updated and not policies_removed:
+            return None, None
+
+        policies_to_find = {}
+        for pol in policies_updated:
+            policy_id = pol[0]
+            policy_version = pol[1]
+            if not policy_id or not policy_version.isdigit():
+                continue
+            else:
+                policy = policies_to_find.get(policy_id)
+                if not policy:
+                    policies_to_find[policy_id] = {
+                        POLICY_ID: policy_id,
+                        POLICY_VERSION : policy_version,
+                    }
+                    continue
+
+        policies_to_remove = {}
+        for (policy_id) in policies_removed:
+            if not policy_id:
+                continue
+            policy = policies_to_remove.get(policy_id)
+            if not policy:
+                policies_to_remove[policy_id] = {
+                    POLICY_ID: policy_id,
+                }
+                continue
+
+        apns = [(audit, policy_id)
+                for (policy_id, policy_to_find) in policies_to_find.items()]
+        policies = None
+        apns_length = len(apns)
+        _LOGGER.debug("apns_length(%s) policies_to_find %s", apns_length,
+                      json.dumps(policies_to_find))
+
+        try:
+            if apns_length == 1:
+                policies = [PolicyRest.get_latest_policy(apns[0])]
+            else: # TODO: Pending Implementation of collective request
+                pool = ThreadPool(min(PolicyRest._thread_pool_size, apns_length))
+                policies = pool.map(PolicyRest.get_latest_policy, apns)
+                pool.close()
+                pool.join()
+
+            metrics_total.metrics("result({}) get_latest_updated_policies {}: {} {}"
+                                  .format(apns_length, str_metrics,
+                                          len(policies), json.dumps(policies)))
+
+            updated_policies = dict((policy[POLICY_ID], policy)
+                                    for policy in policies
+                                    if policy and policy.get(POLICY_ID))
+
+            removed_policies = dict((policy_id, True)
+                                    for (policy_id) in policies_to_remove.items())
+
+            errored_policies = dict((policy_id, policy_to_find)
+                                    for (policy_id, policy_to_find) in policies_to_find.items()
+                                    if policy_id not in updated_policies
+                                    and policy_id not in removed_policies)
+
+            _LOGGER.debug(
+                "result(%s) updated_policies %s, removed_policies %s, errored_policies %s",
+                apns_length, json.dumps(updated_policies), json.dumps(removed_policies),
+                json.dumps(errored_policies))
+
+            if errored_policies:
+                audit.set_http_status_code(AuditHttpCode.DATA_ERROR.value)
+                audit.error(
+                    "errored_policies in PDP: {}".format(json.dumps(errored_policies)),
+                    error_code=AuditResponseCode.DATA_ERROR)
+
+            return updated_policies, removed_policies
+
+        except Exception as ex:
+            error_msg = ("{0}: crash {1} {2} at {3}: {4}"
+                         .format(audit.request_id, type(ex).__name__, str(ex),
+                                 "get_latest_updated_policies", str_metrics))
+
+            _LOGGER.exception(error_msg)
+            audit.fatal(error_msg, error_code=AuditResponseCode.BUSINESS_PROCESS_ERROR)
+            audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+            return None, None
+
+
+
+    @staticmethod
     def get_latest_policy(aud_policy_id):
         """safely try retrieving the latest policy for the policy_id from the policy-engine"""
         audit, policy_id, _, _ = aud_policy_id
