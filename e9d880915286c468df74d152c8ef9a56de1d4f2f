@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f93e9609_f6f86966",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 1,
+      "message": "inconsistent code indentation between functions",
+      "range": {
+        "startLine": 80,
+        "startChar": 4,
+        "endLine": 82,
+        "endChar": 28
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7afba3e5_71891c10",
+        "filename": "policyhandler/pdp_api/policy_matcher.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 1,
+      "message": "does the new PDP support regex on API ?",
+      "range": {
+        "startLine": 113,
+        "startChar": 4,
+        "endLine": 116,
+        "endChar": 37
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "45525c83_ef1f7e6a",
+        "filename": "policyhandler/pdp_api/policy_rest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 1,
+      "message": "why do you override the policy_updated list on every item in the for loop ?\nthis will always return either 0 or 1 item in the list",
+      "range": {
+        "startLine": 189,
+        "startChar": 8,
+        "endLine": 193,
+        "endChar": 86
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "075b459a_70fed3b0",
+        "filename": "policyhandler/pdp_api/policy_rest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 1,
+      "message": "why - the same as in previous question ?",
+      "range": {
+        "startLine": 196,
+        "startChar": 0,
+        "endLine": 200,
+        "endChar": 56
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5070c5b0_03c8cd89",
+        "filename": "policyhandler/pdp_api/policy_rest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 1,
+      "message": "is the policy_version expected to be int and not a string in the new PDP API ?",
+      "range": {
+        "startLine": 212,
+        "startChar": 0,
+        "endLine": 213,
+        "endChar": 59
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c934da39_36f78be4",
+        "filename": "policyhandler/pdp_api/policy_updates.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 1,
+      "message": "did you loose not in front policy_version ?",
+      "range": {
+        "startLine": 78,
+        "startChar": 12,
+        "endLine": 79,
+        "endChar": 24
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}

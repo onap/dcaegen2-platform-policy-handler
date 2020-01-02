@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "376bf662_b118f160",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 0,
+      "message": "should not be removing the previous copyright - just add the new one",
+      "range": {
+        "startLine": 2,
+        "startChar": 0,
+        "endLine": 2,
+        "endChar": 69
+      },
+      "revId": "8dc742e747e0f418665ab9422f5c6c2cda94869b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "abf015d9_89ad64cb",
+        "filename": "policyhandler/pdp_api/policy_matcher.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 0,
+      "message": "should not be removing the previous copyright - just add the new one",
+      "range": {
+        "startLine": 2,
+        "startChar": 2,
+        "endLine": 2,
+        "endChar": 69
+      },
+      "revId": "8dc742e747e0f418665ab9422f5c6c2cda94869b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "18a103d0_1a7fedb0",
+        "filename": "policyhandler/pdp_api/policy_updates.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-02T18:44:18Z",
+      "side": 0,
+      "message": "should not be removing the previous copyright - just add the new one",
+      "range": {
+        "startLine": 2,
+        "startChar": 2,
+        "endLine": 2,
+        "endChar": 69
+      },
+      "revId": "8dc742e747e0f418665ab9422f5c6c2cda94869b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
