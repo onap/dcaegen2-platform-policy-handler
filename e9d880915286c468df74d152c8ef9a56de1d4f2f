@@ -2,6 +2,52 @@
   "comments": [
     {
       "key": {
+        "uuid": "72c1ae2d_e21b63c1",
+        "filename": "policyhandler/pdp_api/DMaap/Subscribe.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:28:49Z",
+      "side": 1,
+      "message": "class name should be a noun, rather than a verb",
+      "range": {
+        "startLine": 29,
+        "startChar": 0,
+        "endLine": 29,
+        "endChar": 15
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0f400d36_6cacfeba",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:28:49Z",
+      "side": 1,
+      "message": "these are the same as \nPDP_POLICY_ID \u003d \u0027policy-id\u0027\nPDP_POLICY_VERSION \u003d \u0027policy-version\u0027 \nfrom .pdp_consts",
+      "range": {
+        "startLine": 47,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 29
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "f93e9609_f6f86966",
         "filename": "policyhandler/pdp_api/policy_listener.py",
         "patchSetId": 1
@@ -18,6 +64,98 @@
         "startChar": 4,
         "endLine": 82,
         "endChar": 28
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "93494d73_368edd2f",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:28:49Z",
+      "side": 1,
+      "message": "should the break happen when not keep-running ?",
+      "range": {
+        "startLine": 127,
+        "startChar": 0,
+        "endLine": 128,
+        "endChar": 21
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e18c7651_c739e273",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:28:49Z",
+      "side": 1,
+      "message": "what is the purpose of having this while inside the another top level while ?\nthis does not look reasonable for the same thread action",
+      "range": {
+        "startLine": 156,
+        "startChar": 0,
+        "endLine": 157,
+        "endChar": 20
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1300fc79_196e59fd",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:28:49Z",
+      "side": 1,
+      "message": "1. calling get() twice on the same message\n2. lost other parts of the message after \nmessage \u003d message.get(ADDED)",
+      "range": {
+        "startLine": 230,
+        "startChar": 0,
+        "endLine": 231,
+        "endChar": 44
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b4ae9b5c_ec02c856",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:28:49Z",
+      "side": 1,
+      "message": "you will never see REMOVED after\nmessage \u003d message.get(ADDED)",
+      "range": {
+        "startLine": 238,
+        "startChar": 0,
+        "endLine": 239,
+        "endChar": 44
       },
       "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
