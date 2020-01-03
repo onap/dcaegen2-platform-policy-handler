@@ -25,6 +25,75 @@
     },
     {
       "key": {
+        "uuid": "f5d23047_56fab0b8",
+        "filename": "policyhandler/pdp_api/DMaap/Subscribe.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:37:05Z",
+      "side": 1,
+      "message": "why os.path.join is used for url ?",
+      "range": {
+        "startLine": 41,
+        "startChar": 32,
+        "endLine": 41,
+        "endChar": 44
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b754420d_a4ecb98c",
+        "filename": "policyhandler/pdp_api/DMaap/Subscribe.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:37:05Z",
+      "side": 1,
+      "message": "should this be url-encoded ?",
+      "range": {
+        "startLine": 47,
+        "startChar": 2,
+        "endLine": 47,
+        "endChar": 63
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a0cc7ac0_fd0cdcf3",
+        "filename": "policyhandler/pdp_api/DMaap/Subscribe.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-03T16:37:05Z",
+      "side": 1,
+      "message": "1. this looks like a CPU+network spin for no reason\n2. r.get needs a timeout",
+      "range": {
+        "startLine": 50,
+        "startChar": 2,
+        "endLine": 66,
+        "endChar": 39
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0f400d36_6cacfeba",
         "filename": "policyhandler/pdp_api/policy_listener.py",
         "patchSetId": 1
