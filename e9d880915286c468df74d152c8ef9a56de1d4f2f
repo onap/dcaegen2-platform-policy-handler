@@ -163,6 +163,30 @@
     },
     {
       "key": {
+        "uuid": "16bd320b_6b837231",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 6220
+      },
+      "writtenOn": "2020-01-07T12:22:06Z",
+      "side": 1,
+      "message": "-on_reconfigure method in policy_receiver.py starts the policy_listener thread after it is initialized, \n\ninit constructor in policy_listener.py calls self.reconfigure() which further calls stop_notification() which set keep_running to False\n\nso we break it on start, and later set keep_running to True.",
+      "parentUuid": "93494d73_368edd2f",
+      "range": {
+        "startLine": 127,
+        "startChar": 0,
+        "endLine": 128,
+        "endChar": 21
+      },
+      "revId": "e9d880915286c468df74d152c8ef9a56de1d4f2f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e18c7651_c739e273",
         "filename": "policyhandler/pdp_api/policy_listener.py",
         "patchSetId": 1
