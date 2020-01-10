@@ -163,6 +163,30 @@
     },
     {
       "key": {
+        "uuid": "43767234_00bb0a24",
+        "filename": "policyhandler/pdp_api/DMaap/Subscriber.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-10T17:51:52Z",
+      "side": 1,
+      "message": "taking this back - requests do throw IOError that is inherited from OSError",
+      "parentUuid": "781c5994_d4d0248e",
+      "range": {
+        "startLine": 63,
+        "startChar": 3,
+        "endLine": 65,
+        "endChar": 22
+      },
+      "revId": "535163784f9efbd05d7fc5e06e216516ac286627",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "429c22eb_f88bc6ab",
         "filename": "policyhandler/pdp_api/DMaap/Subscriber.py",
         "patchSetId": 4
@@ -252,6 +276,30 @@
       "revId": "535163784f9efbd05d7fc5e06e216516ac286627",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a53d74a7_54ade9e5",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-01-10T17:51:52Z",
+      "side": 1,
+      "message": "taking this back - requests do throw IOError that is inherited from OSError",
+      "parentUuid": "a317b41c_47a845a7",
+      "range": {
+        "startLine": 171,
+        "startChar": 23,
+        "endLine": 171,
+        "endChar": 31
+      },
+      "revId": "535163784f9efbd05d7fc5e06e216516ac286627",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     },
     {
       "key": {
