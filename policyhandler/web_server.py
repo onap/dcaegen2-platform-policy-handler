@@ -1,5 +1,6 @@
 # ================================================================================
 # Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (C) 2020 Wipro Limited.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,8 +100,12 @@ class _PolicyWeb(object):
         PolicyWeb.logger.info("%s policy_id=%s headers=%s",
                               req_info, policy_id, json.dumps(cherrypy.request.headers))
 
-        latest_policy = pdp_client.PolicyRest.get_latest_policy(
-            (audit, policy_id, None, None)) or {}
+        if Config.is_pdp_api_default():
+            latest_policy = pdp_client.PolicyRest.get_latest_policy(
+                (audit, policy_id)) or {}
+        else:
+            latest_policy = pdp_client.PolicyRest.get_latest_policy(
+                (audit, policy_id, None, None)) or {}
 
         PolicyWeb.logger.info("res %s policy_id=%s latest_policy=%s",
                               req_info, policy_id, json.dumps(latest_policy))

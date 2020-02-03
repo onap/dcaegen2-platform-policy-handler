@@ -11,6 +11,10 @@
         "reconfigure" : {
             "interval" : 3600
         },
+        "dmaap_info": {
+            "dmaap_url": "http://message-router.onap:3904/POLICY_NOTOFOCATION/cg/cid"
+        },
+        "mode_of_operation": "active",
         "policy_engine" : {
             "url" : "https://unit-test-pdp-server:8081000",
             "path_decision" : "/decision/v1/",

@@ -37,7 +37,7 @@ def test_get_policy_latest():
     audit = Audit(job_name="test_get_policy_latest",
                   req_message="get /policy_latest/{}".format(policy_id or ""))
 
-    policy_latest = pdp_client.PolicyRest.get_latest_policy((audit, policy_id, None, None)) or {}
+    policy_latest = pdp_client.PolicyRest.get_latest_policy((audit, policy_id)) or {}
     audit.audit_done(result=json.dumps(policy_latest))
 
     _LOGGER.info("expected_policy: %s", json.dumps(expected_policy))

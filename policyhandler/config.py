@@ -1,5 +1,6 @@
 # ================================================================================
 # Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (C) 2020 Wipro Limited.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -128,10 +129,11 @@ class Settings(object):
 
 class Config(object):
     """main config of the application"""
+    FIELD_DMAAP = "dmaap_info"
     CONFIG_FILE_PATH = "etc/config.json"
     LOGGER_CONFIG_FILE_PATH = "etc/common_logger.config"
     SERVICE_NAME_POLICY_HANDLER = "policy_handler"
-
+    POLLING_INTERVAL = "polling_interval"
     FIELD_SYSTEM = "system"
     FIELD_CONSUL_URL = "consul_url"
     FIELD_WSERVICE_PORT = "wservice_port"

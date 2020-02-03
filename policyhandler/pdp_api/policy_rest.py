@@ -1,5 +1,6 @@
 # ================================================================================
 # Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (C) 2020 Wipro Limited.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,10 +30,12 @@ from ..config import Config, Settings
 from ..onap.audit import (REQUEST_X_ECOMP_REQUESTID, AuditHttpCode,
                           AuditResponseCode, Metrics)
 from ..utils import Utils
-from .pdp_consts import PDP_POLICIES
+from .pdp_consts import PDP_POLICIES, POLICY_VERSION, PDP_POLICY_VERSION
+from ..policy_consts import POLICY_ID, LATEST_POLICIES, ERRORED_POLICIES, POLICY_BODY
 from .policy_utils import PolicyUtils
 
 _LOGGER = Utils.get_logger(__file__)
+
 
 class PolicyRest(object):
     """using the http API to policy-engine"""
@@ -41,7 +44,7 @@ class PolicyRest(object):
     DEFAULT_TIMEOUT_IN_SECS = 60
 
     _lock = Lock()
-    _settings = Settings(Config.FIELD_POLICY_ENGINE, Config.POOL_CONNECTIONS)
+    _settings = Settings(Config.FIELD_POLICY_ENGINE)
 
     _target_entity = None
     _requests_session = None
@@ -59,15 +62,6 @@ class PolicyRest(object):
 
         if not PolicyRest._requests_session:
             PolicyRest._requests_session = requests.Session()
-
-        changed, pool_size = PolicyRest._settings.get_by_key(Config.POOL_CONNECTIONS, 20)
-        if changed:
-            PolicyRest._requests_session.mount(
-                'https://', requests.adapters.HTTPAdapter(pool_connections=pool_size,
-                                                          pool_maxsize=pool_size))
-            PolicyRest._requests_session.mount(
-                'http://', requests.adapters.HTTPAdapter(pool_connections=pool_size,
-                                                         pool_maxsize=pool_size))
 
         _, config = PolicyRest._settings.get_by_key(Config.FIELD_POLICY_ENGINE)
         if config:
@@ -149,7 +143,6 @@ class PolicyRest(object):
 
         _LOGGER.info(metrics.metrics_start(log_line))
 
-        res = None
         try:
             res = session.post(url, json=pdp_req, headers=headers, timeout=timeout_in_secs,
                                **custom_kwargs)
@@ -181,9 +174,106 @@ class PolicyRest(object):
         return policy_bodies
 
     @staticmethod
+    def get_latest_updated_policies(audit, updated_policies, removed_policies):
+        """safely try retrieving the latest policies for the list of policies updated and removed"""
+        metrics_total = Metrics(
+            aud_parent=audit,
+            targetEntity="{0} total get_latest_updated_policies".format(PolicyRest._target_entity),
+            targetServiceName=PolicyRest._url_pdp_decision)
+
+        policy_updated = {}
+        policy_removed = []
+        if not updated_policies and not removed_policies:
+            return None, None
+
+        for policy_id, policy in updated_policies.items():
+            policy_updated[policy_id] = policy.get(POLICY_BODY).get(PDP_POLICY_VERSION)
+
+
+        for policy_id, policy in removed_policies.items():
+            policy_removed.append(policy_id)
+
+
+        if not policy_updated and not policy_removed:
+            return None, None
+
+        str_metrics = "policies_updated[{0}]: {1} policies_removed[{2}]: {3}".format(
+            len(policy_updated), json.dumps(policy_updated),
+            len(policy_removed), json.dumps(policy_removed))
+
+        policies_to_find = {}
+        for policy_id, policy_version in policy_updated.items():
+            if not policy_id or not policy_version:
+                continue
+            else:
+                policy = policies_to_find.get(policy_id)
+                if not policy:
+                    policies_to_find[policy_id] = {
+                        POLICY_ID: policy_id,
+                        POLICY_VERSION: policy_version
+                    }
+                    continue
+        removed_policies = {}
+        for (policy_id) in policy_removed:
+            if not policy_id:
+                continue
+            policy = policies_to_find.get(policy_id)
+            if not policy:
+                removed_policies[policy_id] = True
+                continue
+
+        policies_list = [policy_id for (policy_id, policy_to_find) in policies_to_find.items()]
+        apns = (audit, policies_list)
+        apns_length = len(policies_list)
+        _LOGGER.debug("apns_length(%s) policies_to_find %s", apns_length,
+                      json.dumps(policies_to_find))
+
+        try:
+            if apns_length == 1:
+                policies = [PolicyRest.get_latest_policy((audit, policies_list[0]))]
+            else:
+                policies = PolicyRest._get_latest_policies(apns)
+
+            metrics_total.metrics("result({}) get_latest_updated_policies {}: {} {}"
+                                  .format(apns_length, str_metrics,
+                                          len(policies), json.dumps(policies)))
+
+            updated_policies = dict((policy[POLICY_ID], policy)
+                                    for policy in policies
+                                    if policy and policy.get(POLICY_ID))
+
+            errored_policies = dict((policy_id, policy_to_find)
+                                    for (policy_id, policy_to_find) in policies_to_find.items()
+                                    if policy_id not in updated_policies
+                                    and policy_id not in removed_policies)
+
+            _LOGGER.debug(
+                "result(%s) updated_policies %s, removed_policies %s, errored_policies %s",
+                apns_length, json.dumps(updated_policies), json.dumps(removed_policies),
+                json.dumps(errored_policies))
+
+            if errored_policies:
+                audit.set_http_status_code(AuditHttpCode.DATA_ERROR.value)
+                audit.error(
+                    "errored_policies in PDP: {}".format(json.dumps(errored_policies)),
+                    error_code=AuditResponseCode.DATA_ERROR)
+
+            return updated_policies, removed_policies
+
+        except Exception as ex:
+            error_msg = ("{0}: crash {1} {2} at {3}: {4}"
+                         .format(audit.request_id, type(ex).__name__, str(ex),
+                                 "get_latest_updated_policies", str_metrics))
+
+            _LOGGER.exception(error_msg)
+            audit.fatal(error_msg, error_code=AuditResponseCode.BUSINESS_PROCESS_ERROR)
+            audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+            return None, None
+
+    @staticmethod
     def get_latest_policy(aud_policy_id):
         """safely try retrieving the latest policy for the policy_id from the policy-engine"""
-        audit, policy_id, _, _ = aud_policy_id
+        audit, policy_id = aud_policy_id
         try:
             PolicyRest._lazy_init()
 
@@ -208,6 +298,89 @@ class PolicyRest(object):
         except Exception as ex:
             error_msg = ("{}: get_latest_policy({}) crash {}: {}"
                          .format(audit.request_id, policy_id, type(ex).__name__, str(ex)))
+
+            _LOGGER.exception(error_msg)
+            audit.fatal(error_msg, error_code=AuditResponseCode.BUSINESS_PROCESS_ERROR)
+            audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+            return None
+
+    @staticmethod
+    def __get_latest_policies(aud_policies):
+        """safely try retrieving the valid and errored policies for the policy_ids
+                             from the policy-engine for catch_up"""
+        audit, policies = aud_policies
+        pdp_req = PolicyUtils.gen_collective_req_to_pdp(policies)
+        try:
+            PolicyRest._lazy_init()
+            policy_bodies = PolicyRest._pdp_get_decision(audit, pdp_req)
+            valid_policies = {}
+            errored_policies = {}
+
+            for policy_id in policies:
+                if policy_id not in policy_bodies:
+                    errored_policies[policy_id] = {}
+
+            for policy_id, policy_body in policy_bodies.items():
+                latest_policy = (PolicyUtils.convert_to_policy(policy_body))
+                if not PolicyUtils.validate_policy(latest_policy):
+                    audit.set_http_status_code(AuditHttpCode.DATA_NOT_FOUND_OK.value)
+                    _LOGGER.error(audit.error(
+                        "received invalid policy from PDP: {}".format(json.dumps(latest_policy)),
+                        error_code=AuditResponseCode.DATA_ERROR))
+                valid_policies[policy_id] = latest_policy
+
+            return valid_policies, errored_policies
+
+        except Exception as ex:
+            error_msg = ("{}: get_latest_policy() crash {}: {}"
+                         .format(audit.request_id, type(ex).__name__, str(ex)))
+
+            _LOGGER.exception(error_msg)
+            audit.fatal(error_msg, error_code=AuditResponseCode.BUSINESS_PROCESS_ERROR)
+            audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
+            return None
+
+    @staticmethod
+    def _get_latest_policies(aud_policies):
+        """safely try retrieving the list of latest policies for the policy_ids from the policy-engine"""
+
+        valid_policies, _ = PolicyRest.__get_latest_policies(aud_policies)
+        return list(valid_policies.values())
+
+    @staticmethod
+    def get_latest_policies(audit, policy_ids):
+        """Get the latest policies from the policy-engine"""
+        result = {}
+
+        str_metrics = None
+        try:
+            PolicyRest._lazy_init()
+
+            target_entity = PolicyRest._target_entity
+            metrics_total = Metrics(aud_parent=audit, targetEntity=target_entity,
+                                    targetServiceName=PolicyRest._url_pdp_decision)
+            str_metrics = "get_latest_policy for catchup"
+            metrics_total.metrics_start(str_metrics)
+
+            latest_policies = [PolicyRest.__get_latest_policies((audit, policy_ids))]
+
+            metrics_total.metrics("total result {0}: {1} {2}".format(
+                str_metrics, len(latest_policies), json.dumps(latest_policies)))
+
+            # latest_policies == [(valid_policies, errored_policies), ...]
+            result[LATEST_POLICIES] = dict(
+                pair for (vps, _) in latest_policies if vps for pair in vps.items())
+
+            result[ERRORED_POLICIES] = dict(
+                pair for (_, eps) in latest_policies if eps for pair in eps.items())
+
+            _LOGGER.debug("got policies result: %s", json.dumps(result))
+            return result
+
+        except Exception as ex:
+            error_msg = ("{0}: crash {1} {2} at {3}: {4}"
+                         .format(audit.request_id, type(ex).__name__, str(ex),
+                                 "get_latest_policies", str_metrics))
 
             _LOGGER.exception(error_msg)
             audit.fatal(error_msg, error_code=AuditResponseCode.BUSINESS_PROCESS_ERROR)
