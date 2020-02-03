@@ -11,6 +11,16 @@
         "reconfigure" : {
             "interval" : 3600
         },
+        "dmaap_info": {
+            "dmaap_url": "http://10.143.125.136:3904/events/POLICY-NOTIFICATION/demo-cg/demo-cid?timeout=10000&limit=10",
+            "http_headers" : {
+                "Accept" : "application/json"
+            },
+            "target_entity" : "dmaap_listener",
+            "dmaap_timeout" : 15
+        },
+        "polling_interval" : 60,
+        "mode_of_operation": "active",
         "policy_engine" : {
             "url" : "https://unit-test-pdp-server:8081000",
             "path_decision" : "/decision/v1/",

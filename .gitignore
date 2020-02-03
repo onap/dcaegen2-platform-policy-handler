@@ -33,3 +33,11 @@ _ReSharper*/
 .vs/
 #Nuget packages folder
 packages/
+
+target/
+mvn-phase-lib.sh
+__pycache__/
+.coverage
+.idea/
+policyhandler.egg-info/
+coverage-reports/

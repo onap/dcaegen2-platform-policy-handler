@@ -160,8 +160,6 @@ class ServiceActivator(object):
                   or ServiceActivator._mode_of_operation
                   == ServiceActivator.MODE_OF_OPERATION_ACTIVE)
 
-        if active and Config.is_pdp_api_default():
-            active = False
 
         if audit:
             _LOGGER.info(audit.info("mode_of_operation = {} active = {}".format(

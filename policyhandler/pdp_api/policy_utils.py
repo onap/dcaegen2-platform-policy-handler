@@ -1,5 +1,6 @@
 # ================================================================================
 # Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (C) 2020 Wipro Limited.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +39,17 @@ class PolicyUtils(object):
             PDP_REQ_ONAP_INSTANCE: Audit.SERVICE_INSTANCE_UUID,
             "action": "configure",
             PDP_REQ_RESOURCE: {PDP_POLICY_ID: [policy_id]}
+        }
+
+    @staticmethod
+    def gen_collective_req_to_pdp(policies):
+        """request to get multiple policies from pdp by policy_id"""
+        return {
+            PDP_REQ_ONAP_NAME: "DCAE",
+            PDP_REQ_ONAP_COMPONENT: Audit.service_name,
+            PDP_REQ_ONAP_INSTANCE: Audit.SERVICE_INSTANCE_UUID,
+            "action": "configure",
+            PDP_REQ_RESOURCE: {PDP_POLICY_ID: policies}
         }
 
     @staticmethod
