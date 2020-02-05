@@ -1,0 +1,464 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d5408da2_8d329390",
+        "filename": "policyhandler/pdp_api/dmaap/subscriber.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "you need to audit and metrics on http communication to DMaaP",
+      "range": {
+        "startLine": 60,
+        "startChar": 12,
+        "endLine": 60,
+        "endChar": 81
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7ceff713_75143236",
+        "filename": "policyhandler/pdp_api/dmaap/subscriber.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "headers to DMaaP server should be in discoverable config\nplus you need the timeout here as you had in prev submission\nplus you need to handle TLS certs",
+      "range": {
+        "startLine": 60,
+        "startChar": 57,
+        "endLine": 60,
+        "endChar": 80
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dd469c78_d319cedd",
+        "filename": "policyhandler/pdp_api/dmaap/subscriber.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "why to re-raise the same exception ?",
+      "range": {
+        "startLine": 76,
+        "startChar": 12,
+        "endLine": 76,
+        "endChar": 20
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d47a0da1_88f2b4c0",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "expresss ?",
+      "range": {
+        "startLine": 13,
+        "startChar": 55,
+        "endLine": 13,
+        "endChar": 63
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c95e160f_85bf182e",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "is Config.POLLING_INTERVAL a part of configuration ?\n\nI do not see it documented anywhere",
+      "range": {
+        "startLine": 60,
+        "startChar": 34,
+        "endLine": 60,
+        "endChar": 57
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c4c868b4_6f765bc8",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "are you trying to find Config.POLLING_INTERVAL in Config.POLLING_INTERVAL in config ?",
+      "range": {
+        "startLine": 82,
+        "startChar": 11,
+        "endLine": 82,
+        "endChar": 89
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e14f765c_37aa65a0",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "should this be under the mutex ?",
+      "range": {
+        "startLine": 81,
+        "startChar": 8,
+        "endLine": 85,
+        "endChar": 23
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7b36f4f8_3ac0d436",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "why do you want to sleep for 60 seconds between the calls to DMaaP ?\n\ntime.sleep(self.polling_interval)",
+      "range": {
+        "startLine": 120,
+        "startChar": 12,
+        "endLine": 120,
+        "endChar": 45
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "235ddbe3_16472ec8",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "your _stop_notifications is almost the same as shutdown - why ?",
+      "range": {
+        "startLine": 129,
+        "startChar": 4,
+        "endLine": 134,
+        "endChar": 72
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a3ee7789_8c95ad10",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "ADDED - is very non-specific name for the constant",
+      "range": {
+        "startLine": 179,
+        "startChar": 46,
+        "endLine": 179,
+        "endChar": 51
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "95ab45c1_6ba926d6",
+        "filename": "policyhandler/pdp_api/policy_listener.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "loosing data !\nwhy ignoring all the messages from DMaaP except the last one ?\n            for message in messages:\n                message \u003d json.loads(message)\n                if not message or not isinstance(message, dict):\n                    _LOGGER.warning(\"unexpected message from PDP: %s\", json.dumps(message))\n                    return\n                policies_updated \u003d [\n                    {PDP_POLICY_ID: policy.get(PDP_POLICY_ID),\n                     PDP_POLICY_VERSION: policy.get(PDP_POLICY_VERSION)}\n                    for policy in message.get(ADDED, [])\n                ]\n                policies_removed \u003d [\n                    {PDP_POLICY_ID: policy.get(PDP_POLICY_ID),\n                     PDP_POLICY_VERSION: policy.get(PDP_POLICY_VERSION)}\n                    for policy in message.get(REMOVED, [])\n                ]",
+      "range": {
+        "startLine": 170,
+        "startChar": 12,
+        "endLine": 186,
+        "endChar": 17
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0fda109d_bcb13940",
+        "filename": "policyhandler/pdp_api/policy_rest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "continue is not needed at the end of the for loop",
+      "range": {
+        "startLine": 215,
+        "startChar": 20,
+        "endLine": 215,
+        "endChar": 28
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dbb076c3_3e846c28",
+        "filename": "policyhandler/pdp_api/policy_rest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "what if the remove item came after add item in the policy-update messages ?\n        removed_policies \u003d {}\n        for (policy_id) in policy_removed:\n            if not policy_id:\n                continue\n            policy \u003d policies_to_find.get(policy_id)\n            if not policy:\n                removed_policies[policy_id] \u003d True\n\nis there a reason why you assume that what you get in policy-update is actually found or actually removed in PDP ?\n\nPDP does not guarantee that the policy-update message will come after PDP servers got synced\nit is also possible that with the time delay of communication and busy time of policy-handler, PDP got the policy changed",
+      "range": {
+        "startLine": 216,
+        "startChar": 8,
+        "endLine": 223,
+        "endChar": 24
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2a8ed2c7_98747f52",
+        "filename": "policyhandler/pdp_api/policy_rest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "def __get_latest_policies(aud_policies) violates the naming convention of Python - the preceding __ are only used for the Python internal methods like __init__()",
+      "range": {
+        "startLine": 308,
+        "startChar": 4,
+        "endLine": 308,
+        "endChar": 43
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "75c75b2e_55bbb3a2",
+        "filename": "policyhandler/pdp_api/policy_updates.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "what if PDP sends 3 messages in a row with the same policy_id added, removed, and added again ?",
+      "range": {
+        "startLine": 64,
+        "startChar": 8,
+        "endLine": 79,
+        "endChar": 54
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ec47ff77_cc4ac1d2",
+        "filename": "policyhandler/web_server.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "this code\n        if Config.is_pdp_api_default():\n            latest_policy \u003d pdp_client.PolicyRest.get_latest_policy(\n                (audit, policy_id)) or {}\n        else:\n            latest_policy \u003d pdp_client.PolicyRest.get_latest_policy(\n                (audit, policy_id, None, None)) or {}\n\ndefeats the purpose of not having ifs everywhere when using the new PDP API versus the old PDP API",
+      "range": {
+        "startLine": 103,
+        "startChar": 0,
+        "endLine": 108,
+        "endChar": 53
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3c402e12_fe50b2a3",
+        "filename": "pom.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "where is the related change to the version in setup.py ?",
+      "range": {
+        "startLine": 32,
+        "startChar": 2,
+        "endLine": 32,
+        "endChar": 35
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d617d8a0_a4fc652a",
+        "filename": "tests/mock_config.json",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "where is the polling_interval ?",
+      "range": {
+        "startLine": 14,
+        "startChar": 8,
+        "endLine": 17,
+        "endChar": 38
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a305051a_0b0eeb03",
+        "filename": "tests/pdp_api_v1/__init__.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "all files that you placed in tests/pdp_api_v1 folder should be in tests/main folder where the new PDP API is tested - there is no v1 anywhere",
+      "range": {
+        "startLine": 17,
+        "startChar": 16,
+        "endLine": 17,
+        "endChar": 27
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "da1db141_3382214d",
+        "filename": "tests/pdp_api_v1/notification.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1949
+      },
+      "writtenOn": "2020-02-05T21:23:42Z",
+      "side": 1,
+      "message": "what ios the point to have a stateless class with non static methods ?",
+      "range": {
+        "startLine": 19,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 23
+      },
+      "revId": "0749a22d1b71ebcee592de5b73617a823f17346a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
