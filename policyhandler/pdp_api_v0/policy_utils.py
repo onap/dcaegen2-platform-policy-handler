@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class PolicyUtils(object):
             return None
         policy_name = policy_body.get(POLICY_NAME)
         policy_version = policy_body.get(POLICY_VERSION)
-        if not policy_name or not policy_version:
+        if not policy_name or policy_version is None:
             return None
         policy_id = PolicyUtils.extract_policy_id(policy_name)
         if not policy_id:
@@ -81,7 +81,7 @@ class PolicyUtils(object):
         for policy_body in policy_bodies:
             policy_name = policy_body.get(POLICY_NAME)
             policy_version = policy_body.get(POLICY_VERSION)
-            if not policy_name or not policy_version or not policy_version.isdigit():
+            if not policy_name or policy_version is None or not policy_version.isdigit():
                 continue
             if expected_versions and policy_version not in expected_versions:
                 continue
@@ -108,7 +108,7 @@ class PolicyUtils(object):
                 continue
             policy_id = policy.get(POLICY_ID)
             policy_version = policy.get(POLICY_BODY, {}).get(POLICY_VERSION)
-            if not policy_id or not policy_version or not policy_version.isdigit():
+            if not policy_id or policy_version is None or not policy_version.isdigit():
                 continue
             if (policy_id not in policies
                     or int(policy_version) > int(policies[policy_id][POLICY_BODY][POLICY_VERSION])):

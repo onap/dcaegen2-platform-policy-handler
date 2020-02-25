@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,14 +65,16 @@ class MockSettings(object):
     deploy_handler_instance_uuid = str(uuid.uuid4())
 
     @staticmethod
-    def init():
+    def init_mock_config():
         """init configs"""
         if MockSettings._loaded:
             _LOGGER.info("testing policy_handler with config: %s", Config.discovered_config)
             return
         MockSettings._loaded = True
 
-        Config.init_config("tests/etc_config.json")
+        _LOGGER.info("init MockSettings")
+
+        MockSettings.reinit_mock_config()
 
         with open("tests/mock_config.json", 'r') as config_json:
             MockSettings.mock_config = json.load(config_json)
@@ -118,3 +120,8 @@ class MockSettings(object):
 
         importlib.reload(importlib.import_module("policyhandler.pdp_client"))
         _LOGGER.info("done setup_pdp_api %s", Config._pdp_api_version)
+
+    @staticmethod
+    def reinit_mock_config():
+        """reload the init configs"""
+        Config.init_config("tests/etc_config.json")

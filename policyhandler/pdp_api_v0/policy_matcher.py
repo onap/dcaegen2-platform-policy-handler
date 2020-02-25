@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,24 +36,6 @@ class PolicyMatcher(object):
     """policy-matcher - static class"""
     PENDING_UPDATE = "pending_update"
     PDP_API_FOLDER = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
-
-    @staticmethod
-    def get_deployed_policies(audit):
-        """get the deployed policies and policy-filters"""
-        deployed_policies, deployed_policy_filters = DeployHandler.get_deployed_policies(audit)
-
-        if audit.is_not_found():
-            warning_txt = "got no deployed policies or policy-filters"
-            _LOGGER.warning(warning_txt)
-            return {"warning": warning_txt}, None, None
-
-        if not audit.is_success() or (not deployed_policies and not deployed_policy_filters):
-            error_txt = "failed to retrieve policies from deployment-handler"
-            _LOGGER.error(error_txt)
-            return {"error": error_txt}, None, None
-
-        return None, deployed_policies, deployed_policy_filters
-
 
     @staticmethod
     def build_catch_up_message(audit, deployed_policies, deployed_policy_filters):
@@ -135,7 +117,7 @@ class PolicyMatcher(object):
     @staticmethod
     def match_to_deployed_policies(audit, policies_updated, policies_removed):
         """match the policies_updated, policies_removed versus deployed policies"""
-        deployed_policies, deployed_policy_filters = DeployHandler.get_deployed_policies(audit)
+        _, deployed_policies, deployed_policy_filters = DeployHandler.get_deployed_policies(audit)
         if not audit.is_success():
             return {}, {}, {}
 

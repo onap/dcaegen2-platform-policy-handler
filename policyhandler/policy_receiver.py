@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class PolicyReceiver(object):
     """
     policy-receiver - static singleton wrapper around two threads
         policy_updater - master thread for all scheduled actions
-        policy_listener - listens to policy-engine through web-socket
+        policy_listener - listens to policy-engine through DMaaP MR or web-socket
     """
     _policy_updater = None
     _policy_listener = None
@@ -47,9 +47,9 @@ class PolicyReceiver(object):
     def _close_listener(audit):
         """stop the notification-handler"""
         if PolicyReceiver._policy_listener:
-            policy_receiver = PolicyReceiver._policy_listener
+            policy_listener = PolicyReceiver._policy_listener
             PolicyReceiver._policy_listener = None
-            policy_receiver.shutdown(audit)
+            policy_listener.shutdown(audit)
 
     @staticmethod
     def shutdown(audit):

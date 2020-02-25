@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,14 +30,19 @@ class PolicyUtils(object):
     """policy-client utils"""
 
     @staticmethod
-    def gen_req_to_pdp(policy_id):
-        """request to get a single policy from pdp by policy_id"""
+    def gen_req_to_pdp(policy_ids):
+        """request to get policies from pdp by policy_id list or a single value"""
+        if not policy_ids:
+            policy_ids = []
+        elif not isinstance(policy_ids, list):
+            policy_ids = [policy_ids]
+
         return {
             PDP_REQ_ONAP_NAME: "DCAE",
             PDP_REQ_ONAP_COMPONENT: Audit.service_name,
             PDP_REQ_ONAP_INSTANCE: Audit.SERVICE_INSTANCE_UUID,
             "action": "configure",
-            PDP_REQ_RESOURCE: {PDP_POLICY_ID: [policy_id]}
+            PDP_REQ_RESOURCE: {PDP_POLICY_ID: policy_ids}
         }
 
     @staticmethod
@@ -52,7 +57,7 @@ class PolicyUtils(object):
             "version": "1.0.0",
             "metadata": {
                 "policy-id": "onap.scaleout.tca",
-                "policy-version": 1,
+                "policy-version": "1.2.3",
                 "description": "The scaleout policy for vDNS"
             },
             "properties": {
@@ -73,13 +78,13 @@ class PolicyUtils(object):
         {
             "policy_id": "onap.scaleout.tca",
             "policy_body": {
-                "policyName": "onap.scaleout.tca.1.xml",
-                "policyVersion": 1,
+                "policyName": "onap.scaleout.tca.1-2-3.xml",
+                "policyVersion": "1.2.3",
                 "type": "onap.policies.monitoring.cdap.tca.hi.lo.app",
                 "version": "1.0.0",
                 "metadata": {
                     "policy-id": "onap.scaleout.tca",
-                    "policy-version": 1,
+                    "policy-version": "1.2.3",
                     "description": "The scaleout policy for vDNS"
                 },
                 "config": {
@@ -97,19 +102,20 @@ class PolicyUtils(object):
             }
         }
         """
-        if not policy_body or not policy_body.get(PDP_PROPERTIES):
+        if not policy_body:
             return None
 
         pdp_metadata = policy_body.get(PDP_METADATA, {})
         policy_id = pdp_metadata.get(PDP_POLICY_ID)
         policy_version = pdp_metadata.get(PDP_POLICY_VERSION)
-        if not policy_id or not policy_version:
+        if not policy_id or policy_version is None:
             return None
 
-        policy_body[POLICY_NAME] = "{}.{}.xml".format(policy_id, policy_version)
+        policy_body[POLICY_NAME] = "{}.{}.xml".format(policy_id, policy_version.replace(".", "-"))
         policy_body[POLICY_VERSION] = str(policy_version)
-        policy_body[POLICY_CONFIG] = policy_body[PDP_PROPERTIES]
-        del policy_body[PDP_PROPERTIES]
+        if PDP_PROPERTIES in policy_body:
+            policy_body[POLICY_CONFIG] = policy_body[PDP_PROPERTIES]
+            del policy_body[PDP_PROPERTIES]
 
         return {POLICY_ID:policy_id, POLICY_BODY:policy_body}
 

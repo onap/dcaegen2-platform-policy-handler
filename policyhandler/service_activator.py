@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@ import requests
 
 from .config import Config, Settings
 from .discovery import DiscoveryClient
-from .onap.audit import (REQUEST_X_ECOMP_REQUESTID, Audit, AuditHttpCode,
-                         Metrics)
+from .onap.audit import Audit, AuditHttpCode, Metrics
 from .policy_consts import TARGET_ENTITY
 from .utils import Utils
 
@@ -153,15 +152,10 @@ class ServiceActivator(object):
         mode_of_operation - whether the service is
             active == True or passive == False
             based on the current value of the mode_of_operation
-
-        temporary for R4 Dublin - passive for new PDP API
         """
         active = (ServiceActivator._mode_of_operation is None
                   or ServiceActivator._mode_of_operation
                   == ServiceActivator.MODE_OF_OPERATION_ACTIVE)
-
-        if active and Config.is_pdp_api_default():
-            active = False
 
         if audit:
             _LOGGER.info(audit.info("mode_of_operation = {} active = {}".format(
@@ -188,7 +182,7 @@ class ServiceActivator(object):
             metrics = Metrics(aud_parent=audit,
                               targetEntity="{} determine_mode_of_operation".format(target_entity),
                               targetServiceName=url)
-            headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
+            headers = metrics.put_request_id_into_headers()
 
             log_action = "post to {} at {}".format(target_entity, url)
             log_data = "headers={}, json_body={}, timeout_in_secs={}, custom_kwargs({})".format(

@@ -143,9 +143,9 @@ make sure that both of the following settings are set properly
 }
 ```
 
-#### point the discovarable config of the policy-handler to point to the **new PDP API**
+#### the discovarable config of the policy-handler to point to the **new PDP API**
 
-In short: keep the consul-kv record for he policy-handler as before R4 Dublin.
+In short: keep the consul-kv record for the policy-handler as before R4 Dublin.
 
 Here is a sample config from consul-kv.  Please replace the {{ ... }} with real setup values
 
@@ -200,6 +200,19 @@ Here is a sample config from consul-kv.  Please replace the {{ ... }} with real 
       "target_entity": "policy_engine",
       "tls_ca_mode": "cert_directory",
       "timeout_in_secs": 60
+    },
+    "dmaap_mr" : {
+        "url" : "http://{{ YOUR_DMAAP_MR_URL }}/events/{{ POLICY_UPDATE_TOPICNAME }}/{{ POLICY_UPDATE_CONSUMEGROUP }}/{{ POLICY_UPDATE_CONSUMERID }}",
+        "query": {
+          "timeout": 15000
+        },
+        "headers" : {
+            "Content-Type" : "application/json",
+            "Authorization": "Basic {{ YOUR_DMAAP_MR_SUBSCRIBER_AUTHORIZATION }}"
+        },
+        "target_entity" : "dmaap_mr",
+        "tls_ca_mode" : "cert_directory",
+        "timeout_in_secs": 60
     },
     "deploy_handler": {
       "target_entity": "deployment_handler",
@@ -272,9 +285,16 @@ Here is a sample config from consul-kv.  Please replace the {{ ... }} with real 
         Accept : "application/json"
         "Content-Type" : "application/json"
         ClientAuth : "Basic {{ YOUR_POLICY_ENGINE_CLIENT_AUTH }}"
+
+        # to override the Authorization value,
+        #    set the environment vars $PDP_USER and $PDP_PWD in policy-handler
         Authorization : "Basic {{ YOUR_POLICY_ENGINE_AUTHORIZATION }}"
+
         Environment : "{{ YOUR_POLICY_ENGINE_ENVIRONMENT }}"
+
+      # target_entity name that is used for logging
       target_entity : "policy_engine"
+
       # optional tls_ca_mode specifies where to find the cacert.pem for tls
       #   can be one of these:
       #       "cert_directory" - use the cacert.pem stored locally in cert_directory.
@@ -287,6 +307,43 @@ Here is a sample config from consul-kv.  Please replace the {{ ... }} with real 
       tls_ca_mode : "cert_directory"
       # optional timeout_in_secs specifies the timeout for the http requests
       timeout_in_secs: 60
+
+
+    # DMaaP MR subscriber config
+    # These are the url of and the auth for the external system, namely the policy-engine (PDP).
+    # We obtain that info manually from PDP and DMaaP folks at the moment.
+    dmaap_mr :
+      url: "http://{{ YOUR_DMAAP_MR_URL }}/events/{{ POLICY_UPDATE_TOPICNAME }}/{{ POLICY_UPDATE_CONSUMEGROUP }}/{{ POLICY_UPDATE_CONSUMERID }}"
+
+      query:
+        # The number of milliseconds for DMaaP MR to wait for messages if none are immediately available.
+        # This should normally be used, and set at 15000 or higher.
+        # This is referred to as long-polling timeout
+        # ?timeout=15000 passed to DMaaP MR in the query
+        timeout: 15000
+
+      headers:
+        "Content-Type": "application/json"
+        # provide Authorization for the subscriber if using https and user-password authentication
+        # to override the Authorization value,
+        #    set the environment vars $DMAAP_MR_USER and $DMAAP_MR_PWD in policy-handler
+        Authorization: "Basic {{ YOUR_DMAAP_MR_SUBSCRIBER_AUTHORIZATION }}"
+
+      # target_entity name that is used for logging
+      target_entity: "dmaap_mr"
+      # optional tls_ca_mode specifies where to find the cacert.pem for tls
+      #   can be one of these:
+      #       "cert_directory" - use the cacert.pem stored locally in cert_directory.
+      #                          this is the default if cacert.pem file is found
+      #
+      #       "os_ca_bundle"     - use the public ca_bundle provided by linux system.
+      #                          this is the default if cacert.pem file not found
+      #
+      #       "do_not_verify"  - special hack to turn off the verification by cacert and hostname
+      tls_ca_mode: "cert_directory"
+      # optional timeout_in_secs specifies the timeout for the http requests
+      timeout_in_secs: 60
+
 
     # deploy_handler config
     #    changed from string "deployment_handler" in 2.3.1 to structure in 2.4.0

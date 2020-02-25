@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class PolicyUpdates(object):
         self._policies_removed = {}
 
     def reset(self):
-        """resets the state"""
+        """resets the state - removes the pending policy-updates"""
         self.__init__()
 
     def pop_policy_updates(self):
@@ -62,25 +62,12 @@ class PolicyUpdates(object):
 
     def push_policy_updates(self, policies_updated, policies_removed):
         """consolidate the new policies_updated, policies_removed to existing ones"""
-        for policy_body in policies_updated:
-            policy_name = policy_body.get(POLICY_NAME)
-            policy = PolicyUtils.convert_to_policy(policy_body)
-            if not policy:
-                continue
-            policy_id = policy.get(POLICY_ID)
-
-            self._policies_updated[policy_id] = policy
-
-            rm_policy_names = self._policies_removed.get(policy_id, {}).get(POLICY_NAMES)
-            if rm_policy_names and policy_name in rm_policy_names:
-                del rm_policy_names[policy_name]
-
         for policy_body in policies_removed:
-            policy_name = policy_body.get(POLICY_NAME)
             policy = PolicyUtils.convert_to_policy(policy_body)
             if not policy:
                 continue
             policy_id = policy.get(POLICY_ID)
+            policy_name = policy_body.get(POLICY_NAME)
 
             if policy_id in self._policies_removed:
                 policy = self._policies_removed[policy_id]
@@ -90,16 +77,27 @@ class PolicyUpdates(object):
             policy[POLICY_NAMES][policy_name] = True
             self._policies_removed[policy_id] = policy
 
+        for policy_body in policies_updated:
+            policy = PolicyUtils.convert_to_policy(policy_body)
+            if not policy:
+                continue
+            policy_id = policy.get(POLICY_ID)
+            policy_name = policy_body.get(POLICY_NAME)
+
+            self._policies_updated[policy_id] = policy
+
+            rm_policy_names = self._policies_removed.get(policy_id, {}).get(POLICY_NAMES)
+            if rm_policy_names and policy_name in rm_policy_names:
+                del rm_policy_names[policy_name]
+
         req_message = ("policy-update notification - updated[{0}], removed[{1}]"
                        .format(len(self._policies_updated),
                                len(self._policies_removed)))
 
         if not self._audit:
-            self._audit = Audit(job_name="policy_update",
-                                req_message=req_message,
+            self._audit = Audit(job_name="policy_update", req_message=req_message,
                                 retry_get_config=True)
-        else:
-            self._audit.req_message = req_message
+        self._audit.req_message = req_message
 
         _LOGGER.info(
             "pending(%s) for %s policies_updated %s policies_removed %s",

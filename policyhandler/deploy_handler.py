@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ import requests
 
 from .config import Config, Settings
 from .discovery import DiscoveryClient
-from .onap.audit import (REQUEST_X_ECOMP_REQUESTID, AuditHttpCode,
-                         AuditResponseCode, Metrics)
+from .onap.audit import AuditHttpCode, AuditResponseCode, Metrics
 from .policy_consts import (CATCH_UP, LATEST_POLICIES, POLICIES,
                             POLICY_FILTER_MATCHES, POLICY_FILTERS,
                             REMOVED_POLICIES, TARGET_ENTITY)
@@ -172,10 +171,10 @@ class DeployHandler(object):
         changed, pool_size = DeployHandler._settings.get_by_key(Config.POOL_CONNECTIONS, 10)
         if changed:
             DeployHandler._requests_session.mount(
-                'https://', requests.adapters.HTTPAdapter(pool_connections=pool_size,
+                'https://', requests.adapters.HTTPAdapter(pool_connections=1,
                                                           pool_maxsize=pool_size))
             DeployHandler._requests_session.mount(
-                'http://', requests.adapters.HTTPAdapter(pool_connections=pool_size,
+                'http://', requests.adapters.HTTPAdapter(pool_connections=1,
                                                          pool_maxsize=pool_size))
 
         _, config_dh = DeployHandler._settings.get_by_key(Config.DEPLOY_HANDLER)
@@ -301,7 +300,8 @@ class DeployHandler(object):
 
         metrics = Metrics(aud_parent=audit, targetEntity="{} policy_update".format(target_entity),
                           targetServiceName=url)
-        headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
+
+        headers = metrics.put_request_id_into_headers()
 
         log_action = "put to {} at {}".format(target_entity, url)
         log_data = "msg={} headers={}, params={}, timeout_in_secs={}, custom_kwargs({})".format(
@@ -371,7 +371,7 @@ class DeployHandler(object):
         metrics = Metrics(aud_parent=audit,
                           targetEntity="{} get_deployed_policies".format(target_entity),
                           targetServiceName=url)
-        headers = {REQUEST_X_ECOMP_REQUESTID : metrics.request_id}
+        headers = metrics.put_request_id_into_headers()
 
         log_action = "get from {} at {}".format(target_entity, url)
         log_data = "headers={}, params={}, timeout_in_secs={}, custom_kwargs({})".format(
@@ -387,7 +387,7 @@ class DeployHandler(object):
             metrics.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             audit.set_http_status_code(AuditHttpCode.SERVICE_UNAVAILABLE_ERROR.value)
             metrics.metrics(error_msg)
-            return None, None
+            return {"error": "failed to retrieve policies from deployment-handler"}, None, None
 
         res = None
         try:
@@ -403,7 +403,7 @@ class DeployHandler(object):
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)
-            return None, None
+            return {"error": "failed to retrieve policies from deployment-handler"}, None, None
 
         metrics.set_http_status_code(res.status_code)
         audit.set_http_status_code(res.status_code)
@@ -414,7 +414,7 @@ class DeployHandler(object):
 
         if res.status_code != requests.codes.ok:
             _LOGGER.error(log_line)
-            return None, None
+            return {"error": "failed to retrieve policies from deployment-handler"}, None, None
 
         result = res.json() or {}
         DeployHandler._server_instance_changed(result, metrics)
@@ -426,10 +426,10 @@ class DeployHandler(object):
             _LOGGER.warning(audit.warn(
                 "found no deployed policies or policy-filters: {}".format(log_line),
                 error_code=AuditResponseCode.DATA_ERROR))
-            return policies, policy_filters
+            return {"warning": "got no deployed policies"}, None, None
 
         _LOGGER.info(log_line)
-        return policies, policy_filters
+        return None, policies, policy_filters
 
     @staticmethod
     def _server_instance_changed(result, metrics):

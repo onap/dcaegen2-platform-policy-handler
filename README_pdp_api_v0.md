@@ -182,6 +182,8 @@ Here is a sample config from consul-kv.  Please replace the {{ ... }} with real 
         Accept : "application/json"
         "Content-Type" : "application/json"
         ClientAuth : "Basic {{ YOUR_POLICY_ENGINE_CLIENT_AUTH }}"
+        # to override the Authorization value,
+        #    set the environment vars $PDP_USER and $PDP_PWD in policy-handler
         Authorization : "Basic {{ YOUR_POLICY_ENGINE_AUTHORIZATION }}"
         Environment : "{{ YOUR_POLICY_ENGINE_ENVIRONMENT }}"
       target_entity : "policy_engine"

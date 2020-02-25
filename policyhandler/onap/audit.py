@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 """
 
 import copy
+import hashlib
 import json
 import os
 import re
@@ -41,6 +42,7 @@ from .health import Health
 from .process_info import ProcessInfo
 
 REQUEST_X_ECOMP_REQUESTID = "X-ECOMP-RequestID"
+REQUEST_X_ONAP_REQUESTID = "X-ONAP-RequestID"
 REQUEST_REMOTE_ADDR = "Remote-Addr"
 REQUEST_HOST = "Host"
 HOSTNAME = "HOSTNAME"
@@ -118,7 +120,7 @@ class AuditResponseCode(Enum):
 class _Audit(object):
     """put the audit object on stack per each initiating request in the system
 
-    :request_id: is the X-ECOMP-RequestID for tracing
+    :request_id: is the X-ONAP-RequestID or X-ECOMP-RequestID for tracing
 
     :req_message: is the request message string for logging
 
@@ -172,7 +174,7 @@ class _Audit(object):
         """create audit object per each request in the system
 
         :job_name: is the name of the audit job for health stats
-        :request_id: is the X-ECOMP-RequestID for tracing
+        :request_id: is the X-ONAP-RequestID or X-ECOMP-RequestID for tracing
         :req_message: is the request message string for logging
         :kwargs: - put any request related params into kwargs
         """
@@ -184,6 +186,12 @@ class _Audit(object):
         self.max_http_status_code = 0
         self._lock = threading.Lock()
 
+    def put_request_id_into_headers(self, headers=None):
+        """when sending message out - put the request_id into headers"""
+        headers = headers or {}
+        headers[REQUEST_X_ONAP_REQUESTID]  = self.request_id
+        headers[REQUEST_X_ECOMP_REQUESTID] = self.request_id
+        return headers
 
     @staticmethod
     def register_item_health(health_name, health_getter=None):
@@ -241,6 +249,8 @@ class _Audit(object):
 
     def set_http_status_code(self, http_status_code):
         """accumulate the highest(worst) http status code"""
+        if http_status_code is None:
+            http_status_code = AuditHttpCode.SERVER_INTERNAL_ERROR.value
         with self._lock:
             if self.max_http_status_code < AuditHttpCode.SERVER_INTERNAL_ERROR.value:
                 self.max_http_status_code = max(http_status_code, self.max_http_status_code)
@@ -346,11 +356,13 @@ class _Audit(object):
         if not isinstance(obj, dict):
             return obj
 
-        for key in obj:
+        for key, val in obj.items():
             if key.lower() in [HEADER_CLIENTAUTH, HEADER_AUTHORIZATION]:
-                obj[key] = "*"
-            elif isinstance(obj[key], dict):
-                obj[key] = _Audit.hide_secrets(obj[key])
+                hval = hashlib.sha256()
+                hval.update(val.encode())
+                obj[key] = "***({})***".format(hval.hexdigest())
+            elif isinstance(val, dict):
+                obj[key] = _Audit.hide_secrets(val)
 
         return obj
 
@@ -375,7 +387,7 @@ class Audit(_Audit):
         """create audit object per each request in the system
 
         :job_name: is the name of the audit job for health stats
-        :request_id: is the X-ECOMP-RequestID for tracing
+        :request_id: is the X-ONAP-RequestID or X-ECOMP-RequestID for tracing
         :req_message: is the request message string for logging
         :aud_parent: is the parent Audit - used for sub-query metrics to other systems
         :kwargs: - put any request related params into kwargs
@@ -388,7 +400,9 @@ class Audit(_Audit):
         headers = self.kwargs.get("headers", {})
         if headers:
             if not self.request_id:
-                self.request_id = headers.get(REQUEST_X_ECOMP_REQUESTID)
+                self.request_id = headers.get(REQUEST_X_ONAP_REQUESTID,
+                                              headers.get(REQUEST_X_ECOMP_REQUESTID))
+
             self.kwargs.setdefault(AUDIT_IPADDRESS, headers.get(REQUEST_REMOTE_ADDR))
             self.kwargs.setdefault(AUDIT_SERVER, headers.get(REQUEST_HOST))
 

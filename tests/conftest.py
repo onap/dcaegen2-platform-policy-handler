@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,30 +15,27 @@
 # ============LICENSE_END=========================================================
 #
 """
-startdard pytest file that contains the shared fixtures
+standard pytest file that contains the shared fixtures
 https://docs.pytest.org/en/latest/fixture.html
 """
 import base64
 import copy
 import json
+import os
 
 import pytest
 
 from policyhandler.config import Config
-from policyhandler.deploy_handler import DeployHandler
 from policyhandler.discovery import DiscoveryClient
-from policyhandler.onap.audit import Audit
 from policyhandler.policy_consts import CATCH_UP, TARGET_ENTITY
 from policyhandler.utils import Utils
 
-from .mock_deploy_handler import MockDeploymentHandler
 from .mock_settings import MockSettings
 from .mock_tracker import MockHttpResponse, Tracker
 
 _LOGGER = Utils.get_logger(__file__)
 
-_LOGGER.info("init MockSettings")
-MockSettings.init()
+MockSettings.init_mock_config()
 
 @pytest.fixture(scope="session", autouse=True)
 def _auto_setup__global():
@@ -50,9 +47,19 @@ def _auto_setup__global():
     _LOGGER.info("teardown _auto_setup__global")
 
 
+@pytest.fixture(autouse=True, scope="module")
+def _auto_module_cycle(request):
+    """log all the test starts and ends"""
+    module_name = request.module.__name__.replace(".", "/")
+
+    _LOGGER.info("start_module: %s %s", module_name, "->"*25)
+    yield _auto_module_cycle
+    _LOGGER.info("end_module: %s %s", module_name, "<-"*25)
+
 @pytest.fixture(autouse=True)
 def _auto_test_cycle(request):
     """log all the test starts and ends"""
+    _LOGGER.info("-"*75)
     module_name = request.module.__name__.replace(".", "/")
     if request.cls:
         test_name = "%s.py::%s::%s" % (module_name, request.cls.__name__,
@@ -61,7 +68,6 @@ def _auto_test_cycle(request):
         test_name = "%s.py::%s" % (module_name, request.function.__name__)
 
     Tracker.reset(test_name)
-    _LOGGER.info("-"*75)
     _LOGGER.info(">>>>>>> start [%s]: %s", len(Tracker.test_names), test_name)
     yield _auto_test_cycle
     _LOGGER.info(">>>>>>> tracked messages: %s", Tracker.to_string())
@@ -84,35 +90,6 @@ def fix_cherrypy_engine_exit(monkeypatch):
     _LOGGER.info("teardown fix_cherrypy_engine_exit")
 
 
-@pytest.fixture()
-def fix_deploy_handler(monkeypatch):
-    """monkeyed requests to deployment-handler"""
-    def monkeyed_deploy_handler_put(uri, **kwargs):
-        """monkeypatch for policy-update request.put to deploy_handler"""
-        return MockHttpResponse("put", uri, MockDeploymentHandler.default_response(),
-                                **kwargs)
-
-    def monkeyed_deploy_handler_get(uri, **kwargs):
-        """monkeypatch policy-update request.get to deploy_handler"""
-        return MockHttpResponse("get", uri, MockDeploymentHandler.get_deployed_policies(),
-                                **kwargs)
-
-    _LOGGER.info("setup fix_deploy_handler")
-    audit = None
-    if DeployHandler._lazy_inited is False:
-        audit = Audit(req_message="fix_deploy_handler")
-        DeployHandler._lazy_init(audit)
-
-    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.put',
-                        monkeyed_deploy_handler_put)
-    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.get',
-                        monkeyed_deploy_handler_get)
-
-    yield fix_deploy_handler
-    if audit:
-        audit.audit_done("teardown")
-    _LOGGER.info("teardown fix_deploy_handler")
-
 
 @pytest.fixture()
 def fix_discovery(monkeypatch):
@@ -134,7 +111,7 @@ def fix_discovery(monkeypatch):
                 Config.consul_url, Config.system_name):
             res_json = [{"Value": base64.b64encode(
                 json.dumps(MockSettings.mock_config).encode()).decode("utf-8")}]
-        return MockHttpResponse("get", uri, res_json)
+        return MockHttpResponse("get", uri, res_json=res_json)
 
     _LOGGER.info("setup fix_discovery")
     monkeypatch.setattr('policyhandler.discovery.requests.get', monkeyed_discovery)
@@ -156,65 +133,42 @@ def fix_auto_catch_up():
     MockSettings.rediscover_config(prev_config)
     _LOGGER.info("teardown fix_auto_catch_up")
 
+@pytest.fixture(scope="module")
+def fix_pdp_authorization():
+    """set env vars that overwrite the headers.Authorization on pdp and dmaap_mr clients"""
+    _LOGGER.info("setup fix_pdp_authorization %s", json.dumps(MockSettings.mock_config))
+    prev_config = copy.deepcopy(MockSettings.mock_config)
 
-@pytest.fixture()
-def fix_deploy_handler_413(monkeypatch):
-    """monkeyed failed discovery request.get"""
-    def monkeyed_deploy_handler_put(uri, **kwargs):
-        """monkeypatch for deploy_handler"""
-        return MockHttpResponse(
-            "put", uri,
-            {"server_instance_uuid": MockSettings.deploy_handler_instance_uuid},
-            status_code=413, **kwargs
-        )
+    os.environ.update({
+        Config.PDP_USER: "alex-PDP_USER",
+        Config.PDP_PWD: "alex-PDP_PWD",
+        Config.DMAAP_MR_USER: "alex-DMAAP_MR_USER",
+        Config.DMAAP_MR_PWD: "alex-DMAAP_MR_PWD"
+    })
+    Config._local_config._config = None
+    Config._pdp_authorization = None
+    Config._dmaap_mr_authorization = None
+    MockSettings.reinit_mock_config()
+    MockSettings.rediscover_config()
 
-    def monkeyed_deploy_handler_get(uri, **kwargs):
-        """monkeypatch policy-update request.get to deploy_handler"""
-        return MockHttpResponse("get", uri, MockDeploymentHandler.get_deployed_policies(),
-                                **kwargs)
+    _LOGGER.info("fix_pdp_authorization %s, %s: %s:%s %s:%s",
+                 json.dumps(Config._pdp_authorization), json.dumps(Config._dmaap_mr_authorization),
+                 os.environ.get(Config.PDP_USER), os.environ.get(Config.PDP_PWD),
+                 os.environ.get(Config.DMAAP_MR_USER), os.environ.get(Config.DMAAP_MR_PWD))
 
-    _LOGGER.info("setup fix_deploy_handler_413")
-    audit = None
-    if DeployHandler._lazy_inited is False:
-        audit = Audit(req_message="fix_deploy_handler_413")
-        DeployHandler._lazy_init(audit)
+    yield fix_pdp_authorization
 
-    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.put',
-                        monkeyed_deploy_handler_put)
-    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.get',
-                        monkeyed_deploy_handler_get)
+    del os.environ[Config.PDP_USER]
+    del os.environ[Config.PDP_PWD]
+    del os.environ[Config.DMAAP_MR_USER]
+    del os.environ[Config.DMAAP_MR_PWD]
 
-    yield fix_deploy_handler_413
-    if audit:
-        audit.audit_done("teardown")
-    _LOGGER.info("teardown fix_deploy_handler_413")
-
-
-@pytest.fixture()
-def fix_deploy_handler_404(monkeypatch):
-    """monkeyed failed discovery request.get"""
-    def monkeyed_deploy_handler_put(uri, **kwargs):
-        """monkeypatch for deploy_handler"""
-        return MockHttpResponse("put", uri, MockDeploymentHandler.default_response(),
-                                **kwargs)
-
-    def monkeyed_deploy_handler_get(uri, **kwargs):
-        """monkeypatch policy-update request.get to deploy_handler"""
-        return MockHttpResponse("get", uri, MockDeploymentHandler.default_response(),
-                                **kwargs)
-
-    _LOGGER.info("setup fix_deploy_handler_404")
-    audit = None
-    if DeployHandler._lazy_inited is False:
-        audit = Audit(req_message="fix_deploy_handler_404")
-        DeployHandler._lazy_init(audit)
-
-    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.put',
-                        monkeyed_deploy_handler_put)
-    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.get',
-                        monkeyed_deploy_handler_get)
-
-    yield fix_deploy_handler_404
-    if audit:
-        audit.audit_done("teardown")
-    _LOGGER.info("teardown fix_deploy_handler_404")
+    Config._local_config._config = None
+    Config._pdp_authorization = None
+    Config._dmaap_mr_authorization = None
+    MockSettings.reinit_mock_config()
+    MockSettings.rediscover_config(prev_config)
+    _LOGGER.info("teardown fix_pdp_authorization %s, %s: %s:%s %s:%s",
+                 json.dumps(Config._pdp_authorization), json.dumps(Config._dmaap_mr_authorization),
+                 os.environ.get(Config.PDP_USER), os.environ.get(Config.PDP_PWD),
+                 os.environ.get(Config.DMAAP_MR_USER), os.environ.get(Config.DMAAP_MR_PWD))

@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,6 @@ import logging
 import os
 from copy import deepcopy
 from typing import Pattern
-
-class ToBeImplementedException(Exception):
-    """exception for to be implemented features of policy-handler"""
-    pass
-
 
 class Utils(object):
     """general purpose utils"""
@@ -91,6 +86,14 @@ class Utils(object):
                 return False
 
             for key, val_1 in body_1.items():
+                val_2 = body_2[key]
+                if isinstance(val_1, str) or isinstance(val_2, str):
+                    if val_1 != val_2:
+                        Utils._logger.debug("key-values %s != %s",
+                                            json_dumps({key: val_1}), json_dumps({key: val_2}))
+                        return False
+                    continue
+
                 if not Utils.are_the_same(val_1, body_2[key], json_dumps):
                     return False
             return True

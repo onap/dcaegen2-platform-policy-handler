@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import json
 import time
 import uuid
 
-import cherrypy
 import pytest
-from cherrypy.test.helper import CPWebCase
 
+import cherrypy
+from cherrypy.test.helper import CPWebCase
 from policyhandler.config import Config
-from policyhandler.onap.audit import REQUEST_X_ECOMP_REQUESTID, Audit
+from policyhandler.onap.audit import (REQUEST_X_ECOMP_REQUESTID,
+                                      REQUEST_X_ONAP_REQUESTID, Audit)
 from policyhandler.pdp_api_v0.pdp_consts import POLICY_NAME
 from policyhandler.policy_consts import LATEST_POLICIES
 from policyhandler.policy_receiver import PolicyReceiver
@@ -89,10 +90,6 @@ class WebServer2018Test(CPWebCase):
         _LOGGER.info("result: %s", result)
         _LOGGER.info("body: %s", self.body)
 
-        if Config.is_pdp_api_default():
-            self.assertStatus('404 Not Found')
-            return
-
         self.assertStatus('200 OK')
 
         policies_latest = json.loads(self.body)
@@ -114,19 +111,17 @@ class WebServer2018Test(CPWebCase):
         expected_policies = MockPolicyEngine2018.gen_policies_latest(match_to_policy_name)
 
         body = json.dumps({POLICY_NAME: match_to_policy_name})
+        request_id = str(uuid.uuid4())
         result = self.getPage("/policies_latest", method='POST',
                               body=body,
                               headers=[
-                                  (REQUEST_X_ECOMP_REQUESTID, str(uuid.uuid4())),
+                                  (REQUEST_X_ECOMP_REQUESTID, request_id),
+                                  (REQUEST_X_ONAP_REQUESTID, request_id),
                                   ("Content-Type", "application/json"),
                                   ('Content-Length', str(len(body)))
                               ])
         _LOGGER.info("result: %s", result)
         _LOGGER.info("body: %s", self.body)
-
-        if Config.is_pdp_api_default():
-            self.assertStatus('404 Not Found')
-            return
 
         self.assertStatus('200 OK')
 
@@ -144,10 +139,6 @@ class WebServer2018Test(CPWebCase):
     @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
     def test_zzz_policy_updates_and_catch_ups(self):
         """test run policy handler with policy updates and catchups"""
-        if Config.is_pdp_api_default():
-            _LOGGER.info("passive for new PDP API")
-            return
-
         _LOGGER.info("start policy_updates_and_catch_ups")
         assert not PolicyReceiver.is_running()
 
@@ -177,10 +168,6 @@ class WebServer2018Test(CPWebCase):
     @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
     def test_zzz_catch_up_on_deploy_handler_changed(self):
         """test run policy handler with deployment-handler changed underneath"""
-        if Config.is_pdp_api_default():
-            _LOGGER.info("passive for new PDP API")
-            return
-
         _LOGGER.info("start zzz_catch_up_on_deploy_handler_changed")
         assert not PolicyReceiver.is_running()
         audit = Audit(job_name="test_zzz_catch_up_on_deploy_handler_changed",
@@ -201,8 +188,8 @@ class WebServer2018Test(CPWebCase):
         _LOGGER.info("sleep after send_notification...")
         time.sleep(3)
 
-        _LOGGER.info("sleep 5 before shutdown...")
-        time.sleep(5)
+        _LOGGER.info("sleep 3 before shutdown...")
+        time.sleep(3)
 
         result = self.getPage("/healthcheck")
         _LOGGER.info("healthcheck result: %s", result)
@@ -216,10 +203,6 @@ class WebServer2018Test(CPWebCase):
     @pytest.mark.usefixtures("fix_deploy_handler", "fix_policy_receiver_websocket")
     def test_zzz_get_catch_up(self):
         """test /catch_up"""
-        if Config.is_pdp_api_default():
-            _LOGGER.info("passive for new PDP API")
-            return
-
         _LOGGER.info("start /catch_up")
         assert not PolicyReceiver.is_running()
         audit = Audit(job_name="test_zzz_get_catch_up", req_message="start /catch_up")
@@ -272,9 +255,5 @@ class WebServer2018Test(CPWebCase):
         _LOGGER.info("got shutdown: %s", self.body)
         time.sleep(1)
         assert not PolicyReceiver.is_running()
-
-        if Config.is_pdp_api_default():
-            _LOGGER.info("passive for new PDP API")
-            return
 
         Tracker.validate()

@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@ from policyhandler.onap.audit import Audit
 from policyhandler.utils import Utils
 
 from ..mock_tracker import Tracker
-from .mock_policy_engine import MockPolicyEngine
+from .mock_policy_engine import MockPolicyEngine2018
 
 _LOGGER = Utils.get_logger(__file__)
 
-@pytest.mark.usefixtures("fix_pdp_post")
+@pytest.mark.usefixtures("fix_pdp_authorization", "fix_pdp_api_v0", "fix_pdp_post")
 def test_get_policy_latest():
     """test /policy_latest/<policy-id>"""
-    policy_id, expected_policy = MockPolicyEngine.gen_policy_latest(3)
+    policy_id, expected_policy = MockPolicyEngine2018.gen_policy_latest(3)
 
     audit = Audit(job_name="test_get_policy_latest",
                   req_message="get /policy_latest/{}".format(policy_id or ""))

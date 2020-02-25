@@ -29,6 +29,19 @@
             "timeout_in_secs": 1,
             "ws_ping_interval_in_secs": 1800
         },
+        "dmaap_mr" : {
+            "url" : "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid",
+            "query": {
+                "timeout": 15000
+            },
+            "headers" : {
+                "Content-Type" : "application/json",
+                "Authorization" : "Basic auth"
+            },
+            "target_entity" : "dmaap_mr",
+            "tls_ca_mode" : "cert_directory",
+            "timeout_in_secs": 60
+        },
         "deploy_handler" : {
             "target_entity" : "deployment_handler",
             "url" : "http://unit-test-deployment_handler:8188000",

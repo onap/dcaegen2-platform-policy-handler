@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,12 @@ import copy
 import json
 
 from policyhandler.config import Config
-from policyhandler.onap.audit import REQUEST_X_ECOMP_REQUESTID
+from policyhandler.onap.audit import (REQUEST_X_ECOMP_REQUESTID,
+                                      REQUEST_X_ONAP_REQUESTID)
 from policyhandler.utils import Utils
 
+REQUEST = "request"
+STATUS_CODE = "status_code"
 RESPONSE = "res"
 PEP_INSTANCE = "ONAPInstance"
 _LOGGER = Utils.get_logger(__file__)
@@ -49,15 +52,21 @@ class _MockHttpRequestInResponse(object):
 
 class MockHttpResponse(object):
     """Mock http response based on request"""
-    def __init__(self, method, uri, res_json, **kwargs):
+    def __init__(self, method, uri, res_json=None, **kwargs):
         """create response based on request"""
         self.request = _MockHttpRequestInResponse(method, uri, **kwargs)
+        self.headers = {}
 
-        self.status_code = kwargs.get("status_code", 200)
-        self.res = copy.deepcopy(res_json)
+        self.status_code, self.res = Tracker.get_response(self.request.to_json())
+        if self.status_code is None and res_json:
+            self.status_code = kwargs.get(STATUS_CODE, 200)
+        if res_json:
+            self.res = copy.deepcopy(res_json)
+        if self.status_code is None:
+            self.status_code = 500
         self.text = json.dumps(self.res)
 
-        self._track()
+        _LOGGER.info("MockHttpResponse: %s", self)
 
     def json(self):
         """returns json of response"""
@@ -70,14 +79,10 @@ class MockHttpResponse(object):
     def to_json(self):
         """create json of the message"""
         return {
-            "request": self.request.to_json(),
-            "status_code": self.status_code,
+            REQUEST: self.request.to_json(),
+            STATUS_CODE: self.status_code,
             RESPONSE: self.res
         }
-
-    def _track(self):
-        """append the message to tracker's history"""
-        Tracker.track(self.to_json())
 
     def __str__(self):
         """stringify for logging"""
@@ -87,30 +92,88 @@ class MockHttpResponse(object):
 class Tracker(object):
     """record all the messages going outside policy-handler during testing"""
     test_name = None
-    messages = []
     test_names = []
+
+    requests = []
+    expected = []
+
     validated_tests = {}
     valid_tests = {}
+
+    main_history = {}
+    pdp_api_v0_history = {}
+
+    @staticmethod
+    def _init():
+        """load expected data from json files"""
+        try:
+            with open("tests/main/expectations.json", 'r') as expectations:
+                Tracker.main_history = json.load(expectations)
+        except Exception:
+            Tracker.main_history = {}
+
+        try:
+            with open("tests/pdp_api_v0/expectations.json", 'r') as expectations:
+                Tracker.pdp_api_v0_history = json.load(expectations)
+        except Exception:
+            Tracker.pdp_api_v0_history = {}
 
     @staticmethod
     def reset(test_name=None):
         """remove all the messages from history"""
+        if not Tracker.test_names:
+            Tracker._init()
+
         Tracker.test_name = test_name
-        Tracker.messages.clear()
+        Tracker.requests.clear()
         Tracker.test_names.append(test_name)
 
+        if Config.is_pdp_api_default():
+            Tracker.expected = Tracker.main_history.get(Tracker.test_name, [])
+        else:
+            Tracker.expected = Tracker.pdp_api_v0_history.get(Tracker.test_name, [])
+
+
     @staticmethod
-    def track(message):
-        """append the tracked message to the history"""
-        message = copy.deepcopy(message)
-        Tracker.messages.append(message)
-        if _LOGGER:
-            _LOGGER.info("tracked_message: %s", json.dumps(message, sort_keys=True))
+    def get_response(request):
+        """
+        track the request to the history of requests
+        and return the response with the status_code from the expected history queue
+        """
+        request_idx = len(Tracker.requests)
+        request = copy.deepcopy(request)
+        Tracker.requests.append(request)
+
+        if request_idx < len(Tracker.expected):
+            expected = Tracker.expected[request_idx] or {}
+            masked_request = Tracker._hide_volatiles(copy.deepcopy(request))
+            expected_request = Tracker._hide_volatiles(copy.deepcopy(expected.get(REQUEST)))
+            if Utils.are_the_same(masked_request, expected_request):
+                _LOGGER.info("as expected[%s]: %s", request_idx,
+                             json.dumps(expected, sort_keys=True))
+                return expected.get(STATUS_CODE), expected.get(RESPONSE)
+
+            unexpected_request = {"unit-test-tracker": {
+                "request_idx": request_idx,
+                "received_request": copy.deepcopy(request),
+                "expected": copy.deepcopy(expected.get(REQUEST))
+            }}
+            _LOGGER.error("unexpected_request[%s]: %s", request_idx,
+                          json.dumps(unexpected_request, sort_keys=True))
+            return None, unexpected_request
+
+        unexpected_request = {"unit-test-tracker":{
+            "request_idx": request_idx, "out-of-range": len(Tracker.expected),
+            "received_request": copy.deepcopy(request)
+        }}
+        _LOGGER.error("unexpected_request[%s]: %s", request_idx,
+                      json.dumps(unexpected_request, sort_keys=True))
+        return None, unexpected_request
 
     @staticmethod
     def to_string():
         """stringify message history for logging"""
-        return json.dumps(Tracker.messages, sort_keys=True)
+        return json.dumps(Tracker.requests, sort_keys=True)
 
     @staticmethod
     def get_status(test_name=None):
@@ -131,15 +194,14 @@ class Tracker(object):
         for idx, test_name in enumerate(Tracker.test_names):
             _LOGGER.info("%s[%s]: %s", Tracker.get_status(test_name), (idx + 1), test_name)
 
-        _LOGGER.info("not tracked test_names listed in main.mock_expected")
-        from .main.mock_expected import HISTORY_EXPECTED as main_history
-        for test_name in main_history:
+        _LOGGER.info("not tracked test_names listed in main.expectations")
+
+        for test_name in Tracker.main_history:
             if test_name not in Tracker.test_names:
                 _LOGGER.info("untracked: %s", test_name)
 
-        _LOGGER.info("not tracked test_names listed in pdp_api_v0.mock_expected")
-        from .pdp_api_v0.mock_expected import HISTORY_EXPECTED as pdp_api_v0_history
-        for test_name in pdp_api_v0_history:
+        _LOGGER.info("not tracked test_names listed in pdp_api_v0.expectations")
+        for test_name in Tracker.pdp_api_v0_history:
             if test_name not in Tracker.test_names:
                 _LOGGER.info("untracked: %s", test_name)
 
@@ -150,7 +212,7 @@ class Tracker(object):
             return obj
 
         for key, value in obj.items():
-            if key in [REQUEST_X_ECOMP_REQUESTID, RESPONSE, PEP_INSTANCE]:
+            if key in [REQUEST_X_ONAP_REQUESTID, REQUEST_X_ECOMP_REQUESTID, RESPONSE, PEP_INSTANCE]:
                 obj[key] = "*"
             elif isinstance(value, dict):
                 obj[key] = Tracker._hide_volatiles(value)
@@ -161,20 +223,15 @@ class Tracker(object):
     def validate():
         """validate that the message history is as expected"""
         _LOGGER.info("Tracker.validate(%s)", Tracker.test_name)
-        messages = [Tracker._hide_volatiles(copy.deepcopy(message))
-                    for message in Tracker.messages]
         Tracker.validated_tests[Tracker.test_name] = True
+        requests = [Tracker._hide_volatiles(copy.deepcopy(request))
+                    for request in Tracker.requests]
+        expected_reqs = [Tracker._hide_volatiles(copy.deepcopy(expected.get(REQUEST)))
+                         for expected in Tracker.expected]
 
-        if Config.is_pdp_api_default():
-            from .main.mock_expected import HISTORY_EXPECTED as main_history
-            expected = main_history.get(Tracker.test_name, [])
-        else:
-            from .pdp_api_v0.mock_expected import HISTORY_EXPECTED as pdp_api_v0_history
-            expected = pdp_api_v0_history.get(Tracker.test_name, [])
-
-        _LOGGER.info("messages: %s", json.dumps(messages, sort_keys=True))
-        _LOGGER.info("expected: %s", json.dumps(expected, sort_keys=True))
-        assert Utils.are_the_same(messages, expected)
+        _LOGGER.info("requests: %s", json.dumps(requests, sort_keys=True))
+        _LOGGER.info("expected: %s", json.dumps(expected_reqs, sort_keys=True))
+        assert Utils.are_the_same(requests, expected_reqs)
 
         _LOGGER.info("history valid for Tracker.validate(%s)", Tracker.test_name)
         Tracker.valid_tests[Tracker.test_name] = True
