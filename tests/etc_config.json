@@ -7,7 +7,7 @@
         "system" : "policy_handler",
         "tls" : {
             "cert_directory" : "etc/tls/certs/",
-            "cacert" : "att_internal_root.crt",
+            "cacert" : "cacert.crt",
             "private_key" : "key.pem",
             "server_cert" : "cert.pem",
             "server_ca_chain" : "ca_chain.pem"

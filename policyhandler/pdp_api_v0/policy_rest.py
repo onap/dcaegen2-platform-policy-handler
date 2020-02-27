@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ from threading import Lock
 import requests
 
 from ..config import Config, Settings
-from ..onap.audit import (REQUEST_X_ECOMP_REQUESTID, AuditHttpCode,
-                          AuditResponseCode, Metrics)
+from ..onap.audit import AuditHttpCode, AuditResponseCode, Metrics
 from ..policy_consts import (ERRORED_POLICIES, LATEST_POLICIES, POLICY_BODY,
                              POLICY_FILTER, POLICY_FILTERS, POLICY_ID,
                              POLICY_NAMES)
@@ -84,10 +83,10 @@ class PolicyRest(object):
         changed, pool_size = PolicyRest._settings.get_by_key(Config.POOL_CONNECTIONS, 20)
         if changed:
             PolicyRest._requests_session.mount(
-                'https://', requests.adapters.HTTPAdapter(pool_connections=pool_size,
+                'https://', requests.adapters.HTTPAdapter(pool_connections=1,
                                                           pool_maxsize=pool_size))
             PolicyRest._requests_session.mount(
-                'http://', requests.adapters.HTTPAdapter(pool_connections=pool_size,
+                'http://', requests.adapters.HTTPAdapter(pool_connections=1,
                                                          pool_maxsize=pool_size))
 
         _, config = PolicyRest._settings.get_by_key(Config.FIELD_POLICY_ENGINE)
@@ -159,7 +158,7 @@ class PolicyRest(object):
             _LOGGER.error(
                 audit.error("no url for PDP", error_code=AuditResponseCode.AVAILABILITY_ERROR))
             audit.set_http_status_code(AuditHttpCode.SERVER_INTERNAL_ERROR.value)
-            return None
+            return None, None
 
         with PolicyRest._lock:
             session = PolicyRest._requests_session
@@ -171,7 +170,7 @@ class PolicyRest(object):
 
         metrics = Metrics(aud_parent=audit, targetEntity=target_entity, targetServiceName=url)
 
-        headers[REQUEST_X_ECOMP_REQUESTID] = metrics.request_id
+        headers = metrics.put_request_id_into_headers(headers)
 
         log_action = "post to {} at {}".format(target_entity, url)
         log_data = "msg={} headers={}, custom_kwargs({}) timeout_in_secs({})".format(
@@ -191,7 +190,7 @@ class PolicyRest(object):
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
             error_msg = ("failed {}: {} to {}".format(type(ex).__name__, str(ex), log_line))
 
-            _LOGGER.exception(error_msg)
+            _LOGGER.exception(metrics.fatal(error_msg))
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)
@@ -412,7 +411,7 @@ class PolicyRest(object):
 
         policies_to_find = {}
         for (policy_id, policy_version) in policies_updated:
-            if not policy_id or not policy_version or not policy_version.isdigit():
+            if not policy_id or policy_version is None or not policy_version.isdigit():
                 continue
             policy = policies_to_find.get(policy_id)
             if not policy:

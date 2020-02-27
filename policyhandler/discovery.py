@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ class DiscoveryClient(object):
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
             error_msg = ("failed {}/{} to {} {}: {}".format(status_code, error_code, log_line,
                                                             type(ex).__name__, str(ex)))
-            _LOGGER.exception(error_msg)
+            _LOGGER.exception(metrics.fatal(error_msg))
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)
@@ -136,7 +136,7 @@ class DiscoveryClient(object):
                           else AuditHttpCode.SERVER_INTERNAL_ERROR.value)
             error_msg = ("failed {}/{} to {} {}: {}".format(status_code, error_code, log_line,
                                                             type(ex).__name__, str(ex)))
-            _LOGGER.exception(error_msg)
+            _LOGGER.exception(metrics.fatal(error_msg))
             metrics.set_http_status_code(error_code)
             audit.set_http_status_code(error_code)
             metrics.metrics(error_msg)

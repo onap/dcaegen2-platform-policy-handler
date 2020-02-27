@@ -1,0 +1,2839 @@
+{
+    "tests/main/test_policyhandler.py::WebServerTest::test_web_all_policies_latest": [
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "0": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "3": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem",
+                            "test_scope_prefix.pdp_decision_amet",
+                            "test_scope_prefix.pdp_decision_ametist",
+                            "test_scope_prefix.pdp_decision_consectetur",
+                            "test_scope_prefix.pdp_decision_dolor",
+                            "test_scope_prefix.pdp_decision_ipsum",
+                            "test_scope_prefix.pdp_decision_sit"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 0,
+                            "policy_updated_to_ver": 1,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_amet",
+                            "policy-id": "test_scope_prefix.pdp_decision_amet",
+                            "policy-version": "5.5.5"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 4,
+                            "policy_updated_to_ver": 5,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_amet"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ametist",
+                            "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                            "policy-version": "7.7.7"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 6,
+                            "policy_updated_to_ver": 7,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                            "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                            "policy-version": "6.6.6"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 5,
+                            "policy_updated_to_ver": 6,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_dolor",
+                            "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                            "policy-version": "3.3.3"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 2,
+                            "policy_updated_to_ver": 3,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                            "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                            "policy-version": "2.2.2"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 1,
+                            "policy_updated_to_ver": 2,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_sit",
+                            "policy-id": "test_scope_prefix.pdp_decision_sit",
+                            "policy-version": "4.4.4"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 3,
+                            "policy_updated_to_ver": 4,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        }
+    ],
+    "tests/main/test_policyhandler.py::WebServerTest::test_web_policies_latest": [
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": {
+                    "policyName": "test_scope_prefix.Config_amet.*"
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": "*",
+            "status_code": 200
+        }
+    ],
+    "tests/main/test_policyhandler.py::WebServerTest::test_web_policy_latest": [
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_sit"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_sit",
+                            "policy-id": "test_scope_prefix.pdp_decision_sit",
+                            "policy-version": "4.4.4"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 3,
+                            "policy_updated_to_ver": 4,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        }
+    ],
+    "tests/main/test_policyhandler.py::WebServerTest::test_zzzzz_shutdown": [
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": null,
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": ["garbage-to-be-ignored"],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "0": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "3": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem",
+                            "test_scope_prefix.pdp_decision_amet",
+                            "test_scope_prefix.pdp_decision_ametist",
+                            "test_scope_prefix.pdp_decision_consectetur",
+                            "test_scope_prefix.pdp_decision_dolor",
+                            "test_scope_prefix.pdp_decision_ipsum",
+                            "test_scope_prefix.pdp_decision_sit"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 0,
+                            "policy_updated_to_ver": 1,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_amet",
+                            "policy-id": "test_scope_prefix.pdp_decision_amet",
+                            "policy-version": "5.5.5"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 4,
+                            "policy_updated_to_ver": 5,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_amet"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ametist",
+                            "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                            "policy-version": "7.7.7"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 6,
+                            "policy_updated_to_ver": 7,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                            "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                            "policy-version": "6.6.6"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 5,
+                            "policy_updated_to_ver": 6,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_dolor",
+                            "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                            "policy-version": "3.3.3"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 2,
+                            "policy_updated_to_ver": 3,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                            "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                            "policy-version": "2.2.2"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 1,
+                            "policy_updated_to_ver": 2,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_sit",
+                            "policy-id": "test_scope_prefix.pdp_decision_sit",
+                            "policy-version": "4.4.4"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 3,
+                            "policy_updated_to_ver": 4,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": true,
+                    "latest_policies": {
+                        "test_scope_prefix.pdp_decision_Lorem": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 0,
+                                    "policy_updated_to_ver": 1,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-version": "1.1.1"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_Lorem.1-1-1.xml",
+                                "policyVersion": "1.1.1",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "test_scope_prefix.pdp_decision_ametist": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 6,
+                                    "policy_updated_to_ver": 7,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ametist",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                                    "policy-version": "7.7.7"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ametist.7-7-7.xml",
+                                "policyVersion": "7.7.7",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "test_scope_prefix.pdp_decision_consectetur": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 5,
+                                    "policy_updated_to_ver": 6,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-version": "6.6.6"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_consectetur.6-6-6.xml",
+                                "policyVersion": "6.6.6",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "test_scope_prefix.pdp_decision_dolor": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 2,
+                                    "policy_updated_to_ver": 3,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_dolor",
+                                    "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                                    "policy-version": "3.3.3"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_dolor.3-3-3.xml",
+                                "policyVersion": "3.3.3",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "test_scope_prefix.pdp_decision_ipsum": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 1,
+                                    "policy_updated_to_ver": 2,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-version": "2.2.2"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ipsum.2-2-2.xml",
+                                "policyVersion": "2.2.2",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "test_scope_prefix.pdp_decision_sit": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 3,
+                                    "policy_updated_to_ver": 4,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_sit",
+                                    "policy-id": "test_scope_prefix.pdp_decision_sit",
+                                    "policy-version": "4.4.4"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_sit.4-4-4.xml",
+                                "policyVersion": "4.4.4",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_sit"
+                        }
+                    },
+                    "policy_filter_matches": {},
+                    "removed_policies": {}
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [],
+            "status_code": 200
+        }
+    ],
+    "tests/main/test_policyhandler.py::WebServerTest::test_zzz_policy_updates_and_catch_ups": [
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": null,
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": ["garbage-to-be-ignored"],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "0": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "3": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem",
+                            "test_scope_prefix.pdp_decision_amet",
+                            "test_scope_prefix.pdp_decision_ametist",
+                            "test_scope_prefix.pdp_decision_consectetur",
+                            "test_scope_prefix.pdp_decision_dolor",
+                            "test_scope_prefix.pdp_decision_ipsum",
+                            "test_scope_prefix.pdp_decision_sit"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 0,
+                            "policy_updated_to_ver": 1,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_amet",
+                            "policy-id": "test_scope_prefix.pdp_decision_amet",
+                            "policy-version": "5.5.5"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 4,
+                            "policy_updated_to_ver": 5,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_amet"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ametist",
+                            "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                            "policy-version": "7.7.7"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 6,
+                            "policy_updated_to_ver": 7,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                            "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                            "policy-version": "6.6.6"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 5,
+                            "policy_updated_to_ver": 6,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_dolor",
+                            "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                            "policy-version": "3.3.3"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 2,
+                            "policy_updated_to_ver": 3,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                            "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                            "policy-version": "2.2.2"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 1,
+                            "policy_updated_to_ver": 2,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_sit",
+                            "policy-id": "test_scope_prefix.pdp_decision_sit",
+                            "policy-version": "4.4.4"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 3,
+                            "policy_updated_to_ver": 4,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": true,
+                    "latest_policies": {
+                        "test_scope_prefix.pdp_decision_Lorem": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 0,
+                                    "policy_updated_to_ver": 1,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-version": "1.1.1"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_Lorem.1-1-1.xml",
+                                "policyVersion": "1.1.1",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "test_scope_prefix.pdp_decision_ametist": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 6,
+                                    "policy_updated_to_ver": 7,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ametist",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                                    "policy-version": "7.7.7"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ametist.7-7-7.xml",
+                                "policyVersion": "7.7.7",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "test_scope_prefix.pdp_decision_consectetur": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 5,
+                                    "policy_updated_to_ver": 6,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-version": "6.6.6"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_consectetur.6-6-6.xml",
+                                "policyVersion": "6.6.6",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "test_scope_prefix.pdp_decision_dolor": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 2,
+                                    "policy_updated_to_ver": 3,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_dolor",
+                                    "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                                    "policy-version": "3.3.3"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_dolor.3-3-3.xml",
+                                "policyVersion": "3.3.3",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "test_scope_prefix.pdp_decision_ipsum": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 1,
+                                    "policy_updated_to_ver": 2,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-version": "2.2.2"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ipsum.2-2-2.xml",
+                                "policyVersion": "2.2.2",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "test_scope_prefix.pdp_decision_sit": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 3,
+                                    "policy_updated_to_ver": 4,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_sit",
+                                    "policy-id": "test_scope_prefix.pdp_decision_sit",
+                                    "policy-version": "4.4.4"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_sit.4-4-4.xml",
+                                "policyVersion": "4.4.4",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_sit"
+                        }
+                    },
+                    "policy_filter_matches": {},
+                    "removed_policies": {}
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+            },
+            "res": [
+                "{\"deployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1-update1\",\"success-count\":3,\"failure-count\":0}],\"undeployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1\",\"success-count\":3,\"failure-count\":0}]}"
+            ],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "1.1.1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "7.7.7": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "6.6.6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "3.3.3": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "2.2.2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "4.4.4": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 0,
+                            "policy_updated_to_ver": 1,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1-update1"
+                        },
+                        "properties": {
+                            "policy_hello": "world! - updated 1",
+                            "policy_updated_from_ver": "1.1.1",
+                            "policy_updated_to_ver": "1.1.1-update1",
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": false,
+                    "latest_policies": {
+                        "test_scope_prefix.pdp_decision_Lorem": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world! - updated 1",
+                                    "policy_updated_from_ver": "1.1.1",
+                                    "policy_updated_to_ver": "1.1.1-update1",
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-version": "1.1.1-update1"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_Lorem.1-1-1-update1.xml",
+                                "policyVersion": "1.1.1-update1",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        }
+                    },
+                    "policy_filter_matches": {},
+                    "removed_policies": {}
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [
+                "{\"deployed-policies\":[{\"policy-type\":\"onap.policies.testing\",\"policy-type-version\":\"99.0.0\",\"policy-id\":\"not-dcae.expect-be-ignored-55\",\"policy-version\":\"522.522.522\",\"success-count\":3,\"failure-count\":0}],\"undeployed-policies\":[{\"policy-type\":\"onap.policies.testing\",\"policy-type-version\":\"9.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_ipsum\",\"policy-version\":\"2.2.2\",\"success-count\":3,\"failure-count\":0},{\"policy-type\":\"onap.policies.testing\",\"policy-type-version\":\"9.0.0\",\"policy-id\":\"not-dcae.expect-be-ignored\",\"policy-version\":\"22.22.22\",\"success-count\":3,\"failure-count\":0}]}",
+                "{\"deployed-policies\":[{\"policy-type\":\"onap.policies.testing\",\"policy-type-version\":\"99.9.9\",\"policy-id\":\"not-dcae.expect-be-ignored-55\",\"policy-version\":\"5522.5522.522\",\"success-count\":3,\"failure-count\":0}],\"undeployed-policies\":[{\"policy-type\":\"onap.policies.testing\",\"policy-type-version\":\"9.0.0\",\"policy-id\":\"not-dcae.expect-be-ignored\",\"policy-version\":\"22.22.22\",\"success-count\":3,\"failure-count\":0}]}"
+            ],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "1.1.1-update1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "7.7.7": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "6.6.6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "3.3.3": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "2.2.2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "4.4.4": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_ipsum"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {}
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": false,
+                    "latest_policies": {},
+                    "policy_filter_matches": {},
+                    "removed_policies": {
+                        "test_scope_prefix.pdp_decision_ipsum": true
+                    }
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [
+                "{\"deployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1-update1\",\"success-count\":3,\"failure-count\":0}],\"undeployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1\",\"success-count\":3,\"failure-count\":0}]}",
+                "{\"deployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1-update2\",\"success-count\":3,\"failure-count\":0}],\"undeployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1-update1\",\"success-count\":3,\"failure-count\":0}]}",
+                "{\"deployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1-update3\",\"success-count\":3,\"failure-count\":0}],\"undeployed-policies\":[{\"policy-type\":\"onap.policies.monitoring.cdap.tca.hi.lo.app\",\"policy-type-version\":\"1.0.0\",\"policy-id\":\"test_scope_prefix.pdp_decision_Lorem\",\"policy-version\":\"1.1.1-update2\",\"success-count\":3,\"failure-count\":0}]}"
+            ],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "1.1.1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "7.7.7": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "6.6.6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "3.3.3": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "2.2.2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "4.4.4": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic auth",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1-update3"
+                        },
+                        "properties": {
+                            "policy_hello": "world! - updated 3",
+                            "policy_updated_from_ver": "1.1.1-update2",
+                            "policy_updated_to_ver": "1.1.1-update3",
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": false,
+                    "latest_policies": {
+                        "test_scope_prefix.pdp_decision_Lorem": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world! - updated 3",
+                                    "policy_updated_from_ver": "1.1.1-update2",
+                                    "policy_updated_to_ver": "1.1.1-update3",
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-version": "1.1.1-update3"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_Lorem.1-1-1-update3.xml",
+                                "policyVersion": "1.1.1-update3",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        }
+                    },
+                    "policy_filter_matches": {},
+                    "removed_policies": {}
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic auth",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [],
+            "status_code": 200
+        }
+    ],
+    "tests/main/test_pz_catch_up.py::test_catch_up": [
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic YWxleC1ETUFBUF9NUl9VU0VSOmFsZXgtRE1BQVBfTVJfUFdE",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": null,
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": ["garbage-to-be-ignored"],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "0": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "3": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic YWxleC1QRFBfVVNFUjphbGV4LVBEUF9QV0Q=",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem",
+                            "test_scope_prefix.pdp_decision_amet",
+                            "test_scope_prefix.pdp_decision_ametist",
+                            "test_scope_prefix.pdp_decision_consectetur",
+                            "test_scope_prefix.pdp_decision_dolor",
+                            "test_scope_prefix.pdp_decision_ipsum",
+                            "test_scope_prefix.pdp_decision_sit"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 0,
+                            "policy_updated_to_ver": 1,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_amet",
+                            "policy-id": "test_scope_prefix.pdp_decision_amet",
+                            "policy-version": "5.5.5"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 4,
+                            "policy_updated_to_ver": 5,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_amet"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ametist",
+                            "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                            "policy-version": "7.7.7"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 6,
+                            "policy_updated_to_ver": 7,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                            "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                            "policy-version": "6.6.6"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 5,
+                            "policy_updated_to_ver": 6,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_dolor",
+                            "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                            "policy-version": "3.3.3"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 2,
+                            "policy_updated_to_ver": 3,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                            "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                            "policy-version": "2.2.2"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 1,
+                            "policy_updated_to_ver": 2,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_sit",
+                            "policy-id": "test_scope_prefix.pdp_decision_sit",
+                            "policy-version": "4.4.4"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 3,
+                            "policy_updated_to_ver": 4,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": true,
+                    "latest_policies": {
+                        "test_scope_prefix.pdp_decision_Lorem": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 0,
+                                    "policy_updated_to_ver": 1,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-version": "1.1.1"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_Lorem.1-1-1.xml",
+                                "policyVersion": "1.1.1",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "test_scope_prefix.pdp_decision_ametist": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 6,
+                                    "policy_updated_to_ver": 7,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ametist",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                                    "policy-version": "7.7.7"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ametist.7-7-7.xml",
+                                "policyVersion": "7.7.7",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "test_scope_prefix.pdp_decision_consectetur": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 5,
+                                    "policy_updated_to_ver": 6,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-version": "6.6.6"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_consectetur.6-6-6.xml",
+                                "policyVersion": "6.6.6",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "test_scope_prefix.pdp_decision_dolor": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 2,
+                                    "policy_updated_to_ver": 3,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_dolor",
+                                    "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                                    "policy-version": "3.3.3"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_dolor.3-3-3.xml",
+                                "policyVersion": "3.3.3",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "test_scope_prefix.pdp_decision_ipsum": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 1,
+                                    "policy_updated_to_ver": 2,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-version": "2.2.2"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ipsum.2-2-2.xml",
+                                "policyVersion": "2.2.2",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "test_scope_prefix.pdp_decision_sit": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 3,
+                                    "policy_updated_to_ver": 4,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_sit",
+                                    "policy-id": "test_scope_prefix.pdp_decision_sit",
+                                    "policy-version": "4.4.4"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_sit.4-4-4.xml",
+                                "policyVersion": "4.4.4",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_sit"
+                        }
+                    },
+                    "policy_filter_matches": {},
+                    "removed_policies": {}
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic YWxleC1ETUFBUF9NUl9VU0VSOmFsZXgtRE1BQVBfTVJfUFdE",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+            },
+            "res": [],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "0": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "3": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic YWxleC1QRFBfVVNFUjphbGV4LVBEUF9QV0Q=",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem",
+                            "test_scope_prefix.pdp_decision_amet",
+                            "test_scope_prefix.pdp_decision_ametist",
+                            "test_scope_prefix.pdp_decision_consectetur",
+                            "test_scope_prefix.pdp_decision_dolor",
+                            "test_scope_prefix.pdp_decision_ipsum",
+                            "test_scope_prefix.pdp_decision_sit"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 0,
+                            "policy_updated_to_ver": 1,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_amet",
+                            "policy-id": "test_scope_prefix.pdp_decision_amet",
+                            "policy-version": "5.5.5"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 4,
+                            "policy_updated_to_ver": 5,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_amet"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ametist",
+                            "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                            "policy-version": "7.7.7"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 6,
+                            "policy_updated_to_ver": 7,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                            "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                            "policy-version": "6.6.6"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 5,
+                            "policy_updated_to_ver": 6,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_dolor",
+                            "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                            "policy-version": "3.3.3"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 2,
+                            "policy_updated_to_ver": 3,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                            "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                            "policy-version": "2.2.2"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 1,
+                            "policy_updated_to_ver": 2,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_sit",
+                            "policy-id": "test_scope_prefix.pdp_decision_sit",
+                            "policy-version": "4.4.4"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 3,
+                            "policy_updated_to_ver": 4,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": true,
+                    "latest_policies": {
+                        "test_scope_prefix.pdp_decision_Lorem": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 0,
+                                    "policy_updated_to_ver": 1,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-version": "1.1.1"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_Lorem.1-1-1.xml",
+                                "policyVersion": "1.1.1",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "test_scope_prefix.pdp_decision_ametist": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 6,
+                                    "policy_updated_to_ver": 7,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ametist",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                                    "policy-version": "7.7.7"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ametist.7-7-7.xml",
+                                "policyVersion": "7.7.7",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "test_scope_prefix.pdp_decision_consectetur": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 5,
+                                    "policy_updated_to_ver": 6,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-version": "6.6.6"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_consectetur.6-6-6.xml",
+                                "policyVersion": "6.6.6",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "test_scope_prefix.pdp_decision_dolor": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 2,
+                                    "policy_updated_to_ver": 3,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_dolor",
+                                    "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                                    "policy-version": "3.3.3"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_dolor.3-3-3.xml",
+                                "policyVersion": "3.3.3",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "test_scope_prefix.pdp_decision_ipsum": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 1,
+                                    "policy_updated_to_ver": 2,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-version": "2.2.2"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ipsum.2-2-2.xml",
+                                "policyVersion": "2.2.2",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "test_scope_prefix.pdp_decision_sit": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 3,
+                                    "policy_updated_to_ver": 4,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_sit",
+                                    "policy-id": "test_scope_prefix.pdp_decision_sit",
+                                    "policy-version": "4.4.4"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_sit.4-4-4.xml",
+                                "policyVersion": "4.4.4",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_sit"
+                        }
+                    },
+                    "policy_filter_matches": {},
+                    "removed_policies": {}
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic YWxleC1ETUFBUF9NUl9VU0VSOmFsZXgtRE1BQVBfTVJfUFdE",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": ["garbage-to-be-ignored", "garbage-to-be-ignored"],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic YWxleC1ETUFBUF9NUl9VU0VSOmFsZXgtRE1BQVBfTVJfUFdE",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [],
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_Lorem",
+                        "policy_versions": {
+                            "0": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_amet",
+                        "policy_versions": {
+                            "5.5.5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ametist",
+                        "policy_versions": {
+                            "6": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_consectetur",
+                        "policy_versions": {
+                            "5": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_dolor",
+                        "policy_versions": {
+                            "2": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_ipsum",
+                        "policy_versions": {
+                            "1": true
+                        }
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "pending_update": false,
+                        "policy_id": "test_scope_prefix.pdp_decision_sit",
+                        "policy_versions": {
+                            "3": true
+                        }
+                    }
+                },
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Accept": "application/json",
+                    "Authorization": "Basic YWxleC1QRFBfVVNFUjphbGV4LVBEUF9QV0Q=",
+                    "ClientAuth": "Basic user",
+                    "Content-Type": "application/json",
+                    "Environment": "TEST",
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "ONAPComponent": "policy_handler",
+                    "ONAPInstance": "*",
+                    "ONAPName": "DCAE",
+                    "action": "configure",
+                    "resource": {
+                        "policy-id": [
+                            "test_scope_prefix.pdp_decision_Lorem",
+                            "test_scope_prefix.pdp_decision_amet",
+                            "test_scope_prefix.pdp_decision_ametist",
+                            "test_scope_prefix.pdp_decision_consectetur",
+                            "test_scope_prefix.pdp_decision_dolor",
+                            "test_scope_prefix.pdp_decision_ipsum",
+                            "test_scope_prefix.pdp_decision_sit"
+                        ]
+                    }
+                },
+                "method": "post",
+                "params": null,
+                "uri": "https://unit-test-pdp-server:8081000/decision/v1/"
+            },
+            "res": {
+                "policies": {
+                    "test_scope_prefix.pdp_decision_Lorem": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                            "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                            "policy-version": "1.1.1"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 0,
+                            "policy_updated_to_ver": 1,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_amet": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_amet",
+                            "policy-id": "test_scope_prefix.pdp_decision_amet",
+                            "policy-version": "5.5.5"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 4,
+                            "policy_updated_to_ver": 5,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_amet"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ametist": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ametist",
+                            "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                            "policy-version": "7.7.7"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 6,
+                            "policy_updated_to_ver": 7,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_consectetur": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                            "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                            "policy-version": "6.6.6"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 5,
+                            "policy_updated_to_ver": 6,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_dolor": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_dolor",
+                            "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                            "policy-version": "3.3.3"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 2,
+                            "policy_updated_to_ver": 3,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_ipsum": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                            "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                            "policy-version": "2.2.2"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 1,
+                            "policy_updated_to_ver": 2,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    },
+                    "test_scope_prefix.pdp_decision_sit": {
+                        "metadata": {
+                            "description": "description for test_scope_prefix.pdp_decision_sit",
+                            "policy-id": "test_scope_prefix.pdp_decision_sit",
+                            "policy-version": "4.4.4"
+                        },
+                        "properties": {
+                            "policy_hello": "world!",
+                            "policy_updated_from_ver": 3,
+                            "policy_updated_to_ver": 4,
+                            "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                        },
+                        "type": "unit.test.type.policies",
+                        "version": "1.0.0"
+                    }
+                }
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "X-ECOMP-RequestID": "*",
+                    "X-ONAP-RequestID": "*"
+                },
+                "json": {
+                    "catch_up": true,
+                    "latest_policies": {
+                        "test_scope_prefix.pdp_decision_Lorem": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 0,
+                                    "policy_updated_to_ver": 1,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-id": "test_scope_prefix.pdp_decision_Lorem",
+                                    "policy-version": "1.1.1"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_Lorem.1-1-1.xml",
+                                "policyVersion": "1.1.1",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_Lorem"
+                        },
+                        "test_scope_prefix.pdp_decision_ametist": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 6,
+                                    "policy_updated_to_ver": 7,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ametist"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ametist",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ametist",
+                                    "policy-version": "7.7.7"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ametist.7-7-7.xml",
+                                "policyVersion": "7.7.7",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ametist"
+                        },
+                        "test_scope_prefix.pdp_decision_consectetur": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 5,
+                                    "policy_updated_to_ver": 6,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-id": "test_scope_prefix.pdp_decision_consectetur",
+                                    "policy-version": "6.6.6"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_consectetur.6-6-6.xml",
+                                "policyVersion": "6.6.6",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_consectetur"
+                        },
+                        "test_scope_prefix.pdp_decision_dolor": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 2,
+                                    "policy_updated_to_ver": 3,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_dolor"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_dolor",
+                                    "policy-id": "test_scope_prefix.pdp_decision_dolor",
+                                    "policy-version": "3.3.3"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_dolor.3-3-3.xml",
+                                "policyVersion": "3.3.3",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_dolor"
+                        },
+                        "test_scope_prefix.pdp_decision_ipsum": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 1,
+                                    "policy_updated_to_ver": 2,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-id": "test_scope_prefix.pdp_decision_ipsum",
+                                    "policy-version": "2.2.2"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_ipsum.2-2-2.xml",
+                                "policyVersion": "2.2.2",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_ipsum"
+                        },
+                        "test_scope_prefix.pdp_decision_sit": {
+                            "policy_body": {
+                                "config": {
+                                    "policy_hello": "world!",
+                                    "policy_updated_from_ver": 3,
+                                    "policy_updated_to_ver": 4,
+                                    "updated_policy_id": "test_scope_prefix.pdp_decision_sit"
+                                },
+                                "metadata": {
+                                    "description": "description for test_scope_prefix.pdp_decision_sit",
+                                    "policy-id": "test_scope_prefix.pdp_decision_sit",
+                                    "policy-version": "4.4.4"
+                                },
+                                "policyName": "test_scope_prefix.pdp_decision_sit.4-4-4.xml",
+                                "policyVersion": "4.4.4",
+                                "type": "unit.test.type.policies",
+                                "version": "1.0.0"
+                            },
+                            "policy_id": "test_scope_prefix.pdp_decision_sit"
+                        }
+                    },
+                    "policy_filter_matches": {},
+                    "removed_policies": {}
+                },
+                "method": "put",
+                "params": {
+                    "cfy_tenant_name": "default_tenant"
+                },
+                "uri": "http://unit-test-deployment_handler:8188000/policy"
+            },
+            "res": {
+                "server_instance_uuid": "e17fc584-7b06-4777-81c5-5da4337d6d16"
+            },
+            "status_code": 200
+        },
+        {
+            "request": {
+                "headers": {
+                    "Authorization": "Basic YWxleC1ETUFBUF9NUl9VU0VSOmFsZXgtRE1BQVBfTVJfUFdE",
+                    "Content-Type": "application/json",
+                    "X-ONAP-RequestID": "*",
+                    "X-ECOMP-RequestID": "*"
+                },
+                "json": null,
+                "method": "get",
+                "params": {
+                    "timeout": 15000
+                },
+                "uri": "https://unit-test-dmaap-mr:280800000/events/unit-test-topicname/unit-test-consumegroup/unit-test-consumerid"
+                },
+            "res": [],
+            "status_code": 200
+        }
+    ]
+}

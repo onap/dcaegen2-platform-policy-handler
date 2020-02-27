@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 """read and use the config"""
 
+import base64
 import copy
 import json
 import logging
@@ -137,6 +138,7 @@ class Config(object):
     FIELD_WSERVICE_PORT = "wservice_port"
     FIELD_TLS = "tls"
     FIELD_POLICY_ENGINE = "policy_engine"
+    DMAAP_MR = "dmaap_mr"
     POOL_CONNECTIONS = "pool_connections"
     DEPLOY_HANDLER = "deploy_handler"
     THREAD_POOL_SIZE = "thread_pool_size"
@@ -155,6 +157,11 @@ class Config(object):
     SERVICE_ACTIVATOR = "service_activator"
     MODE_OF_OPERATION = "mode_of_operation"
     PDP_API_VERSION = "PDP_API_VERSION"
+    QUERY_TIMEOUT = "timeout"
+    PDP_USER = "PDP_USER"
+    PDP_PWD = "PDP_PWD"
+    DMAAP_MR_USER = "DMAAP_MR_USER"
+    DMAAP_MR_PWD = "DMAAP_MR_PWD"
 
     system_name = SERVICE_NAME_POLICY_HANDLER
     wservice_port = 25577
@@ -165,6 +172,8 @@ class Config(object):
     tls_server_cert_file = None
     tls_private_key_file = None
     tls_server_ca_chain_file = None
+    _pdp_authorization = None
+    _dmaap_mr_authorization = None
 
     _local_config = Settings()
     discovered_config = Settings()
@@ -254,12 +263,44 @@ class Config(object):
         Config._pdp_api_version = os.environ.get(
             Config.PDP_API_VERSION, loaded_config.get(Config.PDP_API_VERSION.lower()))
 
+        pdp_user = os.environ.get(Config.PDP_USER)
+        pdp_pwd = os.environ.get(Config.PDP_PWD)
+        if pdp_user and pdp_pwd:
+            Config._pdp_authorization = "Basic {}".format(base64.b64encode(
+                ("{}:{}".format(pdp_user, pdp_pwd)).encode()).decode("utf-8"))
+
+        dmaap_mr_user = os.environ.get(Config.DMAAP_MR_USER)
+        dmaap_mr_pwd = os.environ.get(Config.DMAAP_MR_PWD)
+        if dmaap_mr_user and dmaap_mr_pwd:
+            Config._dmaap_mr_authorization = "Basic {}".format(base64.b64encode(
+                ("{}:{}".format(dmaap_mr_user, dmaap_mr_pwd)).encode()).decode("utf-8"))
+
         local_config = loaded_config.get(Config.SERVICE_NAME_POLICY_HANDLER, {})
         Config.system_name = local_config.get(Config.FIELD_SYSTEM, Config.system_name)
 
         Config._set_tls_config(local_config.get(Config.FIELD_TLS))
 
         Config._local_config.set_config(local_config, auto_commit=True)
+
+    @staticmethod
+    def _overwrite_discovered_config(audit, discovered_config):
+        """replace the secrets in discovered_config with data from environment"""
+        changes = []
+        if Config._pdp_authorization:
+            pdp_cfg = discovered_config.get("policy_engine", {})
+            if pdp_cfg.get("url", "").lower().startswith("https:"):
+                pdp_cfg.get("headers", {})["Authorization"] = Config._pdp_authorization
+                changes.append("pdp_authorization")
+
+        if Config._dmaap_mr_authorization:
+            dmaap_mr_cfg = discovered_config.get("dmaap_mr", {})
+            if dmaap_mr_cfg.get("url", "").lower().startswith("https:"):
+                dmaap_mr_cfg.get("headers", {})["Authorization"] = Config._dmaap_mr_authorization
+                changes.append("dmaap_mr_authorization")
+
+        if changes:
+            _LOGGER.info(audit.info("overwritten discovered config: {}".format(", ".join(changes))))
+
 
     @staticmethod
     def discover(audit):
@@ -269,14 +310,17 @@ class Config(object):
         new_config = DiscoveryClient.get_value(audit, discovery_key)
 
         if not new_config or not isinstance(new_config, dict):
-            _LOGGER.warning("unexpected config from discovery: %s", new_config)
+            _LOGGER.warning(audit.warn("unexpected config from discovery: {}".format(new_config)))
             return
 
-        _LOGGER.debug("loaded config from discovery(%s): %s",
-                      discovery_key, Audit.json_dumps(new_config))
+        _LOGGER.debug(audit.debug("loaded config from discovery({}): {}".format(
+            discovery_key, Audit.json_dumps(new_config))))
+        discovered_config = new_config.get(Config.SERVICE_NAME_POLICY_HANDLER)
 
-        Config.discovered_config.set_config(new_config.get(Config.SERVICE_NAME_POLICY_HANDLER))
-        _LOGGER.info("config from discovery: %s", Config.discovered_config)
+        Config._overwrite_discovered_config(audit, discovered_config)
+
+        Config.discovered_config.set_config(discovered_config)
+        _LOGGER.info(audit.info("config from discovery: {}".format(Config.discovered_config)))
 
 
     @staticmethod

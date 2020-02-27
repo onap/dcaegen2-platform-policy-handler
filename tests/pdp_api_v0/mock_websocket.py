@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import time
 
 from policyhandler.pdp_api_v0.pdp_consts import POLICY_NAME
 from policyhandler.pdp_api_v0.policy_listener import (LOADED_POLICIES,
-                                                        POLICY_VER,
-                                                        REMOVED_POLICIES)
+                                                      POLICY_VER,
+                                                      REMOVED_POLICIES)
 from policyhandler.utils import Utils
 
 from .mock_policy_engine import MockPolicyEngine2018

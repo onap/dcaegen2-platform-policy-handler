@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 #
 """mocking for the deployment-handler - shared by many tests"""
 
+import json
+
 from policyhandler.pdp_api_v0.pdp_consts import POLICY_VERSION
 from policyhandler.policy_consts import POLICY_BODY, POLICY_ID, POLICY_VERSIONS
+from policyhandler.utils import Utils
 
-from .mock_settings import MockSettings
-from .pdp_api_v0.mock_policy_engine import MockPolicyEngine2018
+from ..mock_settings import MockSettings
+from .mock_policy_engine import MockPolicyEngine2018
 
+_LOGGER = Utils.get_logger(__file__)
 
 class MockDeploymentHandler(object):
     """pretend this is the deployment-handler"""
@@ -34,14 +38,16 @@ class MockDeploymentHandler(object):
     @staticmethod
     def get_deployed_policies():
         """generate the deployed policies message"""
+        all_policies = MockPolicyEngine2018.gen_all_policies_latest(version_offset=1)
+        _LOGGER.info("all_policies: %s", json.dumps(all_policies))
+
         response = MockDeploymentHandler.default_response()
         policies = dict(
             (policy_id, {
                 POLICY_ID: policy_id,
                 POLICY_VERSIONS: {policy.get(POLICY_BODY, {}).get(POLICY_VERSION, "999"): True},
                 "pending_update": False})
-            for policy_id, policy in (
-                MockPolicyEngine2018.gen_all_policies_latest(version_offset=1).items()))
+            for policy_id, policy in all_policies.items())
         response["policies"] = policies
 
         return response

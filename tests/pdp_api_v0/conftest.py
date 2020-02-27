@@ -1,5 +1,5 @@
 # ============LICENSE_START=======================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,14 @@ https://docs.pytest.org/en/latest/fixture.html
 import pytest
 
 from policyhandler import pdp_client
+from policyhandler.deploy_handler import DeployHandler
+from policyhandler.onap.audit import Audit
 from policyhandler.pdp_api_v0.pdp_consts import POLICY_NAME
 from policyhandler.utils import Utils
 
 from ..mock_settings import MockSettings
 from ..mock_tracker import MockHttpResponse
+from .mock_deploy_handler import MockDeploymentHandler
 from .mock_policy_engine import MockPolicyEngine2018
 from .mock_websocket import MockWebSocket
 
@@ -57,9 +60,10 @@ def fix_pdp_post(monkeypatch):
     def monkeyed_policy_rest_post(uri, json=None, **kwargs):
         """monkeypatch for the POST to policy-engine"""
         res_json = MockPolicyEngine2018.get_config(json.get(POLICY_NAME))
-        return MockHttpResponse("post", uri, res_json, json=json, **kwargs)
+        return MockHttpResponse("post", uri, res_json=res_json, json=json, **kwargs)
 
     _LOGGER.info("setup fix_pdp_post")
+    pdp_client.PolicyRest._lazy_inited = False
     pdp_client.PolicyRest._lazy_init()
     monkeypatch.setattr('policyhandler.pdp_client.PolicyRest._requests_session.post',
                         monkeyed_policy_rest_post)
@@ -72,9 +76,10 @@ def fix_pdp_post_big(monkeypatch):
     def monkeyed_policy_rest_post(uri, **kwargs):
         """monkeypatch for the POST to policy-engine"""
         res_json = MockPolicyEngine2018.get_configs_all()
-        return MockHttpResponse("post", uri, res_json, **kwargs)
+        return MockHttpResponse("post", uri, res_json=res_json, **kwargs)
 
     _LOGGER.info("setup fix_pdp_post_big")
+    pdp_client.PolicyRest._lazy_inited = False
     pdp_client.PolicyRest._lazy_init()
     monkeypatch.setattr('policyhandler.pdp_client.PolicyRest._requests_session.post',
                         monkeyed_policy_rest_post)
@@ -94,6 +99,7 @@ def fix_pdp_post_boom(monkeypatch):
         raise MockException("fix_pdp_post_boom {}".format(uri))
 
     _LOGGER.info("setup fix_pdp_post_boom")
+    pdp_client.PolicyRest._lazy_inited = False
     pdp_client.PolicyRest._lazy_init()
     monkeypatch.setattr('policyhandler.pdp_client.PolicyRest._requests_session.post',
                         monkeyed_policy_rest_post_boom)
@@ -131,3 +137,96 @@ def fix_select_latest_policies_boom(monkeypatch):
 
     yield fix_select_latest_policies_boom
     _LOGGER.info("teardown fix_select_latest_policies_boom at %s", policy_utils_path)
+
+@pytest.fixture()
+def fix_deploy_handler(monkeypatch):
+    """monkeyed requests to deployment-handler"""
+    def monkeyed_deploy_handler_put(uri, **kwargs):
+        """monkeypatch for policy-update request.put to deploy_handler"""
+        return MockHttpResponse("put", uri, res_json=MockDeploymentHandler.default_response(),
+                                **kwargs)
+
+    def monkeyed_deploy_handler_get(uri, **kwargs):
+        """monkeypatch policy-update request.get to deploy_handler"""
+        return MockHttpResponse("get", uri,
+                                res_json=MockDeploymentHandler.get_deployed_policies(),
+                                **kwargs)
+
+    _LOGGER.info("setup fix_deploy_handler")
+    audit = None
+    if DeployHandler._lazy_inited is False:
+        audit = Audit(req_message="fix_deploy_handler")
+        DeployHandler._lazy_init(audit)
+
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.put',
+                        monkeyed_deploy_handler_put)
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.get',
+                        monkeyed_deploy_handler_get)
+
+    yield fix_deploy_handler
+    if audit:
+        audit.audit_done("teardown")
+    _LOGGER.info("teardown fix_deploy_handler")
+
+
+@pytest.fixture()
+def fix_deploy_handler_413(monkeypatch):
+    """monkeyed failed discovery request.get"""
+    def monkeyed_deploy_handler_put(uri, **kwargs):
+        """monkeypatch for deploy_handler"""
+        return MockHttpResponse(
+            "put", uri,
+            res_json={"server_instance_uuid": MockSettings.deploy_handler_instance_uuid},
+            status_code=413, **kwargs
+        )
+
+    def monkeyed_deploy_handler_get(uri, **kwargs):
+        """monkeypatch policy-update request.get to deploy_handler"""
+        return MockHttpResponse("get", uri, res_json=MockDeploymentHandler.get_deployed_policies(),
+                                **kwargs)
+
+    _LOGGER.info("setup fix_deploy_handler_413")
+    audit = None
+    if DeployHandler._lazy_inited is False:
+        audit = Audit(req_message="fix_deploy_handler_413")
+        DeployHandler._lazy_init(audit)
+
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.put',
+                        monkeyed_deploy_handler_put)
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.get',
+                        monkeyed_deploy_handler_get)
+
+    yield fix_deploy_handler_413
+    if audit:
+        audit.audit_done("teardown")
+    _LOGGER.info("teardown fix_deploy_handler_413")
+
+
+@pytest.fixture()
+def fix_deploy_handler_404(monkeypatch):
+    """monkeyed failed discovery request.get"""
+    def monkeyed_deploy_handler_put(uri, **kwargs):
+        """monkeypatch for deploy_handler"""
+        return MockHttpResponse("put", uri, res_json=MockDeploymentHandler.default_response(),
+                                **kwargs)
+
+    def monkeyed_deploy_handler_get(uri, **kwargs):
+        """monkeypatch policy-update request.get to deploy_handler"""
+        return MockHttpResponse("get", uri, res_json=MockDeploymentHandler.default_response(),
+                                **kwargs)
+
+    _LOGGER.info("setup fix_deploy_handler_404")
+    audit = None
+    if DeployHandler._lazy_inited is False:
+        audit = Audit(req_message="fix_deploy_handler_404")
+        DeployHandler._lazy_init(audit)
+
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.put',
+                        monkeyed_deploy_handler_put)
+    monkeypatch.setattr('policyhandler.deploy_handler.DeployHandler._requests_session.get',
+                        monkeyed_deploy_handler_get)
+
+    yield fix_deploy_handler_404
+    if audit:
+        audit.audit_done("teardown")
+    _LOGGER.info("teardown fix_deploy_handler_404")

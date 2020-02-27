@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@
 """web-server for policy_handler"""
 
 import json
-from datetime import datetime
 import os
 import time
+from datetime import datetime
 
 import cherrypy
 
 from . import pdp_client
 from .config import Config
-from .deploy_handler import PolicyUpdateMessage
+from .deploy_handler import DeployHandler, PolicyUpdateMessage
 from .onap.audit import Audit, AuditHttpCode
 from .policy_receiver import PolicyReceiver
 from .utils import Utils
@@ -120,7 +120,7 @@ class _PolicyWeb(object):
 
         PolicyWeb.logger.info("%s", req_info)
 
-        result, policies, policy_filters = pdp_client.PolicyMatcher.get_deployed_policies(audit)
+        result, policies, policy_filters = DeployHandler.get_deployed_policies(audit)
         if not result:
             result, policy_update = pdp_client.PolicyMatcher.build_catch_up_message(
                 audit, policies, policy_filters)
@@ -184,11 +184,11 @@ class _PolicyWeb(object):
             }
         }
         """
-        if Config.is_pdp_api_default():
-            raise cherrypy.HTTPError(404, "temporarily unsupported due to the new pdp API")
-
         if cherrypy.request.method == "GET":
             return self._get_all_policies_latest()
+
+        if Config.is_pdp_api_default():
+            raise cherrypy.HTTPError(404, "temporarily unsupported due to the new pdp API")
 
         if cherrypy.request.method != "POST":
             raise cherrypy.HTTPError(404, "unexpected method {0}".format(cherrypy.request.method))

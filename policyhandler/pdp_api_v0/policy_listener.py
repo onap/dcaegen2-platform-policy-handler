@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2018-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #
 
 """
-policy-listener communicates with policy-engine
+policy_listener communicates with policy-engine
 thru web-socket to receive push notifications
 on updates and removal of policies.
 
@@ -298,8 +298,8 @@ class PolicyListener(Thread):
 
 
     def shutdown(self, audit):
-        """Shutdown the policy-listener"""
-        _LOGGER.info(audit.info("shutdown policy-listener"))
+        """Shutdown the policy_listener"""
+        _LOGGER.info(audit.info("shutdown policy_listener"))
         with self._lock:
             self._keep_running = False
 

@@ -1,5 +1,5 @@
 # ================================================================================
-# Copyright (c) 2017-2019 AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class PolicyUpdater(Thread):
         self._reconfigure_receiver = on_reconfigure_receiver
 
         self._lock = Lock()
-        self._run = Event()
+        self._run_event = Event()
         self._settings = Settings(CATCH_UP, Config.RECONFIGURE)
 
         self._catch_up_timer = None
@@ -74,11 +74,11 @@ class PolicyUpdater(Thread):
         self._settings.commit_change()
         return True
 
-    def policy_update(self, policies_updated, policies_removed):
+    def policy_update(self, *args):
         """enqueue the policy-updates"""
         with self._lock:
-            self._policy_updates.push_policy_updates(policies_updated, policies_removed)
-            self._run.set()
+            self._policy_updates.push_policy_updates(*args)
+            self._run_event.set()
 
     def catch_up(self, audit=None):
         """need to bring the latest policies to DCAE-Controller"""
@@ -89,7 +89,7 @@ class PolicyUpdater(Thread):
                     "catch_up %s request_id %s",
                     self._aud_catch_up.req_message, self._aud_catch_up.request_id
                 )
-            self._run.set()
+            self._run_event.set()
 
     def reconfigure(self, audit=None):
         """job to check for and bring in the updated config for policy-handler"""
@@ -100,7 +100,7 @@ class PolicyUpdater(Thread):
                     "%s request_id %s",
                     self._aud_reconfigure.req_message, self._aud_reconfigure.request_id
                 )
-            self._run.set()
+            self._run_event.set()
 
     def run(self):
         """wait and run the policy-update in thread"""
@@ -108,10 +108,10 @@ class PolicyUpdater(Thread):
         self._run_reconfigure_timer()
         while True:
             _LOGGER.info("waiting for policy-updates...")
-            self._run.wait()
+            self._run_event.wait()
 
             with self._lock:
-                self._run.clear()
+                self._run_event.clear()
 
             if not self._keep_running():
                 break
@@ -126,7 +126,7 @@ class PolicyUpdater(Thread):
 
             self._on_policy_update()
 
-        _LOGGER.info("exit policy-updater")
+        _LOGGER.info("exit policy_updater")
 
     def _keep_running(self):
         """thread-safe check whether to continue running"""
@@ -235,7 +235,7 @@ class PolicyUpdater(Thread):
 
                 if self._reconfigure_receiver(aud_reconfigure):
                     need_to_catch_up = True
-                    changed_configs.append("web-socket")
+                    changed_configs.append("policy-receiver")
 
                 reconfigure_result = " -- config changed on {} changes: {}".format(
                     json.dumps(changed_configs), Config.discovered_config)
@@ -246,7 +246,7 @@ class PolicyUpdater(Thread):
 
             Config.discovered_config.commit_change()
             aud_reconfigure.audit_done(result=reconfigure_result)
-            _LOGGER.info(log_line + reconfigure_result)
+            _LOGGER.info("%s%s", log_line, reconfigure_result)
 
             if need_to_catch_up:
                 self._pause_catch_up_timer()
@@ -300,8 +300,7 @@ class PolicyUpdater(Thread):
             _LOGGER.info(log_line)
             self._pause_catch_up_timer()
 
-            (_, policies,
-             policy_filters) = pdp_client.PolicyMatcher.get_deployed_policies(aud_catch_up)
+            (_, policies, policy_filters) = DeployHandler.get_deployed_policies(aud_catch_up)
 
             catch_up_message = None
             if aud_catch_up.is_not_found():
@@ -422,11 +421,11 @@ class PolicyUpdater(Thread):
 
 
     def shutdown(self, audit):
-        """Shutdown the policy-updater"""
-        _LOGGER.info("shutdown policy-updater")
+        """Shutdown the policy_updater"""
+        _LOGGER.info("shutdown policy_updater")
         with self._lock:
             self._aud_shutdown = audit
-            self._run.set()
+            self._run_event.set()
 
         self._stop_timers()
 
