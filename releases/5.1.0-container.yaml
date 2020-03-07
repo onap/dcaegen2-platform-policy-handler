@@ -1,0 +1,8 @@
+distribution_type: 'container'
+container_release_tag: '5.1.0'
+project: 'dcae-platform-policyhandler'
+log_dir: 'dcaegen2-platform-policy-handler-master-merge-java/57'
+ref: 78ff88f9b3a3d32f941b3b9fedc2abfbaba291cb
+containers:
+    - name: 'org.onap.dcaegen2.platform.policy-handler'
+      version: '5.1.0-SNAPSHOT-20200304T222242Z'
