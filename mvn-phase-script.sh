@@ -37,7 +37,7 @@ if [ -z "$SETTINGS_FILE" ]; then
 fi
 
 set +e
-RELEASE_TAG=${MVN_RELEASE_TAG:-R6}
+RELEASE_TAG=${MVN_RELEASE_TAG:-R7}
 if [ "$RELEASE_TAG" != "R1" ]; then
   RELEASE_TAGGED_DIR="${RELEASE_TAG}/"
 else
