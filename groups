@@ -1,4 +1,5 @@
 # UUID                                                                                           	Group Name
 #
+045e924e6580a80a3261be9671acc0daaeb94b45                                                         	saml/onap-gerrit-dcaegen2-platform-policy-handler-committers
 daebbf523be390041a1a9c0e340a6d833aae5043                                                         	GitHub Replication
 ldap:cn=onap-gerrit-dcaegen2-platform-policy-handler-committers,ou=Groups,dc=freestandards,dc=org	ldap/onap-gerrit-dcaegen2-platform-policy-handler-committers
