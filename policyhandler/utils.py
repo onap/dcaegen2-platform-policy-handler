@@ -1,6 +1,5 @@
 # ================================================================================
 # Copyright (c) 2018-2020 AT&T Intellectual Property. All rights reserved.
-# Copyright 2020 Deutsche Telekom. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -243,7 +242,7 @@ class RegexCoarser(object):
     @staticmethod
     def _compress(trie):
         """compress trie into shortest leaves"""
-        for key, subtrie in trie.copy().items():
+        for key, subtrie in trie.items():
             RegexCoarser._compress(subtrie)
             subkeys = list(subtrie.keys())
             if len(subkeys) == 1:
