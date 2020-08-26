@@ -1,5 +1,6 @@
 # ================================================================================
 # Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
+# Copyright 2020 Deutsche Telekom. All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,42 +17,41 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
-# Use the official Python as the base image
-FROM python:3.6
+# Use the recommended by SECCOM Python as the base image
+FROM nexus3.onap.org:10001/onap/integration-python:7.0.1
 
-ENV INSROOT /opt/app
-ENV APPUSER policy_handler
-ENV APPDIR ${INSROOT}/${APPUSER}
+ARG user=onap
+ARG group=onap
 
-RUN useradd -d ${APPDIR} ${APPUSER}
-
-WORKDIR ${APPDIR}
+USER root
 
 # Make port 25577 available to the world outside this container
 EXPOSE 25577
 
-# Copy the current directory content into the container at ${APPDIR}
-COPY ./*.py ./
-COPY ./*.in ./
-COPY ./*.txt ./
-COPY ./run_policy.sh ./
-COPY ./policyhandler/ ./policyhandler/
-COPY ./etc/ ./etc/
-COPY ./etc_customize/ ./etc_customize/
+# Copy the current directory content into the container at WORKDIR
+COPY --chown=onap:onap ./*.py ./
+COPY --chown=onap:onap ./*.in ./
+COPY --chown=onap:onap ./*.txt ./
+COPY --chown=onap:onap ./run_policy.sh ./
+COPY --chown=onap:onap ./policyhandler/ ./policyhandler/
+COPY --chown=onap:onap ./etc/ ./etc/
+COPY --chown=onap:onap ./etc_customize/ ./etc_customize/
 
-RUN mkdir -p ${APPDIR}/logs \
- && chown -R ${APPUSER}:${APPUSER} ${APPDIR} \
- && chmod a+w ${APPDIR}/logs \
- && chmod 500 ${APPDIR}/etc \
- && chmod 500 ${APPDIR}/run_policy.sh \
- && pip install -r requirements.txt \
- && (CUST_SH=./etc_customize/customize.sh && test -e ${CUST_SH} && chmod 500 ${CUST_SH} \
-   && (${CUST_SH} | tee -a logs/"customize_${APPUSER}_$(date +%Y_%m%d-%H%M%S).log" 2>&1)) \
- && ls -laR ${APPDIR}/
+RUN apk add build-base linux-headers openssl iproute2 bash && \
+    pip install -r requirements.txt
 
-USER ${APPUSER}
+RUN mkdir -p logs \
+ && chown -R $user:$group . \
+ && chmod a+w logs \
+ && chmod 500 etc \
+ && chmod 500 run_policy.sh \
+ && (CUST_SH=./etc_customize/customize.sh && test -e $CUST_SH && chmod 500 $CUST_SH \
+   && ($CUST_SH | tee -a logs/"customize_$user_$(date +%Y_%m%d-%H%M%S).log" 2>&1)) \
+ && ls -laR .
 
-VOLUME ${APPDIR}/logs
+USER $user
+
+VOLUME logs
 
 # Run run_policy.sh when the container launches
 CMD ["./run_policy.sh"]
