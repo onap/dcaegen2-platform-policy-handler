@@ -18,7 +18,7 @@
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 
 # Use the recommended by SECCOM Python as the base image
-FROM nexus3.onap.org:10001/onap/integration-python:7.0.1
+FROM nexus3.onap.org:10001/onap/integration-python:8.0.0
 
 ARG user=onap
 ARG group=onap
