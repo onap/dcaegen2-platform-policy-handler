@@ -1,0 +1,8 @@
+distribution_type: 'container'
+container_release_tag: '5.1.1'
+project: 'dcae-platform-policyhandler'
+log_dir: 'dcaegen2-platform-policy-handler-docker-merge-master/2'
+ref: 47d31b33955f7a237d4e189b549a7decb83e1682
+containers:
+    - name: 'org.onap.dcaegen2.platform.policy-handler'
+      version: '5.1.1-SNAPSHOT-20210222T073926Z'
