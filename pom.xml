@@ -30,7 +30,7 @@ limitations under the License.
   <groupId>org.onap.dcaegen2.platform</groupId>
   <artifactId>policy-handler</artifactId>
   <name>dcaegen2-platform-policy-handler</name>
-  <version>5.1.1-SNAPSHOT</version>
+  <version>5.1.2-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
