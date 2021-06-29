@@ -1,6 +1,7 @@
 # ================================================================================
 # Copyright (c) 2017-2020 AT&T Intellectual Property. All rights reserved.
 # Copyright 2020 Deutsche Telekom. All rights reserved.
+# Copyright (c) 2021 J. F. Lucas.  All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +24,7 @@ from setuptools import setup
 setup(
     name='policyhandler',
     description='DCAE-Controller policy-handler to communicate with policy-engine',
-    version="5.1.2",
+    version="5.1.3",
     author='Alex Shatov',
     packages=['policyhandler'],
     zip_safe=False,

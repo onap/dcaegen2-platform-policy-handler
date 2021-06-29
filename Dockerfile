@@ -1,6 +1,7 @@
 # ================================================================================
 # Copyright (c) 2017-2018 AT&T Intellectual Property. All rights reserved.
 # Copyright 2020 Deutsche Telekom. All rights reserved.
+# Copyright (c) 2021 J. F. Lucas.  All rights reserved.
 # ================================================================================
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,8 +51,6 @@ RUN mkdir -p logs \
  && ls -laR .
 
 USER $user
-
-VOLUME logs
 
 # Run run_policy.sh when the container launches
 CMD ["./run_policy.sh"]
